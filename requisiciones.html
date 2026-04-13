@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mexa Digital</title>
+  <title>Requisiciones - Mexa</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -13,26 +13,25 @@
       color: white;
     }
     .wrap {
-      max-width: 480px;
+      max-width: 520px;
       margin: 0 auto;
       padding: 16px;
     }
     .card {
       background: #1e293b;
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
     }
-    h1, h2, p { margin-top: 0; }
-    input {
+    input, textarea {
       width: 100%;
       padding: 12px;
-      margin: 8px 0;
+      margin-top: 8px;
       border: none;
       border-radius: 8px;
     }
     button, a.btn {
-      display: block;
+      display: inline-block;
       width: 100%;
       text-align: center;
       text-decoration: none;
@@ -45,122 +44,243 @@
     }
     .primary { background: #22c55e; color: #08110b; }
     .secondary { background: #334155; color: white; }
-    .danger { background: #ef4444; color: white; }
+    .warning { background: #f59e0b; color: #111827; }
     .muted { color: #cbd5e1; font-size: 14px; }
-    .ok { color: #22c55e; }
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-top: 6px;
+      background: #334155;
+    }
     .hidden { display: none; }
+    hr { border: none; border-top: 1px solid #334155; margin: 12px 0; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Mexa Digital</h1>
-      <p class="muted">Acceso móvil para operación de almacén</p>
-      <p id="apiStatus" class="muted">Verificando API...</p>
+      <a class="btn secondary" href="./index.html">← Volver</a>
+      <h1>Requisiciones</h1>
+      <p class="muted">Flujo móvil para solicitud y surtido</p>
+      <button class="primary" onclick="cargarRequisiciones()">Actualizar lista</button>
     </div>
 
-    <div id="loginCard" class="card">
-      <h2>Entrar</h2>
-      <input id="email" type="email" placeholder="Correo" />
-      <input id="password" type="password" placeholder="Contraseña" />
-      <button class="primary" onclick="login()">Iniciar sesión</button>
-      <p id="loginMsg" class="muted"></p>
+    <div class="card">
+      <h2>Nueva requisición</h2>
+      <input id="solicitante" placeholder="Solicitante" />
+      <input id="producto_id" type="number" placeholder="Producto ID" />
+      <input id="producto_nombre" placeholder="Nombre producto" />
+      <input id="cantidad_solicitada" type="number" placeholder="Cantidad solicitada" />
+      <textarea id="nota" placeholder="Nota"></textarea>
+      <button class="primary" onclick="crearRequisicion()">Crear requisición</button>
+      <p id="msgCrear" class="muted"></p>
     </div>
 
-    <div id="menuCard" class="card hidden">
-      <h2>Panel</h2>
-      <p id="userInfo" class="muted"></p>
-      <a class="btn primary" href="./requisiciones.html">Ir a Requisiciones</a>
-      <button class="secondary" onclick="probarProductos()">Probar Productos</button>
-      <button class="danger" onclick="logout()">Cerrar sesión</button>
-      <pre id="debug" class="muted" style="white-space:pre-wrap;"></pre>
+    <div id="detalleBox" class="card hidden"></div>
+
+    <div class="card">
+      <h2>Listado</h2>
+      <div id="lista"></div>
     </div>
   </div>
 
   <script>
     const API = "https://mexa-core-1.onrender.com";
 
-    function saveToken(token) {
-      localStorage.setItem("mexa_token", token);
-    }
-
     function getToken() {
       return localStorage.getItem("mexa_token");
     }
 
-    function logout() {
-      localStorage.removeItem("mexa_token");
-      location.reload();
+    function authHeaders(json = false) {
+      const headers = {
+        "Authorization": "Bearer " + getToken()
+      };
+      if (json) headers["Content-Type"] = "application/json";
+      return headers;
     }
 
-    function showMenu() {
-      document.getElementById("loginCard").classList.add("hidden");
-      document.getElementById("menuCard").classList.remove("hidden");
-      document.getElementById("userInfo").textContent = "Sesión activa";
-    }
-
-    async function checkApi() {
-      try {
-        const res = await fetch(API + "/health");
-        const data = await res.json();
-        document.getElementById("apiStatus").innerHTML =
-          `API: <span class="ok">${data.status || "ok"}</span>`;
-      } catch (e) {
-        document.getElementById("apiStatus").textContent = "API no disponible";
+    function ensureLogin() {
+      if (!getToken()) {
+        alert("Primero inicia sesión");
+        window.location.href = "./index.html";
       }
     }
 
-    async function login() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const msg = document.getElementById("loginMsg");
-      msg.textContent = "Entrando...";
+    async function cargarRequisiciones() {
+      ensureLogin();
+      const lista = document.getElementById("lista");
+      lista.innerHTML = "Cargando...";
 
       try {
-        const res = await fetch(API + "/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
+        const res = await fetch(API + "/requisiciones/", {
+          headers: authHeaders()
         });
-
         const data = await res.json();
 
         if (!res.ok) {
-          msg.textContent = data.detail || "Error al iniciar sesión";
+          lista.innerHTML = `<p class="muted">${JSON.stringify(data)}</p>`;
           return;
         }
 
-        saveToken(data.access_token);
-        msg.textContent = "Login correcto";
-        showMenu();
+        if (!data.length) {
+          lista.innerHTML = `<p class="muted">No hay requisiciones todavía.</p>`;
+          return;
+        }
+
+        lista.innerHTML = "";
+        data.forEach(r => {
+          lista.innerHTML += `
+            <div class="card">
+              <strong>${r.folio}</strong><br>
+              <span class="muted">Solicitante: ${r.solicitante}</span><br>
+              <span class="pill">${r.estado}</span><br>
+              <span class="muted">Partidas: ${r.detalles.length}</span>
+              <button class="secondary" onclick="verRequisicion(${r.id})">Ver detalle</button>
+            </div>
+          `;
+        });
       } catch (e) {
-        msg.textContent = "No se pudo conectar con el servidor";
+        lista.innerHTML = `<p class="muted">Error al cargar requisiciones</p>`;
       }
     }
 
-    async function probarProductos() {
-      const debug = document.getElementById("debug");
-      debug.textContent = "Consultando productos...";
-      try {
-        const res = await fetch(API + "/productos/", {
-          headers: {
-            "Authorization": "Bearer " + getToken()
+    async function crearRequisicion() {
+      ensureLogin();
+      const msg = document.getElementById("msgCrear");
+
+      const payload = {
+        solicitante: document.getElementById("solicitante").value.trim(),
+        nota: document.getElementById("nota").value.trim(),
+        detalles: [
+          {
+            producto_id: Number(document.getElementById("producto_id").value),
+            producto_nombre: document.getElementById("producto_nombre").value.trim(),
+            cantidad_solicitada: Number(document.getElementById("cantidad_solicitada").value),
+            nota: document.getElementById("nota").value.trim() || null
           }
+        ]
+      };
+
+      msg.textContent = "Guardando...";
+
+      try {
+        const res = await fetch(API + "/requisiciones/", {
+          method: "POST",
+          headers: authHeaders(true),
+          body: JSON.stringify(payload)
         });
+
         const data = await res.json();
+
         if (!res.ok) {
-          debug.textContent = JSON.stringify(data, null, 2);
+          msg.textContent = data.detail ? JSON.stringify(data.detail) : JSON.stringify(data);
           return;
         }
-        debug.textContent = JSON.stringify(data.slice(0, 3), null, 2);
+
+        msg.textContent = "Requisición creada";
+        document.getElementById("solicitante").value = "";
+        document.getElementById("producto_id").value = "";
+        document.getElementById("producto_nombre").value = "";
+        document.getElementById("cantidad_solicitada").value = "";
+        document.getElementById("nota").value = "";
+        await cargarRequisiciones();
       } catch (e) {
-        debug.textContent = "Error consultando productos";
+        msg.textContent = "Error al crear requisición";
       }
     }
 
-    window.onload = async () => {
-      await checkApi();
-      if (getToken()) showMenu();
+    async function verRequisicion(id) {
+      ensureLogin();
+      const box = document.getElementById("detalleBox");
+      box.classList.remove("hidden");
+      box.innerHTML = "Cargando detalle...";
+
+      try {
+        const res = await fetch(API + "/requisiciones/" + id, {
+          headers: authHeaders()
+        });
+        const r = await res.json();
+
+        if (!res.ok) {
+          box.innerHTML = `<p class="muted">${JSON.stringify(r)}</p>`;
+          return;
+        }
+
+        let html = `
+          <h2>${r.folio}</h2>
+          <p class="muted">Solicitante: ${r.solicitante}</p>
+          <p class="muted">Estado: ${r.estado}</p>
+          <p class="muted">Nota: ${r.nota || "-"}</p>
+          <hr>
+        `;
+
+        r.detalles.forEach(d => {
+          const pendiente = d.cantidad_solicitada - d.cantidad_surtida;
+          html += `
+            <div class="card">
+              <strong>${d.producto_nombre}</strong><br>
+              <span class="muted">Producto ID: ${d.producto_id}</span><br>
+              <span class="muted">Solicitado: ${d.cantidad_solicitada}</span><br>
+              <span class="muted">Surtido: ${d.cantidad_surtida}</span><br>
+              <span class="muted">Pendiente: ${pendiente}</span><br>
+              <span class="pill">${d.estado}</span>
+              <input id="surtir_${d.id}" type="number" placeholder="Cantidad a surtir ahora" />
+              <button class="warning" onclick="surtir(${r.id}, ${d.id})">Surtir</button>
+            </div>
+          `;
+        });
+
+        box.innerHTML = html;
+      } catch (e) {
+        box.innerHTML = `<p class="muted">Error cargando detalle</p>`;
+      }
+    }
+
+    async function surtir(requisicionId, detalleId) {
+      ensureLogin();
+      const input = document.getElementById("surtir_" + detalleId);
+      const cantidad = Number(input.value);
+
+      if (!cantidad || cantidad <= 0) {
+        alert("Pon una cantidad válida");
+        return;
+      }
+
+      try {
+        const res = await fetch(API + `/requisiciones/${requisicionId}/surtir`, {
+          method: "PUT",
+          headers: authHeaders(true),
+          body: JSON.stringify({
+            detalles: [
+              {
+                detalle_id: detalleId,
+                cantidad_surtida: cantidad
+              }
+            ],
+            nota: "Surtido desde frontend móvil"
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.detail || "Error al surtir");
+          return;
+        }
+
+        alert("Surtido aplicado");
+        await verRequisicion(requisicionId);
+        await cargarRequisiciones();
+      } catch (e) {
+        alert("Error de conexión al surtir");
+      }
+    }
+
+    window.onload = () => {
+      ensureLogin();
+      cargarRequisiciones();
     };
   </script>
 </body>
