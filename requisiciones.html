@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mexa Digital</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    h1, h2, p { margin-top: 0; }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+    }
+    button, a.btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .primary { background: #22c55e; color: #08110b; }
+    .secondary { background: #334155; color: white; }
+    .danger { background: #ef4444; color: white; }
+    .muted { color: #cbd5e1; font-size: 14px; }
+    .ok { color: #22c55e; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Mexa Digital</h1>
+      <p class="muted">Acceso móvil para operación de almacén</p>
+      <p id="apiStatus" class="muted">Verificando API...</p>
+    </div>
+
+    <div id="loginCard" class="card">
+      <h2>Entrar</h2>
+      <input id="email" type="email" placeholder="Correo" />
+      <input id="password" type="password" placeholder="Contraseña" />
+      <button class="primary" onclick="login()">Iniciar sesión</button>
+      <p id="loginMsg" class="muted"></p>
+    </div>
+
+    <div id="menuCard" class="card hidden">
+      <h2>Panel</h2>
+      <p id="userInfo" class="muted"></p>
+      <a class="btn primary" href="./requisiciones.html">Ir a Requisiciones</a>
+      <button class="secondary" onclick="probarProductos()">Probar Productos</button>
+      <button class="danger" onclick="logout()">Cerrar sesión</button>
+      <pre id="debug" class="muted" style="white-space:pre-wrap;"></pre>
+    </div>
+  </div>
+
+  <script>
+    const API = "https://mexa-core-1.onrender.com";
+
+    function saveToken(token) {
+      localStorage.setItem("mexa_token", token);
+    }
+
+    function getToken() {
+      return localStorage.getItem("mexa_token");
+    }
+
+    function logout() {
+      localStorage.removeItem("mexa_token");
+      location.reload();
+    }
+
+    function showMenu() {
+      document.getElementById("loginCard").classList.add("hidden");
+      document.getElementById("menuCard").classList.remove("hidden");
+      document.getElementById("userInfo").textContent = "Sesión activa";
+    }
+
+    async function checkApi() {
+      try {
+        const res = await fetch(API + "/health");
+        const data = await res.json();
+        document.getElementById("apiStatus").innerHTML =
+          `API: <span class="ok">${data.status || "ok"}</span>`;
+      } catch (e) {
+        document.getElementById("apiStatus").textContent = "API no disponible";
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const msg = document.getElementById("loginMsg");
+      msg.textContent = "Entrando...";
+
+      try {
+        const res = await fetch(API + "/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.textContent = data.detail || "Error al iniciar sesión";
+          return;
+        }
+
+        saveToken(data.access_token);
+        msg.textContent = "Login correcto";
+        showMenu();
+      } catch (e) {
+        msg.textContent = "No se pudo conectar con el servidor";
+      }
+    }
+
+    async function probarProductos() {
+      const debug = document.getElementById("debug");
+      debug.textContent = "Consultando productos...";
+      try {
+        const res = await fetch(API + "/productos/", {
+          headers: {
+            "Authorization": "Bearer " + getToken()
+          }
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          debug.textContent = JSON.stringify(data, null, 2);
+          return;
+        }
+        debug.textContent = JSON.stringify(data.slice(0, 3), null, 2);
+      } catch (e) {
+        debug.textContent = "Error consultando productos";
+      }
+    }
+
+    window.onload = async () => {
+      await checkApi();
+      if (getToken()) showMenu();
+    };
+  </script>
+</body>
+</html>
