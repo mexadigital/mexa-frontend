@@ -1,303 +1,559 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mexa Digital</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mexa Digital</title>
 
-<style>
-body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  padding: 10px;
-}
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      padding: 10px;
+      margin: 0;
+    }
 
-.card {
-  background: #1e293b;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-}
+    h2, h3, h4, label {
+      margin-top: 0;
+    }
 
-button {
-  padding: 12px;
-  border-radius: 8px;
-  border: none;
-  width: 100%;
-}
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
 
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  border: none;
-}
+    button {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      font-weight: bold;
+    }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-</style>
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: none;
+      box-sizing: border-box;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .mini-btn {
+      width: auto;
+      padding: 10px 12px;
+      background: #dc2626;
+      color: white;
+    }
+
+    .secondary-btn {
+      background: #334155;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .primary-btn {
+      background: #2563eb;
+      color: white;
+    }
+
+    .success-btn {
+      background: #16a34a;
+      color: white;
+    }
+
+    .danger-btn {
+      background: #dc2626;
+      color: white;
+    }
+
+    .muted {
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      color: white;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #475569;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #334155;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0b1220;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+  </style>
 </head>
-
 <body>
 
-<h2>Mexa Digital</h2>
+  <h2>Mexa Digital</h2>
 
-<!-- LOGIN -->
-<div class="card" id="loginBox">
-  <h3>Login</h3>
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Entrar</button>
-</div>
-
-<!-- PANEL -->
-<div class="card" id="panel" style="display:none;">
-  <h3>Panel</h3>
-
-  <div class="grid">
-    <button onclick="show('productos')">📦 Productos</button>
-    <button onclick="show('entradas')">📥 Entradas</button>
-    <button onclick="show('traspasos')">🔄 Traspasos</button>
-    <button onclick="show('requisiciones')">📋 Requisiciones</button>
-    <button onclick="show('inventario')">📊 Inventario</button>
-    <button onclick="show('ubicaciones')">📍 Ubicaciones</button>
-    <button onclick="logout()" style="background:red;color:white;">🚪 Salir</button>
+  <!-- LOGIN -->
+  <div class="card" id="loginBox">
+    <h3>Login</h3>
+    <input id="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
+    <button class="primary-btn" onclick="login()">Entrar</button>
+    <p class="muted" id="loginStatus"></p>
   </div>
-</div>
 
-<!-- PRODUCTOS -->
-<div class="card" id="productos" style="display:none;">
-  <h3>Productos</h3>
-  <button onclick="getProductos()">Cargar</button>
-  <pre id="productosOut"></pre>
-</div>
+  <!-- PANEL -->
+  <div class="card" id="panel" style="display:none;">
+    <h3>Panel</h3>
 
-<!-- ENTRADAS -->
-<div class="card" id="entradas" style="display:none;">
-  <h3>📥 Entrada de Material</h3>
+    <div class="grid">
+      <button onclick="show('productos')">📦 Productos</button>
+      <button onclick="show('entradas')">📥 Entradas</button>
+      <button onclick="show('traspasos')">🔄 Traspasos</button>
+      <button onclick="show('inventario')">📊 Inventario</button>
+      <button onclick="show('requisiciones')">📋 Requisiciones</button>
+      <button onclick="show('ubicaciones')">📍 Ubicaciones</button>
+      <button class="danger-btn" onclick="logout()">🚪 Salir</button>
+    </div>
+  </div>
 
-  <input id="orden_compra" placeholder="Orden de compra">
-  <input id="proveedor" placeholder="Proveedor">
-  <input id="factura" placeholder="Factura">
-  <input id="solicitado_por" placeholder="Quién mandó a comprar">
+  <!-- PRODUCTOS -->
+  <div class="card" id="productos" style="display:none;">
+    <h3>📦 Productos</h3>
+    <button class="secondary-btn" onclick="getProductos()">Cargar productos</button>
+    <pre id="productosOut">Sin cargar.</pre>
+  </div>
 
-  <div id="productosList"></div>
+  <!-- ENTRADAS -->
+  <div class="card" id="entradas" style="display:none;">
+    <h3>📥 Entrada de material</h3>
 
-  <button onclick="agregarProducto()">+ Agregar producto</button>
-  <br><br>
-  <button onclick="guardarEntrada()">Guardar Entrada</button>
-</div>
+    <input id="orden_compra" placeholder="Orden de compra" />
+    <input id="proveedor" placeholder="Proveedor" />
+    <input id="factura" placeholder="Factura" />
+    <input id="solicitado_por" placeholder="Quién mandó a comprar" />
 
-<!-- TRASPASOS -->
-<div class="card" id="traspasos" style="display:none;">
-  <h3>🔄 Traspaso de material</h3>
+    <h4>Productos</h4>
+    <div id="productosList"></div>
 
-  <label>Producto</label>
-  <select id="producto"></select>
+    <button class="secondary-btn" onclick="agregarProducto()">+ Agregar producto</button>
+    <button class="success-btn" onclick="guardarEntrada()">Guardar entrada</button>
 
-  <label>Ubicación origen</label>
-  <select id="origen"></select>
+    <p class="muted" id="entradaStatus"></p>
+  </div>
 
-  <label>Ubicación destino</label>
-  <select id="destino"></select>
+  <!-- TRASPASOS -->
+  <div class="card" id="traspasos" style="display:none;">
+    <h3>🔄 Traspaso de material</h3>
 
-  <input id="cantidad" placeholder="Cantidad">
+    <label>Producto</label>
+    <select id="traspaso_producto"></select>
 
-  <button onclick="hacerTraspaso()">Mover</button>
-</div>
+    <label>Ubicación origen</label>
+    <select id="traspaso_origen"></select>
 
-<!-- REQUISICIONES -->
-<div class="card" id="requisiciones" style="display:none;">
-  <h3>Requisiciones</h3>
-  <p>En construcción 🚧</p>
-</div>
+    <label>Ubicación destino</label>
+    <select id="traspaso_destino"></select>
 
-<!-- INVENTARIO -->
-<div class="card" id="inventario" style="display:none;">
-  <h3>Inventario</h3>
-  <p>Próximamente</p>
-</div>
+    <input id="traspaso_cantidad" placeholder="Cantidad" type="number" />
 
-<!-- UBICACIONES -->
-<div class="card" id="ubicaciones" style="display:none;">
-  <h3>Ubicaciones</h3>
-  <p>Próximamente</p>
-</div>
+    <button class="success-btn" onclick="hacerTraspaso()">Mover</button>
 
-<script>
-let token = "";
+    <p class="muted" id="traspasoStatus"></p>
+  </div>
 
-// LOGIN
-function login() {
-  fetch("https://mexa-core-1.onrender.com/auth/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    token = data.access_token;
-    localStorage.setItem("mexa_token", token);
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("panel").style.display = "block";
-  });
-}
+  <!-- INVENTARIO -->
+  <div class="card" id="inventario" style="display:none;">
+    <h3>📊 Inventario por ubicación</h3>
 
-// AUTO LOGIN
-window.onload = () => {
-  const t = localStorage.getItem("mexa_token");
-  if (t) {
-    token = t;
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("panel").style.display = "block";
-  }
-};
+    <button class="secondary-btn" onclick="cargarInventario()">Cargar inventario</button>
 
-// NAVEGACIÓN
-function show(id) {
-  ["productos","entradas","traspasos","requisiciones","inventario","ubicaciones"]
-    .forEach(x => {
-      const el = document.getElementById(x);
-      if (el) el.style.display = "none";
-    });
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Ubicación</th>
+          <th>Cantidad</th>
+        </tr>
+      </thead>
+      <tbody id="inventarioBody">
+        <tr>
+          <td colspan="3">Sin cargar.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-  document.getElementById(id).style.display = "block";
+  <!-- REQUISICIONES -->
+  <div class="card" id="requisiciones" style="display:none;">
+    <h3>📋 Requisiciones</h3>
+    <p>En construcción 🚧</p>
+  </div>
 
-  if (id === "traspasos") {
-    cargarProductos();
-    cargarUbicaciones();
-  }
-}
+  <!-- UBICACIONES -->
+  <div class="card" id="ubicaciones" style="display:none;">
+    <h3>📍 Ubicaciones</h3>
+    <button class="secondary-btn" onclick="cargarUbicacionesVista()">Cargar ubicaciones</button>
+    <pre id="ubicacionesOut">Sin cargar.</pre>
+  </div>
 
-// LOGOUT
-function logout() {
-  localStorage.removeItem("mexa_token");
-  location.reload();
-}
+  <script>
+    const API_BASE = "https://mexa-core-1.onrender.com";
+    let token = "";
+    let productosEntrada = [];
 
-// PRODUCTOS
-function getProductos() {
-  fetch("https://mexa-core-1.onrender.com/productos/", {
-    headers: { "Authorization": "Bearer " + token }
-  })
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("productosOut").textContent =
-      JSON.stringify(data, null, 2);
-  });
-}
+    // ---------------------------
+    // AUTH
+    // ---------------------------
+    async function login() {
+      const status = document.getElementById("loginStatus");
+      status.textContent = "Entrando...";
 
-// ENTRADAS MULTI PRODUCTO
-let productos = [];
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value
+          })
+        });
 
-function agregarProducto() {
-  const id = Date.now();
-  productos.push({ id, producto_id: "", cantidad: "" });
-  renderProductos();
-}
+        const data = await res.json();
 
-function renderProductos() {
-  let html = "";
+        if (!res.ok) {
+          status.textContent = data.detail || "Error al iniciar sesión";
+          return;
+        }
 
-  productos.forEach(p => {
-    html += `
-      <div>
-        <input placeholder="Producto ID"
-          onchange="updateProducto(${p.id}, 'producto_id', this.value)">
-        
-        <input placeholder="Cantidad"
-          onchange="updateProducto(${p.id}, 'cantidad', this.value)">
-      </div>
-    `;
-  });
+        token = data.access_token;
+        localStorage.setItem("mexa_token", token);
 
-  document.getElementById("productosList").innerHTML = html;
-}
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("panel").style.display = "block";
+        status.textContent = "";
+      } catch (error) {
+        status.textContent = "No se pudo conectar con el servidor";
+        console.error(error);
+      }
+    }
 
-function updateProducto(id, campo, valor) {
-  const p = productos.find(x => x.id === id);
-  p[campo] = valor;
-}
+    window.onload = () => {
+      const t = localStorage.getItem("mexa_token");
+      if (t) {
+        token = t;
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("panel").style.display = "block";
+      }
 
-function guardarEntrada() {
-  fetch("https://mexa-core-1.onrender.com/entradas/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({
-      organizacion_id: 1,
-      orden_compra: document.getElementById("orden_compra").value,
-      proveedor: document.getElementById("proveedor").value,
-      factura: document.getElementById("factura").value,
-      solicitado_por: document.getElementById("solicitado_por").value,
-      productos: productos.map(p => ({
-        producto_id: parseInt(p.producto_id),
-        cantidad: parseInt(p.cantidad)
-      }))
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    alert("Entrada registrada 🔥");
-    console.log(data);
-  });
-}
+      if (productosEntrada.length === 0) {
+        agregarProducto();
+      }
+    };
 
-// TRASPASOS
-async function cargarProductos() {
-  const res = await fetch("https://mexa-core-1.onrender.com/productos/", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  const data = await res.json();
+    function logout() {
+      localStorage.removeItem("mexa_token");
+      location.reload();
+    }
 
-  document.getElementById("producto").innerHTML =
-    data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join("");
-}
+    function authHeaders(extra = {}) {
+      return {
+        ...extra,
+        "Authorization": "Bearer " + token
+      };
+    }
 
-async function cargarUbicaciones() {
-  const res = await fetch("https://mexa-core-1.onrender.com/ubicaciones/", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  const data = await res.json();
+    // ---------------------------
+    // NAVEGACIÓN
+    // ---------------------------
+    function show(id) {
+      const ids = ["productos", "entradas", "traspasos", "inventario", "requisiciones", "ubicaciones"];
+      ids.forEach(x => {
+        const el = document.getElementById(x);
+        if (el) el.style.display = "none";
+      });
 
-  const options = data.map(u =>
-    `<option value="${u.id}">${u.nombre}</option>`
-  ).join("");
+      document.getElementById(id).style.display = "block";
 
-  document.getElementById("origen").innerHTML = options;
-  document.getElementById("destino").innerHTML = options;
-}
+      if (id === "traspasos") {
+        cargarProductosSelect();
+        cargarUbicacionesSelect();
+      }
+    }
 
-function hacerTraspaso() {
-  fetch("https://mexa-core-1.onrender.com/traspasos/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({
-      producto_id: parseInt(document.getElementById("producto").value),
-      ubicacion_origen_id: parseInt(document.getElementById("origen").value),
-      ubicacion_destino_id: parseInt(document.getElementById("destino").value),
-      cantidad: parseInt(document.getElementById("cantidad").value)
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    alert("Traspaso hecho 🔥");
-    console.log(data);
-  });
-}
-</script>
+    // ---------------------------
+    // PRODUCTOS
+    // ---------------------------
+    async function getProductos() {
+      try {
+        const res = await fetch(`${API_BASE}/productos/`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
 
+        document.getElementById("productosOut").textContent =
+          JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("productosOut").textContent =
+          "Error cargando productos";
+        console.error(error);
+      }
+    }
+
+    // ---------------------------
+    // ENTRADAS MULTI PRODUCTO
+    // ---------------------------
+    function agregarProducto() {
+      const id = Date.now() + Math.floor(Math.random() * 1000);
+      productosEntrada.push({
+        id,
+        producto_id: "",
+        cantidad: ""
+      });
+      renderProductosEntrada();
+    }
+
+    function eliminarProducto(id) {
+      productosEntrada = productosEntrada.filter(p => p.id !== id);
+      if (productosEntrada.length === 0) {
+        agregarProducto();
+        return;
+      }
+      renderProductosEntrada();
+    }
+
+    function updateProducto(id, campo, valor) {
+      const item = productosEntrada.find(p => p.id === id);
+      if (item) {
+        item[campo] = valor;
+      }
+    }
+
+    function renderProductosEntrada() {
+      const container = document.getElementById("productosList");
+      let html = "";
+
+      productosEntrada.forEach(p => {
+        html += `
+          <div class="row">
+            <input
+              placeholder="Producto ID"
+              type="number"
+              value="${p.producto_id}"
+              onchange="updateProducto(${p.id}, 'producto_id', this.value)"
+            />
+            <input
+              placeholder="Cantidad"
+              type="number"
+              value="${p.cantidad}"
+              onchange="updateProducto(${p.id}, 'cantidad', this.value)"
+            />
+            <button class="mini-btn" onclick="eliminarProducto(${p.id})">X</button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    async function guardarEntrada() {
+      const status = document.getElementById("entradaStatus");
+      status.textContent = "Guardando entrada...";
+
+      try {
+        const payload = {
+          organizacion_id: 1,
+          orden_compra: document.getElementById("orden_compra").value,
+          proveedor: document.getElementById("proveedor").value,
+          factura: document.getElementById("factura").value,
+          solicitado_por: document.getElementById("solicitado_por").value,
+          productos: productosEntrada
+            .filter(p => p.producto_id && p.cantidad)
+            .map(p => ({
+              producto_id: parseInt(p.producto_id),
+              cantidad: parseInt(p.cantidad)
+            }))
+        };
+
+        const res = await fetch(`${API_BASE}/entradas/`, {
+          method: "POST",
+          headers: authHeaders({
+            "Content-Type": "application/json"
+          }),
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          status.textContent = data.detail || "Error al guardar entrada";
+          console.error(data);
+          return;
+        }
+
+        status.textContent = "Entrada registrada 🔥";
+        console.log(data);
+      } catch (error) {
+        status.textContent = "No se pudo guardar la entrada";
+        console.error(error);
+      }
+    }
+
+    // ---------------------------
+    // TRASPASOS
+    // ---------------------------
+    async function cargarProductosSelect() {
+      try {
+        const res = await fetch(`${API_BASE}/productos/`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
+
+        const select = document.getElementById("traspaso_producto");
+        select.innerHTML = data.map(p =>
+          `<option value="${p.id}">${p.nombre}</option>`
+        ).join("");
+      } catch (error) {
+        console.error("Error cargando productos para traspaso", error);
+      }
+    }
+
+    async function cargarUbicacionesSelect() {
+      try {
+        const res = await fetch(`${API_BASE}/ubicaciones/`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
+
+        const options = data.map(u =>
+          `<option value="${u.id}">${u.nombre}</option>`
+        ).join("");
+
+        document.getElementById("traspaso_origen").innerHTML = options;
+        document.getElementById("traspaso_destino").innerHTML = options;
+      } catch (error) {
+        console.error("Error cargando ubicaciones", error);
+      }
+    }
+
+    async function hacerTraspaso() {
+      const status = document.getElementById("traspasoStatus");
+      status.textContent = "Haciendo traspaso...";
+
+      try {
+        const payload = {
+          producto_id: parseInt(document.getElementById("traspaso_producto").value),
+          ubicacion_origen_id: parseInt(document.getElementById("traspaso_origen").value),
+          ubicacion_destino_id: parseInt(document.getElementById("traspaso_destino").value),
+          cantidad: parseInt(document.getElementById("traspaso_cantidad").value)
+        };
+
+        const res = await fetch(`${API_BASE}/traspasos/`, {
+          method: "POST",
+          headers: authHeaders({
+            "Content-Type": "application/json"
+          }),
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          status.textContent = data.detail || "Error en traspaso";
+          console.error(data);
+          return;
+        }
+
+        status.textContent = "Traspaso hecho 🔥";
+        console.log(data);
+      } catch (error) {
+        status.textContent = "No se pudo hacer el traspaso";
+        console.error(error);
+      }
+    }
+
+    // ---------------------------
+    // INVENTARIO POR UBICACIÓN
+    // ---------------------------
+    async function cargarInventario() {
+      try {
+        const res = await fetch(`${API_BASE}/inventario_ubicaciones/`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
+
+        let html = "";
+
+        data.forEach(item => {
+          html += `
+            <tr>
+              <td>${item.producto_nombre || item.producto_id || "-"}</td>
+              <td>${item.ubicacion_nombre || item.ubicacion_id || "-"}</td>
+              <td>${item.cantidad ?? "-"}</td>
+            </tr>
+          `;
+        });
+
+        if (!html) {
+          html = `<tr><td colspan="3">Sin datos.</td></tr>`;
+        }
+
+        document.getElementById("inventarioBody").innerHTML = html;
+      } catch (error) {
+        document.getElementById("inventarioBody").innerHTML =
+          `<tr><td colspan="3">Error cargando inventario.</td></tr>`;
+        console.error(error);
+      }
+    }
+
+    // ---------------------------
+    // UBICACIONES
+    // ---------------------------
+    async function cargarUbicacionesVista() {
+      try {
+        const res = await fetch(`${API_BASE}/ubicaciones/`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
+
+        document.getElementById("ubicacionesOut").textContent =
+          JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("ubicacionesOut").textContent =
+          "Error cargando ubicaciones";
+        console.error(error);
+      }
+    }
+  </script>
 </body>
 </html>
