@@ -1,167 +1,209 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mexa Digital</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-    }
-    .wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 16px;
-    }
-    .card {
-      background: #1e293b;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
-    }
-    h1, h2, p { margin-top: 0; }
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 8px;
-    }
-    button, a.btn {
-      display: block;
-      width: 100%;
-      text-align: center;
-      text-decoration: none;
-      padding: 12px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .primary { background: #22c55e; color: #08110b; }
-    .secondary { background: #334155; color: white; }
-    .danger { background: #ef4444; color: white; }
-    .muted { color: #cbd5e1; font-size: 14px; }
-    .ok { color: #22c55e; }
-    .hidden { display: none; }
-  </style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mexa Digital</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  padding: 10px;
+}
+
+.card {
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+button {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  width: 100%;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Mexa Digital</h1>
-      <p class="muted">Acceso móvil para operación de almacén</p>
-      <p id="apiStatus" class="muted">Verificando API...</p>
-    </div>
 
-    <div id="loginCard" class="card">
-      <h2>Entrar</h2>
-      <input id="email" type="email" placeholder="Correo" />
-      <input id="password" type="password" placeholder="Contraseña" />
-      <button class="primary" onclick="login()">Iniciar sesión</button>
-      <p id="loginMsg" class="muted"></p>
-    </div>
+<h2>Mexa Digital</h2>
 
-    <div id="menuCard" class="card hidden">
-      <h2>Panel</h2>
-      <p id="userInfo" class="muted"></p>
-      <a class="btn primary" href="./requisiciones.html">Ir a Requisiciones</a>
-      <button class="secondary" onclick="probarProductos()">Probar Productos</button>
-      <button class="danger" onclick="logout()">Cerrar sesión</button>
-      <pre id="debug" class="muted" style="white-space:pre-wrap;"></pre>
-    </div>
+<!-- LOGIN -->
+<div class="card" id="loginBox">
+  <h3>Login</h3>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<!-- PANEL -->
+<div class="card" id="panel" style="display:none;">
+  <h3>Panel</h3>
+
+  <div class="grid">
+    <button onclick="show('productos')">📦 Productos</button>
+    <button onclick="show('movimientos')">🔄 Movimientos</button>
+    <button onclick="show('requisiciones')">📋 Requisiciones</button>
+    <button onclick="show('inventario')">📊 Inventario</button>
+    <button onclick="show('ubicaciones')">📍 Ubicaciones</button>
+    <button onclick="logout()" style="background:red;color:white;">🚪 Salir</button>
   </div>
+</div>
 
-  <script>
-    const API = "https://mexa-core-1.onrender.com";
+<!-- PRODUCTOS -->
+<div class="card" id="productos" style="display:none;">
+  <h3>Productos</h3>
+  <button onclick="getProductos()">Cargar</button>
+  <pre id="productosOut"></pre>
+</div>
 
-    function saveToken(token) {
-      localStorage.setItem("mexa_token", token);
-    }
+<!-- MOVIMIENTOS -->
+<div class="card" id="movimientos" style="display:none;">
+  <h3>Registrar Movimiento</h3>
 
-    function getToken() {
-      return localStorage.getItem("mexa_token");
-    }
+  <input id="producto_id" placeholder="Producto ID">
+  <input id="cantidad" placeholder="Cantidad">
 
-    function logout() {
-      localStorage.removeItem("mexa_token");
-      location.reload();
-    }
+  <select id="tipo">
+    <option value="entrada">Entrada</option>
+    <option value="salida">Salida</option>
+  </select>
 
-    function showMenu() {
-      document.getElementById("loginCard").classList.add("hidden");
-      document.getElementById("menuCard").classList.remove("hidden");
-      document.getElementById("userInfo").textContent = "Sesión activa";
-    }
+  <!-- CAMPOS IMPORTANTES -->
+  <input id="orden_compra" placeholder="Orden de compra">
+  <input id="proveedor" placeholder="Proveedor">
+  <input id="factura" placeholder="Factura">
+  <input id="solicitado_por" placeholder="Quién mandó a comprar">
 
-    async function checkApi() {
-      try {
-        const res = await fetch(API + "/health");
-        const data = await res.json();
-        document.getElementById("apiStatus").innerHTML =
-          `API: <span class="ok">${data.status || "ok"}</span>`;
-      } catch (e) {
-        document.getElementById("apiStatus").textContent = "API no disponible";
-      }
-    }
+  <input id="nota" placeholder="Nota">
 
-    async function login() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const msg = document.getElementById("loginMsg");
-      msg.textContent = "Entrando...";
+  <button onclick="crearMovimiento()">Guardar</button>
+</div>
 
-      try {
-        const res = await fetch(API + "/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
+<!-- REQUISICIONES -->
+<div class="card" id="requisiciones" style="display:none;">
+  <h3>Requisiciones</h3>
+  <p>En construcción 🚧</p>
+</div>
 
-        const data = await res.json();
+<!-- INVENTARIO -->
+<div class="card" id="inventario" style="display:none;">
+  <h3>Inventario</h3>
+  <p>Próximamente</p>
+</div>
 
-        if (!res.ok) {
-          msg.textContent = data.detail || "Error al iniciar sesión";
-          return;
-        }
+<!-- UBICACIONES -->
+<div class="card" id="ubicaciones" style="display:none;">
+  <h3>Ubicaciones</h3>
+  <p>Próximamente</p>
+</div>
 
-        saveToken(data.access_token);
-        msg.textContent = "Login correcto";
-        showMenu();
-      } catch (e) {
-        msg.textContent = "No se pudo conectar con el servidor";
-      }
-    }
+<script>
+let token = "";
 
-    async function probarProductos() {
-      const debug = document.getElementById("debug");
-      debug.textContent = "Consultando productos...";
-      try {
-        const res = await fetch(API + "/productos/", {
-          headers: {
-            "Authorization": "Bearer " + getToken()
-          }
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          debug.textContent = JSON.stringify(data, null, 2);
-          return;
-        }
-        debug.textContent = JSON.stringify(data.slice(0, 3), null, 2);
-      } catch (e) {
-        debug.textContent = "Error consultando productos";
-      }
-    }
+// LOGIN
+function login() {
+  fetch("https://mexa-core-1.onrender.com/auth/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    token = data.access_token;
+    localStorage.setItem("mexa_token", token);
 
-    window.onload = async () => {
-      await checkApi();
-      if (getToken()) showMenu();
-    };
-  </script>
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+  });
+}
+
+// AUTO LOGIN
+window.onload = () => {
+  const t = localStorage.getItem("mexa_token");
+  if (t) {
+    token = t;
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+  }
+};
+
+// NAVEGACIÓN
+function show(id) {
+  ["productos","movimientos","requisiciones","inventario","ubicaciones"]
+    .forEach(x => document.getElementById(x).style.display = "none");
+
+  document.getElementById(id).style.display = "block";
+}
+
+// LOGOUT
+function logout() {
+  localStorage.removeItem("mexa_token");
+  location.reload();
+}
+
+// PRODUCTOS
+function getProductos() {
+  fetch("https://mexa-core-1.onrender.com/productos/", {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("productosOut").textContent =
+      JSON.stringify(data, null, 2);
+  });
+}
+
+// MOVIMIENTOS
+function crearMovimiento() {
+  fetch("https://mexa-core-1.onrender.com/movimientos/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      organizacion_id: 1,
+      producto_id: parseInt(document.getElementById("producto_id").value),
+      tipo: document.getElementById("tipo").value,
+      cantidad: parseInt(document.getElementById("cantidad").value),
+      usuario: "admin@mexa.com",
+
+      orden_compra: document.getElementById("orden_compra").value,
+      proveedor: document.getElementById("proveedor").value,
+      factura: document.getElementById("factura").value,
+      solicitado_por: document.getElementById("solicitado_por").value,
+      nota: document.getElementById("nota").value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Movimiento registrado 🔥");
+    console.log(data);
+  });
+}
+</script>
+
 </body>
 </html>
