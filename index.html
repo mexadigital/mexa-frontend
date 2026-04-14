@@ -60,7 +60,8 @@ input, select {
 
   <div class="grid">
     <button onclick="show('productos')">📦 Productos</button>
-    <button onclick="show('movimientos')">🔄 Movimientos</button>
+    <button onclick="show('entradas')">📥 Entradas</button>
+    <button onclick="show('traspasos')">🔄 Traspasos</button>
     <button onclick="show('requisiciones')">📋 Requisiciones</button>
     <button onclick="show('inventario')">📊 Inventario</button>
     <button onclick="show('ubicaciones')">📍 Ubicaciones</button>
@@ -75,27 +76,38 @@ input, select {
   <pre id="productosOut"></pre>
 </div>
 
-<!-- MOVIMIENTOS -->
-<div class="card" id="movimientos" style="display:none;">
-  <h3>Registrar Movimiento</h3>
+<!-- ENTRADAS -->
+<div class="card" id="entradas" style="display:none;">
+  <h3>📥 Entrada de Material</h3>
 
-  <input id="producto_id" placeholder="Producto ID">
-  <input id="cantidad" placeholder="Cantidad">
-
-  <select id="tipo">
-    <option value="entrada">Entrada</option>
-    <option value="salida">Salida</option>
-  </select>
-
-  <!-- CAMPOS IMPORTANTES -->
   <input id="orden_compra" placeholder="Orden de compra">
   <input id="proveedor" placeholder="Proveedor">
   <input id="factura" placeholder="Factura">
   <input id="solicitado_por" placeholder="Quién mandó a comprar">
 
-  <input id="nota" placeholder="Nota">
+  <div id="productosList"></div>
 
-  <button onclick="crearMovimiento()">Guardar</button>
+  <button onclick="agregarProducto()">+ Agregar producto</button>
+  <br><br>
+  <button onclick="guardarEntrada()">Guardar Entrada</button>
+</div>
+
+<!-- TRASPASOS -->
+<div class="card" id="traspasos" style="display:none;">
+  <h3>🔄 Traspaso de material</h3>
+
+  <label>Producto</label>
+  <select id="producto"></select>
+
+  <label>Ubicación origen</label>
+  <select id="origen"></select>
+
+  <label>Ubicación destino</label>
+  <select id="destino"></select>
+
+  <input id="cantidad" placeholder="Cantidad">
+
+  <button onclick="hacerTraspaso()">Mover</button>
 </div>
 
 <!-- REQUISICIONES -->
@@ -133,7 +145,6 @@ function login() {
   .then(data => {
     token = data.access_token;
     localStorage.setItem("mexa_token", token);
-
     document.getElementById("loginBox").style.display = "none";
     document.getElementById("panel").style.display = "block";
   });
@@ -151,10 +162,18 @@ window.onload = () => {
 
 // NAVEGACIÓN
 function show(id) {
-  ["productos","movimientos","requisiciones","inventario","ubicaciones"]
-    .forEach(x => document.getElementById(x).style.display = "none");
+  ["productos","entradas","traspasos","requisiciones","inventario","ubicaciones"]
+    .forEach(x => {
+      const el = document.getElementById(x);
+      if (el) el.style.display = "none";
+    });
 
   document.getElementById(id).style.display = "block";
+
+  if (id === "traspasos") {
+    cargarProductos();
+    cargarUbicaciones();
+  }
 }
 
 // LOGOUT
@@ -175,9 +194,40 @@ function getProductos() {
   });
 }
 
-// MOVIMIENTOS
-function crearMovimiento() {
-  fetch("https://mexa-core-1.onrender.com/movimientos/", {
+// ENTRADAS MULTI PRODUCTO
+let productos = [];
+
+function agregarProducto() {
+  const id = Date.now();
+  productos.push({ id, producto_id: "", cantidad: "" });
+  renderProductos();
+}
+
+function renderProductos() {
+  let html = "";
+
+  productos.forEach(p => {
+    html += `
+      <div>
+        <input placeholder="Producto ID"
+          onchange="updateProducto(${p.id}, 'producto_id', this.value)">
+        
+        <input placeholder="Cantidad"
+          onchange="updateProducto(${p.id}, 'cantidad', this.value)">
+      </div>
+    `;
+  });
+
+  document.getElementById("productosList").innerHTML = html;
+}
+
+function updateProducto(id, campo, valor) {
+  const p = productos.find(x => x.id === id);
+  p[campo] = valor;
+}
+
+function guardarEntrada() {
+  fetch("https://mexa-core-1.onrender.com/entradas/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -185,21 +235,65 @@ function crearMovimiento() {
     },
     body: JSON.stringify({
       organizacion_id: 1,
-      producto_id: parseInt(document.getElementById("producto_id").value),
-      tipo: document.getElementById("tipo").value,
-      cantidad: parseInt(document.getElementById("cantidad").value),
-      usuario: "admin@mexa.com",
-
       orden_compra: document.getElementById("orden_compra").value,
       proveedor: document.getElementById("proveedor").value,
       factura: document.getElementById("factura").value,
       solicitado_por: document.getElementById("solicitado_por").value,
-      nota: document.getElementById("nota").value
+      productos: productos.map(p => ({
+        producto_id: parseInt(p.producto_id),
+        cantidad: parseInt(p.cantidad)
+      }))
     })
   })
   .then(res => res.json())
   .then(data => {
-    alert("Movimiento registrado 🔥");
+    alert("Entrada registrada 🔥");
+    console.log(data);
+  });
+}
+
+// TRASPASOS
+async function cargarProductos() {
+  const res = await fetch("https://mexa-core-1.onrender.com/productos/", {
+    headers: { Authorization: "Bearer " + token }
+  });
+  const data = await res.json();
+
+  document.getElementById("producto").innerHTML =
+    data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join("");
+}
+
+async function cargarUbicaciones() {
+  const res = await fetch("https://mexa-core-1.onrender.com/ubicaciones/", {
+    headers: { Authorization: "Bearer " + token }
+  });
+  const data = await res.json();
+
+  const options = data.map(u =>
+    `<option value="${u.id}">${u.nombre}</option>`
+  ).join("");
+
+  document.getElementById("origen").innerHTML = options;
+  document.getElementById("destino").innerHTML = options;
+}
+
+function hacerTraspaso() {
+  fetch("https://mexa-core-1.onrender.com/traspasos/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      producto_id: parseInt(document.getElementById("producto").value),
+      ubicacion_origen_id: parseInt(document.getElementById("origen").value),
+      ubicacion_destino_id: parseInt(document.getElementById("destino").value),
+      cantidad: parseInt(document.getElementById("cantidad").value)
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Traspaso hecho 🔥");
     console.log(data);
   });
 }
