@@ -14,15 +14,16 @@
       margin: 0;
     }
 
-    h2, h3, h4, label {
+    h2, h3, h4, label, p {
       margin-top: 0;
     }
 
     .card {
       background: #1e293b;
       padding: 15px;
-      border-radius: 10px;
+      border-radius: 12px;
       margin-bottom: 15px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
     }
 
     button {
@@ -47,6 +48,30 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .metric {
+      background: #334155;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .metric-title {
+      font-size: 14px;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: bold;
     }
 
     .row {
@@ -88,6 +113,12 @@
     .muted {
       color: #cbd5e1;
       font-size: 14px;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
     table {
@@ -134,9 +165,10 @@
 
   <!-- PANEL -->
   <div class="card" id="panel" style="display:none;">
-    <h3>Panel</h3>
+    <h3>Panel principal</h3>
 
     <div class="grid">
+      <button onclick="show('dashboard')">🏠 Dashboard</button>
       <button onclick="show('productos')">📦 Productos</button>
       <button onclick="show('entradas')">📥 Entradas</button>
       <button onclick="show('traspasos')">🔄 Traspasos</button>
@@ -144,6 +176,42 @@
       <button onclick="show('requisiciones')">📋 Requisiciones</button>
       <button onclick="show('ubicaciones')">📍 Ubicaciones</button>
       <button class="danger-btn" onclick="logout()">🚪 Salir</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="card" id="dashboard" style="display:none;">
+    <h3>🏠 Dashboard</h3>
+    <p class="muted">Resumen rápido de operación</p>
+
+    <div class="dashboard-grid">
+      <div class="metric">
+        <div class="metric-title">Productos</div>
+        <div class="metric-value" id="metricProductos">-</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-title">Ubicaciones</div>
+        <div class="metric-value" id="metricUbicaciones">-</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-title">Registros inventario</div>
+        <div class="metric-value" id="metricInventario">-</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-title">Estado API</div>
+        <div class="metric-value" id="metricApi">...</div>
+      </div>
+    </div>
+
+    <h4>Acciones rápidas</h4>
+    <div class="quick-actions">
+      <button class="secondary-btn" onclick="show('productos')">Ver productos</button>
+      <button class="secondary-btn" onclick="show('inventario')">Ver inventario</button>
+      <button class="secondary-btn" onclick="show('traspasos')">Hacer traspaso</button>
+      <button class="secondary-btn" onclick="show('entradas')">Registrar entrada</button>
     </div>
   </div>
 
@@ -232,9 +300,20 @@
     let token = "";
     let productosEntrada = [];
 
-    // ---------------------------
-    // AUTH
-    // ---------------------------
+    async function apiFetch(path, options = {}) {
+      const headers = {
+        ...(options.headers || {}),
+        Authorization: "Bearer " + token
+      };
+
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers
+      });
+
+      return res;
+    }
+
     async function login() {
       const status = document.getElementById("loginStatus");
       status.textContent = "Entrando...";
@@ -261,6 +340,7 @@
 
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("panel").style.display = "block";
+        show("dashboard");
         status.textContent = "";
       } catch (error) {
         status.textContent = "No se pudo conectar con el servidor";
@@ -274,6 +354,7 @@
         token = t;
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("panel").style.display = "block";
+        show("dashboard");
       }
 
       if (productosEntrada.length === 0) {
@@ -286,18 +367,8 @@
       location.reload();
     }
 
-    function authHeaders(extra = {}) {
-      return {
-        ...extra,
-        "Authorization": "Bearer " + token
-      };
-    }
-
-    // ---------------------------
-    // NAVEGACIÓN
-    // ---------------------------
     function show(id) {
-      const ids = ["productos", "entradas", "traspasos", "inventario", "requisiciones", "ubicaciones"];
+      const ids = ["dashboard", "productos", "entradas", "traspasos", "inventario", "requisiciones", "ubicaciones"];
       ids.forEach(x => {
         const el = document.getElementById(x);
         if (el) el.style.display = "none";
@@ -305,41 +376,53 @@
 
       document.getElementById(id).style.display = "block";
 
+      if (id === "dashboard") {
+        cargarDashboard();
+      }
+
       if (id === "traspasos") {
         cargarProductosSelect();
         cargarUbicacionesSelect();
       }
     }
 
-    // ---------------------------
-    // PRODUCTOS
-    // ---------------------------
+    async function cargarDashboard() {
+      try {
+        document.getElementById("metricApi").textContent = "OK";
+
+        const [resProductos, resUbicaciones, resInventario] = await Promise.all([
+          apiFetch("/productos/"),
+          apiFetch("/ubicaciones/"),
+          apiFetch("/inventario_ubicaciones/")
+        ]);
+
+        const productos = await resProductos.json();
+        const ubicaciones = await resUbicaciones.json();
+        const inventario = await resInventario.json();
+
+        document.getElementById("metricProductos").textContent = Array.isArray(productos) ? productos.length : 0;
+        document.getElementById("metricUbicaciones").textContent = Array.isArray(ubicaciones) ? ubicaciones.length : 0;
+        document.getElementById("metricInventario").textContent = Array.isArray(inventario) ? inventario.length : 0;
+      } catch (error) {
+        document.getElementById("metricApi").textContent = "ERROR";
+        console.error("Error cargando dashboard", error);
+      }
+    }
+
     async function getProductos() {
       try {
-        const res = await fetch(`${API_BASE}/productos/`, {
-          headers: authHeaders()
-        });
+        const res = await apiFetch("/productos/");
         const data = await res.json();
-
-        document.getElementById("productosOut").textContent =
-          JSON.stringify(data, null, 2);
+        document.getElementById("productosOut").textContent = JSON.stringify(data, null, 2);
       } catch (error) {
-        document.getElementById("productosOut").textContent =
-          "Error cargando productos";
+        document.getElementById("productosOut").textContent = "Error cargando productos";
         console.error(error);
       }
     }
 
-    // ---------------------------
-    // ENTRADAS MULTI PRODUCTO
-    // ---------------------------
     function agregarProducto() {
       const id = Date.now() + Math.floor(Math.random() * 1000);
-      productosEntrada.push({
-        id,
-        producto_id: "",
-        cantidad: ""
-      });
+      productosEntrada.push({ id, producto_id: "", cantidad: "" });
       renderProductosEntrada();
     }
 
@@ -354,9 +437,7 @@
 
     function updateProducto(id, campo, valor) {
       const item = productosEntrada.find(p => p.id === id);
-      if (item) {
-        item[campo] = valor;
-      }
+      if (item) item[campo] = valor;
     }
 
     function renderProductosEntrada() {
@@ -405,11 +486,9 @@
             }))
         };
 
-        const res = await fetch(`${API_BASE}/entradas/`, {
+        const res = await apiFetch("/entradas/", {
           method: "POST",
-          headers: authHeaders({
-            "Content-Type": "application/json"
-          }),
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
@@ -422,21 +501,15 @@
         }
 
         status.textContent = "Entrada registrada 🔥";
-        console.log(data);
       } catch (error) {
         status.textContent = "No se pudo guardar la entrada";
         console.error(error);
       }
     }
 
-    // ---------------------------
-    // TRASPASOS
-    // ---------------------------
     async function cargarProductosSelect() {
       try {
-        const res = await fetch(`${API_BASE}/productos/`, {
-          headers: authHeaders()
-        });
+        const res = await apiFetch("/productos/");
         const data = await res.json();
 
         const select = document.getElementById("traspaso_producto");
@@ -444,15 +517,13 @@
           `<option value="${p.id}">${p.nombre}</option>`
         ).join("");
       } catch (error) {
-        console.error("Error cargando productos para traspaso", error);
+        console.error(error);
       }
     }
 
     async function cargarUbicacionesSelect() {
       try {
-        const res = await fetch(`${API_BASE}/ubicaciones/`, {
-          headers: authHeaders()
-        });
+        const res = await apiFetch("/ubicaciones/");
         const data = await res.json();
 
         const options = data.map(u =>
@@ -462,7 +533,7 @@
         document.getElementById("traspaso_origen").innerHTML = options;
         document.getElementById("traspaso_destino").innerHTML = options;
       } catch (error) {
-        console.error("Error cargando ubicaciones", error);
+        console.error(error);
       }
     }
 
@@ -478,11 +549,9 @@
           cantidad: parseInt(document.getElementById("traspaso_cantidad").value)
         };
 
-        const res = await fetch(`${API_BASE}/traspasos/`, {
+        const res = await apiFetch("/traspasos/", {
           method: "POST",
-          headers: authHeaders({
-            "Content-Type": "application/json"
-          }),
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
@@ -495,21 +564,15 @@
         }
 
         status.textContent = "Traspaso hecho 🔥";
-        console.log(data);
       } catch (error) {
         status.textContent = "No se pudo hacer el traspaso";
         console.error(error);
       }
     }
 
-    // ---------------------------
-    // INVENTARIO POR UBICACIÓN
-    // ---------------------------
     async function cargarInventario() {
       try {
-        const res = await fetch(`${API_BASE}/inventario_ubicaciones/`, {
-          headers: authHeaders()
-        });
+        const res = await apiFetch("/inventario_ubicaciones/");
         const data = await res.json();
 
         let html = "";
@@ -536,21 +599,13 @@
       }
     }
 
-    // ---------------------------
-    // UBICACIONES
-    // ---------------------------
     async function cargarUbicacionesVista() {
       try {
-        const res = await fetch(`${API_BASE}/ubicaciones/`, {
-          headers: authHeaders()
-        });
+        const res = await apiFetch("/ubicaciones/");
         const data = await res.json();
-
-        document.getElementById("ubicacionesOut").textContent =
-          JSON.stringify(data, null, 2);
+        document.getElementById("ubicacionesOut").textContent = JSON.stringify(data, null, 2);
       } catch (error) {
-        document.getElementById("ubicacionesOut").textContent =
-          "Error cargando ubicaciones";
+        document.getElementById("ubicacionesOut").textContent = "Error cargando ubicaciones";
         console.error(error);
       }
     }
