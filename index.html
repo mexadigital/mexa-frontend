@@ -18,7 +18,7 @@
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1150px;
       margin: 0 auto;
       padding: 24px;
     }
@@ -175,12 +175,19 @@
     }
 
     .badge {
-      background: #1d4ed8;
       color: white;
       font-size: 12px;
       padding: 8px 12px;
       border-radius: 999px;
       font-weight: bold;
+    }
+
+    .badge-role {
+      background: #1d4ed8;
+    }
+
+    .badge-type {
+      background: #059669;
     }
 
     .main-grid {
@@ -242,7 +249,7 @@
       border: 1px solid #e2e8f0;
       border-radius: 14px;
       padding: 14px;
-      max-height: 360px;
+      max-height: 380px;
       overflow: auto;
     }
 
@@ -289,12 +296,11 @@
 </head>
 <body>
 
-  <!-- LOGIN -->
   <section id="loginSection" class="login-wrapper">
     <div class="login-card">
       <div class="brand">
         <h1>Mexa.Digital</h1>
-        <p>Control de inventario, usuarios y operación</p>
+        <p>Control e inventario por tipo de negocio</p>
       </div>
 
       <div class="form-group">
@@ -308,12 +314,10 @@
       </div>
 
       <button class="btn btn-primary" onclick="login()">Entrar</button>
-
       <div id="loginMessage" class="msg msg-error hidden"></div>
     </div>
   </section>
 
-  <!-- DASHBOARD -->
   <section id="dashboardSection" class="hidden">
     <div class="topbar">
       <div class="topbar-left">
@@ -322,7 +326,8 @@
       </div>
 
       <div class="topbar-right">
-        <span id="roleBadge" class="badge">ROL</span>
+        <span id="roleBadge" class="badge badge-role">ROL</span>
+        <span id="typeBadge" class="badge badge-type">TIPO</span>
         <button class="btn btn-danger" onclick="logout()">Cerrar sesión</button>
       </div>
     </div>
@@ -334,7 +339,6 @@
           <div id="moduleGrid" class="module-grid"></div>
         </div>
 
-        <!-- PANEL ADMIN -->
         <div id="adminPanel" class="card hidden">
           <h3 class="section-title">Panel admin</h3>
 
@@ -367,14 +371,14 @@
 
               <button class="btn btn-green" onclick="crearUsuario()">Crear usuario</button>
 
-              <div id="adminMessage" class="msg hidden" style="margin-top: 14px;"></div>
+              <div id="adminMessage" class="msg hidden"></div>
 
               <div class="actions-row">
-                <button class="btn btn-secondary" onclick="listarUsuarios()">Actualizar lista</button>
+                <button class="btn btn-secondary" onclick="listarUsuarios()">Actualizar usuarios</button>
               </div>
 
               <p class="small-note">
-                Por ahora, el admin crea usuarios dentro de su misma organización.
+                El usuario nuevo se crea dentro de la misma organización del admin actual.
               </p>
             </div>
 
@@ -387,7 +391,54 @@
           </div>
         </div>
 
-        <!-- PANEL GENERAL -->
+        <div id="organizacionesPanel" class="card hidden">
+          <h3 class="section-title">Crear organización</h3>
+
+          <div class="panel-grid">
+            <div>
+              <div class="form-group">
+                <label for="orgNombre">Nombre</label>
+                <input type="text" id="orgNombre" placeholder="ICA / Woppy / Hielos...">
+              </div>
+
+              <div class="form-group">
+                <label for="orgRfc">RFC</label>
+                <input type="text" id="orgRfc" placeholder="XAXX010101000">
+              </div>
+
+              <div class="form-group">
+                <label for="orgPlan">Plan</label>
+                <select id="orgPlan">
+                  <option value="free">free</option>
+                  <option value="basic">basic</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="orgTipo">Tipo</label>
+                <select id="orgTipo">
+                  <option value="control">control</option>
+                  <option value="retail">retail</option>
+                </select>
+              </div>
+
+              <button class="btn btn-green" onclick="crearOrganizacion()">Crear organización</button>
+              <div id="orgMessage" class="msg hidden"></div>
+
+              <div class="actions-row">
+                <button class="btn btn-secondary" onclick="listarOrganizaciones()">Actualizar organizaciones</button>
+              </div>
+            </div>
+
+            <div>
+              <h4 style="margin-bottom: 12px;">Organizaciones</h4>
+              <div id="organizacionesList" class="list-box">
+                <p style="color:#64748b;">Sin datos todavía.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <h3 class="section-title">Estado actual</h3>
           <div class="list-box">
@@ -401,7 +452,7 @@
             </div>
             <div class="item">
               <strong>Acceso</strong>
-              <span id="accessStatus">Validando rol...</span>
+              <span id="accessStatus">Validando rol y tipo...</span>
             </div>
           </div>
         </div>
@@ -411,62 +462,7 @@
 
   <script>
     const API_URL = "https://mexa-core-1.onrender.com";
-
     let currentUser = null;
-
-    const adminModules = [
-      {
-        title: "Organizaciones",
-        desc: "Alta y consulta de empresas dentro del sistema."
-      },
-      {
-        title: "Usuarios",
-        desc: "Crear y revisar usuarios por organización."
-      },
-      {
-        title: "Productos",
-        desc: "Alta y control de productos del inventario."
-      },
-      {
-        title: "Movimientos",
-        desc: "Entradas y salidas con trazabilidad."
-      },
-      {
-        title: "Ubicaciones",
-        desc: "Contenedores, almacenes y puntos internos."
-      },
-      {
-        title: "Inventario",
-        desc: "Visualización de existencias por área."
-      },
-      {
-        title: "Traspasos",
-        desc: "Movimientos entre ubicaciones."
-      },
-      {
-        title: "Ventas",
-        desc: "Flujo de salida comercial o punto de venta."
-      }
-    ];
-
-    const userModules = [
-      {
-        title: "Registrar movimiento",
-        desc: "Capturar entradas y salidas del día."
-      },
-      {
-        title: "Ver inventario",
-        desc: "Consultar existencias disponibles."
-      },
-      {
-        title: "Ventas",
-        desc: "Registrar ventas o salidas comerciales."
-      },
-      {
-        title: "Requisiciones",
-        desc: "Módulo pensado para siguientes fases."
-      }
-    ];
 
     function setMessage(elementId, text, type = "error") {
       const el = document.getElementById(elementId);
@@ -498,12 +494,8 @@
     function logout() {
       localStorage.removeItem("mexa_token");
       currentUser = null;
-
       document.getElementById("dashboardSection").classList.add("hidden");
       document.getElementById("loginSection").classList.remove("hidden");
-
-      document.getElementById("email").value = "";
-      document.getElementById("password").value = "";
       clearMessage("loginMessage");
     }
 
@@ -521,9 +513,7 @@
       try {
         const res = await fetch(`${API_URL}/auth/login`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password })
         });
 
@@ -559,11 +549,43 @@
       return await res.json();
     }
 
-    function renderModules(role) {
+    function getModulesByBusiness(role, tipo) {
+      const isAdmin = role === "admin";
+
+      if (tipo === "control") {
+        return [
+          { title: "Productos", desc: "Alta y control de materiales." },
+          { title: "Movimientos", desc: "Entradas y salidas del almacén." },
+          { title: "Ubicaciones", desc: "Contenedores, satélites y almacenes." },
+          { title: "Inventario", desc: "Existencias por zona o contenedor." },
+          { title: "Traspasos", desc: "Movimientos entre ubicaciones." },
+          ...(isAdmin ? [{ title: "Usuarios", desc: "Gestión de accesos internos." }] : [])
+        ];
+      }
+
+      if (tipo === "retail") {
+        return [
+          { title: "Ventas", desc: "Registro de ventas del negocio." },
+          { title: "Productos", desc: "Catálogo y control de productos." },
+          { title: "Inventario", desc: "Existencias actuales." },
+          { title: "Traspasos", desc: "Movimientos entre sucursales o bodega." },
+          ...(isAdmin ? [
+            { title: "Usuarios", desc: "Gestión de accesos internos." },
+            { title: "Organizaciones", desc: "Alta y consulta de empresas." }
+          ] : [])
+        ];
+      }
+
+      return [
+        { title: "Inicio", desc: "Sin configuración de módulos todavía." }
+      ];
+    }
+
+    function renderModules(role, tipo) {
       const moduleGrid = document.getElementById("moduleGrid");
       moduleGrid.innerHTML = "";
 
-      const modules = role === "admin" ? adminModules : userModules;
+      const modules = getModulesByBusiness(role, tipo);
 
       modules.forEach(mod => {
         const card = document.createElement("button");
@@ -581,17 +603,16 @@
 
     function renderUserInfo(user) {
       document.getElementById("userInfo").textContent =
-        `${user.nombre} | ${user.email} | Organización ${user.organizacion_id}`;
+        `${user.nombre} | ${user.email} | ${user.organizacion_nombre}`;
 
       document.getElementById("roleBadge").textContent = user.rol.toUpperCase();
+      document.getElementById("typeBadge").textContent = user.organizacion_tipo.toUpperCase();
 
       document.getElementById("backendStatus").textContent = "Conectado con Render";
       document.getElementById("currentUserStatus").textContent =
         `${user.nombre} (${user.email})`;
       document.getElementById("accessStatus").textContent =
-        user.rol === "admin"
-          ? "Acceso administrador habilitado"
-          : "Acceso usuario habilitado";
+        `Rol ${user.rol} | Tipo ${user.organizacion_tipo}`;
     }
 
     async function loadDashboard() {
@@ -603,13 +624,21 @@
         document.getElementById("dashboardSection").classList.remove("hidden");
 
         renderUserInfo(user);
-        renderModules(user.rol);
+        renderModules(user.rol, user.organizacion_tipo);
 
         if (user.rol === "admin") {
           document.getElementById("adminPanel").classList.remove("hidden");
           await listarUsuarios();
+
+          if (user.organizacion_tipo === "retail") {
+            document.getElementById("organizacionesPanel").classList.remove("hidden");
+            await listarOrganizaciones();
+          } else {
+            document.getElementById("organizacionesPanel").classList.add("hidden");
+          }
         } else {
           document.getElementById("adminPanel").classList.add("hidden");
+          document.getElementById("organizacionesPanel").classList.add("hidden");
         }
       } catch (error) {
         logout();
@@ -663,17 +692,16 @@
     async function crearUsuario() {
       clearMessage("adminMessage");
 
-      const token = getToken();
-
-      const nombre = document.getElementById("nuevoNombre").value.trim();
-      const email = document.getElementById("nuevoEmail").value.trim();
-      const password = document.getElementById("nuevoPassword").value.trim();
-      const rol = document.getElementById("nuevoRol").value;
-
       if (!currentUser) {
         setMessage("adminMessage", "No se detectó usuario actual.");
         return;
       }
+
+      const token = getToken();
+      const nombre = document.getElementById("nuevoNombre").value.trim();
+      const email = document.getElementById("nuevoEmail").value.trim();
+      const password = document.getElementById("nuevoPassword").value.trim();
+      const rol = document.getElementById("nuevoRol").value;
 
       if (!nombre || !email || !password || !rol) {
         setMessage("adminMessage", "Completa todos los campos.");
@@ -713,6 +741,97 @@
         await listarUsuarios();
       } catch (error) {
         setMessage("adminMessage", "Error de conexión al crear usuario.");
+      }
+    }
+
+    async function crearOrganizacion() {
+      clearMessage("orgMessage");
+
+      const token = getToken();
+      const nombre = document.getElementById("orgNombre").value.trim();
+      const rfc = document.getElementById("orgRfc").value.trim();
+      const plan = document.getElementById("orgPlan").value;
+      const tipo = document.getElementById("orgTipo").value;
+
+      if (!nombre || !rfc || !plan || !tipo) {
+        setMessage("orgMessage", "Completa todos los campos.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/organizaciones/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            nombre,
+            rfc,
+            plan,
+            tipo
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage("orgMessage", data.detail || "No se pudo crear la organización.");
+          return;
+        }
+
+        setMessage("orgMessage", "Organización creada correctamente.", "success");
+
+        document.getElementById("orgNombre").value = "";
+        document.getElementById("orgRfc").value = "";
+        document.getElementById("orgPlan").value = "free";
+        document.getElementById("orgTipo").value = "control";
+
+        await listarOrganizaciones();
+      } catch (error) {
+        setMessage("orgMessage", "Error de conexión al crear organización.");
+      }
+    }
+
+    async function listarOrganizaciones() {
+      const token = getToken();
+      const box = document.getElementById("organizacionesList");
+      box.innerHTML = `<p style="color:#64748b;">Cargando organizaciones...</p>`;
+
+      try {
+        const res = await fetch(`${API_URL}/organizaciones/`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          box.innerHTML = `<p style="color:#991b1b;">${data.detail || "No se pudieron cargar organizaciones."}</p>`;
+          return;
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          box.innerHTML = `<p style="color:#64748b;">No hay organizaciones todavía.</p>`;
+          return;
+        }
+
+        box.innerHTML = "";
+        data.forEach(org => {
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerHTML = `
+            <strong>${org.nombre}</strong>
+            <span>RFC: ${org.rfc}</span>
+            <span>Plan: ${org.plan}</span>
+            <span>Tipo: ${org.tipo}</span>
+          `;
+          box.appendChild(item);
+        });
+      } catch (error) {
+        box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar organizaciones.</p>`;
       }
     }
 
