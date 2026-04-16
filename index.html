@@ -17,21 +17,8 @@
       color: #1f2937;
     }
 
-    .container {
-      max-width: 1150px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
     .hidden {
       display: none !important;
-    }
-
-    .card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     }
 
     .login-wrapper {
@@ -46,10 +33,10 @@
     .login-card {
       width: 100%;
       max-width: 420px;
-      background: #ffffff;
+      background: #fff;
       border-radius: 20px;
       padding: 32px;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
     }
 
     .brand {
@@ -69,7 +56,7 @@
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .form-group label {
@@ -87,11 +74,7 @@
       border-radius: 12px;
       outline: none;
       font-size: 14px;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: #2563eb;
+      background: white;
     }
 
     .btn {
@@ -109,9 +92,9 @@
     }
 
     .btn-primary {
+      width: 100%;
       background: #2563eb;
       color: white;
-      width: 100%;
     }
 
     .btn-danger {
@@ -119,7 +102,7 @@
       color: white;
     }
 
-    .btn-secondary {
+    .btn-dark {
       background: #0f172a;
       color: white;
     }
@@ -182,19 +165,21 @@
       font-weight: bold;
     }
 
-    .badge-role {
-      background: #1d4ed8;
+    .badge-role { background: #1d4ed8; }
+    .badge-type { background: #059669; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
     }
 
-    .badge-type {
-      background: #059669;
-    }
-
-    .main-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
-      margin-top: 24px;
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
     }
 
     .section-title {
@@ -216,7 +201,7 @@
       padding: 22px;
       text-align: left;
       cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.05);
       transition: 0.2s ease;
     }
 
@@ -239,9 +224,8 @@
 
     .panel-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 20px;
-      margin-top: 20px;
     }
 
     .list-box {
@@ -249,7 +233,7 @@
       border: 1px solid #e2e8f0;
       border-radius: 14px;
       padding: 14px;
-      max-height: 380px;
+      max-height: 400px;
       overflow: auto;
     }
 
@@ -274,12 +258,6 @@
       margin-bottom: 2px;
     }
 
-    .small-note {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #64748b;
-    }
-
     .actions-row {
       display: flex;
       gap: 10px;
@@ -287,7 +265,7 @@
       margin-top: 14px;
     }
 
-    @media (max-width: 850px) {
+    @media (max-width: 900px) {
       .panel-grid {
         grid-template-columns: 1fr;
       }
@@ -296,16 +274,17 @@
 </head>
 <body>
 
+  <!-- LOGIN -->
   <section id="loginSection" class="login-wrapper">
     <div class="login-card">
       <div class="brand">
         <h1>Mexa.Digital</h1>
-        <p>Control e inventario por tipo de negocio</p>
+        <p>Panel operativo para Mexa y clientes</p>
       </div>
 
       <div class="form-group">
         <label for="email">Correo</label>
-        <input type="email" id="email" placeholder="admin@mexa.com">
+        <input type="email" id="email" placeholder="root@mexa.com">
       </div>
 
       <div class="form-group">
@@ -318,6 +297,7 @@
     </div>
   </section>
 
+  <!-- DASHBOARD -->
   <section id="dashboardSection" class="hidden">
     <div class="topbar">
       <div class="topbar-left">
@@ -333,72 +313,20 @@
     </div>
 
     <div class="container">
-      <div class="main-grid">
+      <div class="card">
+        <h3 class="section-title">Módulos</h3>
+        <div id="moduleGrid" class="module-grid"></div>
+      </div>
+
+      <!-- PANEL SUPERADMIN -->
+      <div id="superadminPanel" class="hidden">
         <div class="card">
-          <h3 class="section-title">Módulos disponibles</h3>
-          <div id="moduleGrid" class="module-grid"></div>
-        </div>
-
-        <div id="adminPanel" class="card hidden">
-          <h3 class="section-title">Panel admin</h3>
-
-          <div class="panel-grid">
-            <div>
-              <h4 style="margin-bottom: 12px;">Crear usuario</h4>
-
-              <div class="form-group">
-                <label for="nuevoNombre">Nombre</label>
-                <input type="text" id="nuevoNombre" placeholder="Nombre del usuario">
-              </div>
-
-              <div class="form-group">
-                <label for="nuevoEmail">Correo</label>
-                <input type="email" id="nuevoEmail" placeholder="usuario@mexa.com">
-              </div>
-
-              <div class="form-group">
-                <label for="nuevoPassword">Contraseña</label>
-                <input type="password" id="nuevoPassword" placeholder="123456">
-              </div>
-
-              <div class="form-group">
-                <label for="nuevoRol">Rol</label>
-                <select id="nuevoRol">
-                  <option value="usuario">usuario</option>
-                  <option value="admin">admin</option>
-                </select>
-              </div>
-
-              <button class="btn btn-green" onclick="crearUsuario()">Crear usuario</button>
-
-              <div id="adminMessage" class="msg hidden"></div>
-
-              <div class="actions-row">
-                <button class="btn btn-secondary" onclick="listarUsuarios()">Actualizar usuarios</button>
-              </div>
-
-              <p class="small-note">
-                El usuario nuevo se crea dentro de la misma organización del admin actual.
-              </p>
-            </div>
-
-            <div>
-              <h4 style="margin-bottom: 12px;">Usuarios de la organización</h4>
-              <div id="usuariosList" class="list-box">
-                <p style="color:#64748b;">Sin datos todavía.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="organizacionesPanel" class="card hidden">
-          <h3 class="section-title">Crear organización</h3>
-
+          <h3 class="section-title">Organizaciones</h3>
           <div class="panel-grid">
             <div>
               <div class="form-group">
                 <label for="orgNombre">Nombre</label>
-                <input type="text" id="orgNombre" placeholder="ICA / Woppy / Hielos...">
+                <input type="text" id="orgNombre" placeholder="Woppy">
               </div>
 
               <div class="form-group">
@@ -426,34 +354,128 @@
               <div id="orgMessage" class="msg hidden"></div>
 
               <div class="actions-row">
-                <button class="btn btn-secondary" onclick="listarOrganizaciones()">Actualizar organizaciones</button>
+                <button class="btn btn-dark" onclick="listarOrganizaciones()">Actualizar organizaciones</button>
               </div>
             </div>
 
             <div>
-              <h4 style="margin-bottom: 12px;">Organizaciones</h4>
               <div id="organizacionesList" class="list-box">
-                <p style="color:#64748b;">Sin datos todavía.</p>
+                <p style="color:#64748b;">Sin organizaciones cargadas.</p>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
+      <!-- PANEL ADMIN/SUPERADMIN USUARIOS -->
+      <div id="usuariosPanel" class="hidden">
         <div class="card">
-          <h3 class="section-title">Estado actual</h3>
-          <div class="list-box">
-            <div class="item">
-              <strong>Backend</strong>
-              <span id="backendStatus">Conectando...</span>
+          <h3 class="section-title">Usuarios</h3>
+          <div class="panel-grid">
+            <div>
+              <div class="form-group">
+                <label for="usuarioOrganizacionId">Organización ID</label>
+                <input type="number" id="usuarioOrganizacionId" placeholder="1">
+              </div>
+
+              <div class="form-group">
+                <label for="nuevoNombre">Nombre</label>
+                <input type="text" id="nuevoNombre" placeholder="Admin Woppy">
+              </div>
+
+              <div class="form-group">
+                <label for="nuevoEmail">Correo</label>
+                <input type="email" id="nuevoEmail" placeholder="admin@woppy.com">
+              </div>
+
+              <div class="form-group">
+                <label for="nuevoPassword">Contraseña</label>
+                <input type="password" id="nuevoPassword" placeholder="123456">
+              </div>
+
+              <div class="form-group">
+                <label for="nuevoRol">Rol</label>
+                <select id="nuevoRol">
+                  <option value="usuario">usuario</option>
+                  <option value="admin">admin</option>
+                  <option value="superadmin">superadmin</option>
+                </select>
+              </div>
+
+              <button class="btn btn-green" onclick="crearUsuario()">Crear usuario</button>
+              <div id="usuarioMessage" class="msg hidden"></div>
+
+              <div class="actions-row">
+                <button class="btn btn-dark" onclick="listarUsuarios()">Actualizar usuarios</button>
+              </div>
             </div>
-            <div class="item">
-              <strong>Usuario actual</strong>
-              <span id="currentUserStatus">Cargando...</span>
+
+            <div>
+              <div id="usuariosList" class="list-box">
+                <p style="color:#64748b;">Sin usuarios cargados.</p>
+              </div>
             </div>
-            <div class="item">
-              <strong>Acceso</strong>
-              <span id="accessStatus">Validando rol y tipo...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL UBICACIONES / SUCURSALES -->
+      <div id="ubicacionesPanel" class="hidden">
+        <div class="card">
+          <h3 class="section-title">Sucursales / Ubicaciones</h3>
+          <div class="panel-grid">
+            <div>
+              <div class="form-group">
+                <label for="ubicacionOrganizacionId">Organización ID</label>
+                <input type="number" id="ubicacionOrganizacionId" placeholder="1">
+              </div>
+
+              <div class="form-group">
+                <label for="ubicacionNombre">Nombre</label>
+                <input type="text" id="ubicacionNombre" placeholder="Sucursal Centro">
+              </div>
+
+              <div class="form-group">
+                <label for="ubicacionTipo">Tipo</label>
+                <select id="ubicacionTipo">
+                  <option value="sucursal">sucursal</option>
+                  <option value="almacen">almacen</option>
+                  <option value="contenedor">contenedor</option>
+                </select>
+              </div>
+
+              <button class="btn btn-green" onclick="crearUbicacion()">Crear sucursal</button>
+              <div id="ubicacionMessage" class="msg hidden"></div>
+
+              <div class="actions-row">
+                <button class="btn btn-dark" onclick="listarUbicaciones()">Actualizar sucursales</button>
+              </div>
             </div>
+
+            <div>
+              <div id="ubicacionesList" class="list-box">
+                <p style="color:#64748b;">Sin ubicaciones cargadas.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL ESTADO -->
+      <div class="card">
+        <h3 class="section-title">Estado</h3>
+        <div class="list-box">
+          <div class="item">
+            <strong>Backend</strong>
+            <span id="backendStatus">Conectando...</span>
+          </div>
+          <div class="item">
+            <strong>Usuario actual</strong>
+            <span id="currentUserStatus">Cargando...</span>
+          </div>
+          <div class="item">
+            <strong>Acceso</strong>
+            <span id="accessStatus">Validando...</span>
           </div>
         </div>
       </div>
@@ -468,7 +490,6 @@
       const el = document.getElementById(elementId);
       el.classList.remove("hidden", "msg-error", "msg-success");
       el.textContent = text;
-
       if (type === "success") {
         el.classList.add("msg-success");
       } else {
@@ -542,63 +563,9 @@
         }
       });
 
-      if (!res.ok) {
-        throw new Error("No autorizado");
-      }
+      if (!res.ok) throw new Error("No autorizado");
 
       return await res.json();
-    }
-
-    function getModulesByBusiness(role, tipo) {
-      const isAdmin = role === "admin";
-
-      if (tipo === "control") {
-        return [
-          { title: "Productos", desc: "Alta y control de materiales." },
-          { title: "Movimientos", desc: "Entradas y salidas del almacén." },
-          { title: "Ubicaciones", desc: "Contenedores, satélites y almacenes." },
-          { title: "Inventario", desc: "Existencias por zona o contenedor." },
-          { title: "Traspasos", desc: "Movimientos entre ubicaciones." },
-          ...(isAdmin ? [{ title: "Usuarios", desc: "Gestión de accesos internos." }] : [])
-        ];
-      }
-
-      if (tipo === "retail") {
-        return [
-          { title: "Ventas", desc: "Registro de ventas del negocio." },
-          { title: "Productos", desc: "Catálogo y control de productos." },
-          { title: "Inventario", desc: "Existencias actuales." },
-          { title: "Traspasos", desc: "Movimientos entre sucursales o bodega." },
-          ...(isAdmin ? [
-            { title: "Usuarios", desc: "Gestión de accesos internos." },
-            { title: "Organizaciones", desc: "Alta y consulta de empresas." }
-          ] : [])
-        ];
-      }
-
-      return [
-        { title: "Inicio", desc: "Sin configuración de módulos todavía." }
-      ];
-    }
-
-    function renderModules(role, tipo) {
-      const moduleGrid = document.getElementById("moduleGrid");
-      moduleGrid.innerHTML = "";
-
-      const modules = getModulesByBusiness(role, tipo);
-
-      modules.forEach(mod => {
-        const card = document.createElement("button");
-        card.className = "module-btn";
-        card.innerHTML = `
-          <h3>${mod.title}</h3>
-          <p>${mod.desc}</p>
-        `;
-        card.onclick = () => {
-          alert(`Módulo seleccionado: ${mod.title}`);
-        };
-        moduleGrid.appendChild(card);
-      });
     }
 
     function renderUserInfo(user) {
@@ -609,10 +576,81 @@
       document.getElementById("typeBadge").textContent = user.organizacion_tipo.toUpperCase();
 
       document.getElementById("backendStatus").textContent = "Conectado con Render";
-      document.getElementById("currentUserStatus").textContent =
-        `${user.nombre} (${user.email})`;
-      document.getElementById("accessStatus").textContent =
-        `Rol ${user.rol} | Tipo ${user.organizacion_tipo}`;
+      document.getElementById("currentUserStatus").textContent = `${user.nombre} (${user.email})`;
+      document.getElementById("accessStatus").textContent = `Rol ${user.rol} | Tipo ${user.organizacion_tipo}`;
+    }
+
+    function getModules(user) {
+      if (user.rol === "superadmin") {
+        return [
+          { title: "Organizaciones", desc: "Alta y control global de empresas." },
+          { title: "Usuarios", desc: "Crear y administrar usuarios." },
+          { title: "Sucursales", desc: "Crear ubicaciones para clientes." }
+        ];
+      }
+
+      if (user.rol === "admin" && user.organizacion_tipo === "retail") {
+        return [
+          { title: "Usuarios", desc: "Usuarios internos del negocio." },
+          { title: "Sucursales", desc: "Tiendas y bodega." },
+          { title: "Productos", desc: "Catálogo de productos." },
+          { title: "Inventario", desc: "Existencias por tienda." },
+          { title: "Traspasos", desc: "Mover mercancía entre sucursales." },
+          { title: "Ventas", desc: "Control de ventas." }
+        ];
+      }
+
+      if (user.rol === "admin" && user.organizacion_tipo === "control") {
+        return [
+          { title: "Usuarios", desc: "Usuarios internos del cliente." },
+          { title: "Ubicaciones", desc: "Contenedores y almacenes." },
+          { title: "Productos", desc: "Materiales y herramientas." },
+          { title: "Inventario", desc: "Control por ubicación." },
+          { title: "Traspasos", desc: "Movimientos entre ubicaciones." },
+          { title: "Movimientos", desc: "Entradas y salidas." }
+        ];
+      }
+
+      return [
+        { title: "Operación", desc: "Uso diario del sistema." }
+      ];
+    }
+
+    function renderModules(user) {
+      const moduleGrid = document.getElementById("moduleGrid");
+      moduleGrid.innerHTML = "";
+
+      const modules = getModules(user);
+
+      modules.forEach(mod => {
+        const card = document.createElement("button");
+        card.className = "module-btn";
+        card.innerHTML = `
+          <h3>${mod.title}</h3>
+          <p>${mod.desc}</p>
+        `;
+        card.onclick = () => openModule(mod.title);
+        moduleGrid.appendChild(card);
+      });
+    }
+
+    function openModule(title) {
+      if (title === "Organizaciones") {
+        document.getElementById("superadminPanel").scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+
+      if (title === "Usuarios") {
+        document.getElementById("usuariosPanel").scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+
+      if (title === "Sucursales" || title === "Ubicaciones") {
+        document.getElementById("ubicacionesPanel").scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+
+      alert(`Módulo en construcción: ${title}`);
     }
 
     async function loadDashboard() {
@@ -624,123 +662,56 @@
         document.getElementById("dashboardSection").classList.remove("hidden");
 
         renderUserInfo(user);
-        renderModules(user.rol, user.organizacion_tipo);
+        renderModules(user);
 
-        if (user.rol === "admin") {
-          document.getElementById("adminPanel").classList.remove("hidden");
-          await listarUsuarios();
-
-          if (user.organizacion_tipo === "retail") {
-            document.getElementById("organizacionesPanel").classList.remove("hidden");
-            await listarOrganizaciones();
-          } else {
-            document.getElementById("organizacionesPanel").classList.add("hidden");
-          }
-        } else {
-          document.getElementById("adminPanel").classList.add("hidden");
-          document.getElementById("organizacionesPanel").classList.add("hidden");
-        }
+        configurePanelsByRole();
       } catch (error) {
         logout();
         setMessage("loginMessage", "Tu sesión expiró o no es válida.");
       }
     }
 
-    async function listarUsuarios() {
-      const token = getToken();
-      const box = document.getElementById("usuariosList");
-      box.innerHTML = `<p style="color:#64748b;">Cargando usuarios...</p>`;
+    function configurePanelsByRole() {
+      const superadminPanel = document.getElementById("superadminPanel");
+      const usuariosPanel = document.getElementById("usuariosPanel");
+      const ubicacionesPanel = document.getElementById("ubicacionesPanel");
 
-      try {
-        const res = await fetch(`${API_URL}/usuarios/`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
+      superadminPanel.classList.add("hidden");
+      usuariosPanel.classList.add("hidden");
+      ubicacionesPanel.classList.add("hidden");
 
-        const data = await res.json();
+      if (!currentUser) return;
 
-        if (!res.ok) {
-          box.innerHTML = `<p style="color:#991b1b;">${data.detail || "No se pudieron cargar usuarios."}</p>`;
-          return;
-        }
+      if (currentUser.rol === "superadmin") {
+        superadminPanel.classList.remove("hidden");
+        usuariosPanel.classList.remove("hidden");
+        ubicacionesPanel.classList.remove("hidden");
 
-        if (!Array.isArray(data) || data.length === 0) {
-          box.innerHTML = `<p style="color:#64748b;">No hay usuarios todavía.</p>`;
-          return;
-        }
+        document.getElementById("usuarioOrganizacionId").value = currentUser.organizacion_id;
+        document.getElementById("ubicacionOrganizacionId").value = currentUser.organizacion_id;
 
-        box.innerHTML = "";
-        data.forEach(user => {
-          const item = document.createElement("div");
-          item.className = "item";
-          item.innerHTML = `
-            <strong>${user.nombre}</strong>
-            <span>${user.email}</span>
-            <span>Rol: ${user.rol}</span>
-            <span>Organización: ${user.organizacion_id}</span>
-            <span>Activo: ${user.activo}</span>
+        listarOrganizaciones();
+        listarUsuarios();
+        listarUbicaciones();
+        return;
+      }
+
+      if (currentUser.rol === "admin") {
+        usuariosPanel.classList.remove("hidden");
+        ubicacionesPanel.classList.remove("hidden");
+
+        document.getElementById("usuarioOrganizacionId").value = currentUser.organizacion_id;
+        document.getElementById("ubicacionOrganizacionId").value = currentUser.organizacion_id;
+
+        if (document.getElementById("nuevoRol")) {
+          document.getElementById("nuevoRol").innerHTML = `
+            <option value="usuario">usuario</option>
+            <option value="admin">admin</option>
           `;
-          box.appendChild(item);
-        });
-      } catch (error) {
-        box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar usuarios.</p>`;
-      }
-    }
-
-    async function crearUsuario() {
-      clearMessage("adminMessage");
-
-      if (!currentUser) {
-        setMessage("adminMessage", "No se detectó usuario actual.");
-        return;
-      }
-
-      const token = getToken();
-      const nombre = document.getElementById("nuevoNombre").value.trim();
-      const email = document.getElementById("nuevoEmail").value.trim();
-      const password = document.getElementById("nuevoPassword").value.trim();
-      const rol = document.getElementById("nuevoRol").value;
-
-      if (!nombre || !email || !password || !rol) {
-        setMessage("adminMessage", "Completa todos los campos.");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/usuarios/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            organizacion_id: currentUser.organizacion_id,
-            nombre,
-            email,
-            password,
-            rol
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setMessage("adminMessage", data.detail || "No se pudo crear el usuario.");
-          return;
         }
 
-        setMessage("adminMessage", "Usuario creado correctamente.", "success");
-
-        document.getElementById("nuevoNombre").value = "";
-        document.getElementById("nuevoEmail").value = "";
-        document.getElementById("nuevoPassword").value = "";
-        document.getElementById("nuevoRol").value = "usuario";
-
-        await listarUsuarios();
-      } catch (error) {
-        setMessage("adminMessage", "Error de conexión al crear usuario.");
+        listarUsuarios();
+        listarUbicaciones();
       }
     }
 
@@ -765,12 +736,7 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({
-            nombre,
-            rfc,
-            plan,
-            tipo
-          })
+          body: JSON.stringify({ nombre, rfc, plan, tipo })
         });
 
         const data = await res.json();
@@ -824,6 +790,7 @@
           item.className = "item";
           item.innerHTML = `
             <strong>${org.nombre}</strong>
+            <span>ID: ${org.id}</span>
             <span>RFC: ${org.rfc}</span>
             <span>Plan: ${org.plan}</span>
             <span>Tipo: ${org.tipo}</span>
@@ -832,6 +799,189 @@
         });
       } catch (error) {
         box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar organizaciones.</p>`;
+      }
+    }
+
+    async function crearUsuario() {
+      clearMessage("usuarioMessage");
+
+      const token = getToken();
+      const organizacion_id = parseInt(document.getElementById("usuarioOrganizacionId").value, 10);
+      const nombre = document.getElementById("nuevoNombre").value.trim();
+      const email = document.getElementById("nuevoEmail").value.trim();
+      const password = document.getElementById("nuevoPassword").value.trim();
+      const rol = document.getElementById("nuevoRol").value;
+
+      if (!organizacion_id || !nombre || !email || !password || !rol) {
+        setMessage("usuarioMessage", "Completa todos los campos.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/usuarios/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            organizacion_id,
+            nombre,
+            email,
+            password,
+            rol
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage("usuarioMessage", data.detail || "No se pudo crear el usuario.");
+          return;
+        }
+
+        setMessage("usuarioMessage", "Usuario creado correctamente.", "success");
+
+        document.getElementById("nuevoNombre").value = "";
+        document.getElementById("nuevoEmail").value = "";
+        document.getElementById("nuevoPassword").value = "";
+        document.getElementById("nuevoRol").value = "usuario";
+
+        await listarUsuarios();
+      } catch (error) {
+        setMessage("usuarioMessage", "Error de conexión al crear usuario.");
+      }
+    }
+
+    async function listarUsuarios() {
+      const token = getToken();
+      const box = document.getElementById("usuariosList");
+      box.innerHTML = `<p style="color:#64748b;">Cargando usuarios...</p>`;
+
+      try {
+        const res = await fetch(`${API_URL}/usuarios/`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          box.innerHTML = `<p style="color:#991b1b;">${data.detail || "No se pudieron cargar usuarios."}</p>`;
+          return;
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          box.innerHTML = `<p style="color:#64748b;">No hay usuarios todavía.</p>`;
+          return;
+        }
+
+        box.innerHTML = "";
+        data.forEach(user => {
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerHTML = `
+            <strong>${user.nombre}</strong>
+            <span>ID: ${user.id}</span>
+            <span>${user.email}</span>
+            <span>Rol: ${user.rol}</span>
+            <span>Organización: ${user.organizacion_id}</span>
+            <span>Activo: ${user.activo}</span>
+          `;
+          box.appendChild(item);
+        });
+      } catch (error) {
+        box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar usuarios.</p>`;
+      }
+    }
+
+    async function crearUbicacion() {
+      clearMessage("ubicacionMessage");
+
+      const token = getToken();
+      const organizacion_id = parseInt(document.getElementById("ubicacionOrganizacionId").value, 10);
+      const nombre = document.getElementById("ubicacionNombre").value.trim();
+      const tipo = document.getElementById("ubicacionTipo").value;
+
+      if (!organizacion_id || !nombre || !tipo) {
+        setMessage("ubicacionMessage", "Completa todos los campos.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/ubicaciones/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            organizacion_id,
+            nombre,
+            tipo
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage("ubicacionMessage", data.detail || "No se pudo crear la ubicación.");
+          return;
+        }
+
+        setMessage("ubicacionMessage", "Ubicación creada correctamente.", "success");
+
+        document.getElementById("ubicacionNombre").value = "";
+        document.getElementById("ubicacionTipo").value = "sucursal";
+
+        await listarUbicaciones();
+      } catch (error) {
+        setMessage("ubicacionMessage", "Error de conexión al crear ubicación.");
+      }
+    }
+
+    async function listarUbicaciones() {
+      const token = getToken();
+      const box = document.getElementById("ubicacionesList");
+      box.innerHTML = `<p style="color:#64748b;">Cargando ubicaciones...</p>`;
+
+      try {
+        const res = await fetch(`${API_URL}/ubicaciones/`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          box.innerHTML = `<p style="color:#991b1b;">${data.detail || "No se pudieron cargar ubicaciones."}</p>`;
+          return;
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          box.innerHTML = `<p style="color:#64748b;">No hay ubicaciones todavía.</p>`;
+          return;
+        }
+
+        box.innerHTML = "";
+        data.forEach(ubicacion => {
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerHTML = `
+            <strong>${ubicacion.nombre}</strong>
+            <span>ID: ${ubicacion.id}</span>
+            <span>Organización: ${ubicacion.organizacion_id}</span>
+            <span>Tipo: ${ubicacion.tipo}</span>
+            <span>Activo: ${ubicacion.activo}</span>
+          `;
+          box.appendChild(item);
+        });
+      } catch (error) {
+        box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar ubicaciones.</p>`;
       }
     }
 
