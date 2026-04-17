@@ -6,21 +6,21 @@
   <title>Mexa.Digital</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    body { background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+    body { background: #08142f; color: #e2e8f0; min-height: 100vh; }
     .hidden { display: none !important; }
 
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 22px;
     }
 
     .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 18px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+      background: #1f2c46;
+      border: 1px solid #30415f;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
     }
 
     .login-wrap {
@@ -46,93 +46,109 @@
     }
 
     .subtitle {
-      color: #94a3b8;
-      margin-bottom: 20px;
+      color: #9fb0c9;
+      margin-bottom: 18px;
+      line-height: 1.4;
     }
 
     input, select, button {
       width: 100%;
       padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid #475569;
-      background: #0f172a;
+      border-radius: 12px;
+      border: 1px solid #445679;
+      background: #09162f;
       color: #e2e8f0;
       margin-top: 10px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #93a3bc;
     }
 
     button {
       cursor: pointer;
-      background: #2563eb;
       border: none;
       font-weight: 700;
-      transition: .2s;
+      transition: .18s;
     }
 
-    button:hover { opacity: .92; }
+    button:hover { opacity: .94; }
 
-    .btn-secondary { background: #334155; }
-    .btn-danger { background: #dc2626; }
-    .btn-green { background: #16a34a; }
-    .btn-orange { background: #ea580c; }
+    .btn-primary { background: #2f66e2; }
+    .btn-secondary { background: #48566d; }
+    .btn-danger { background: #ef2f2f; }
+    .btn-green { background: #1fb556; }
+    .btn-orange { background: #e56a18; }
 
     .topbar {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1.2fr .9fr auto;
+      gap: 20px;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .topbar-box {
+      min-height: 78px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .user-box {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 12px 14px;
-      min-width: 280px;
+      background: transparent;
+      border: 1px solid #30415f;
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+
+    .user-box div {
+      line-height: 1.35;
     }
 
     .layout {
       display: grid;
-      grid-template-columns: 250px 1fr;
-      gap: 20px;
+      grid-template-columns: 260px 1fr;
+      gap: 22px;
     }
 
     .sidebar {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 16px;
+      background: #1f2c46;
+      border: 1px solid #30415f;
+      border-radius: 18px;
+      padding: 18px;
       height: fit-content;
       position: sticky;
-      top: 20px;
+      top: 18px;
     }
 
     .menu-title {
       font-size: 12px;
       text-transform: uppercase;
-      color: #94a3b8;
-      margin: 16px 0 8px;
+      color: #9fb0c9;
+      margin: 14px 0 10px;
       letter-spacing: 1px;
     }
 
     .menu-btn {
       width: 100%;
       text-align: left;
-      background: #0f172a;
-      border: 1px solid #334155;
-      margin-top: 8px;
+      background: #09162f;
+      border: 1px solid #30415f;
+      margin-top: 10px;
+      font-size: 15px;
     }
 
     .menu-btn.active {
-      background: #2563eb;
-      border-color: #2563eb;
+      background: #2f66e2;
+      border-color: #2f66e2;
     }
 
     .content {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 22px;
     }
 
     .section {
@@ -145,31 +161,31 @@
 
     .grid-2 {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      grid-template-columns: 1fr 1.35fr;
+      gap: 22px;
     }
 
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      gap: 16px;
     }
 
     .stat {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 16px;
+      background: #1f2c46;
+      border: 1px solid #30415f;
+      border-radius: 16px;
+      padding: 18px;
     }
 
     .stat-label {
-      color: #94a3b8;
+      color: #9fb0c9;
       font-size: 13px;
       margin-bottom: 6px;
     }
 
     .stat-value {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 800;
       color: #f8fafc;
     }
@@ -177,71 +193,95 @@
     .table-wrap {
       overflow-x: auto;
       margin-top: 14px;
-      border: 1px solid #334155;
-      border-radius: 12px;
+      border: 1px solid #30415f;
+      border-radius: 14px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       min-width: 650px;
-      background: #0f172a;
+      background: transparent;
     }
 
     th, td {
-      padding: 12px;
-      border-bottom: 1px solid #334155;
+      padding: 14px 14px;
+      border-bottom: 1px solid #30415f;
       text-align: left;
       font-size: 14px;
     }
 
     th {
-      background: #1e293b;
+      background: #1f2c46;
       color: #f8fafc;
+      font-size: 15px;
     }
 
     .tag {
       display: inline-block;
-      padding: 4px 10px;
+      padding: 5px 10px;
       border-radius: 999px;
       font-size: 12px;
       font-weight: 700;
     }
 
-    .tag-entrada { background: rgba(22,163,74,.15); color: #4ade80; }
-    .tag-salida { background: rgba(220,38,38,.15); color: #f87171; }
+    .tag-entrada { background: rgba(31,181,86,.15); color: #67f09d; }
+    .tag-salida { background: rgba(239,47,47,.15); color: #ff8e8e; }
 
     .msg {
       margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 11px 12px;
+      border-radius: 12px;
       font-size: 14px;
       display: none;
     }
 
     .msg.ok {
       display: block;
-      background: rgba(22,163,74,.15);
-      color: #86efac;
-      border: 1px solid rgba(22,163,74,.35);
+      background: rgba(31,181,86,.12);
+      color: #8ff0b6;
+      border: 1px solid rgba(31,181,86,.28);
     }
 
     .msg.error {
       display: block;
-      background: rgba(220,38,38,.15);
-      color: #fca5a5;
-      border: 1px solid rgba(220,38,38,.35);
+      background: rgba(239,47,47,.12);
+      color: #ffaaaa;
+      border: 1px solid rgba(239,47,47,.28);
     }
 
     .muted {
-      color: #94a3b8;
+      color: #9fb0c9;
       font-size: 13px;
     }
 
-    @media (max-width: 900px) {
-      .layout { grid-template-columns: 1fr; }
-      .grid-2, .grid-3 { grid-template-columns: 1fr; }
-      .sidebar { position: static; }
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 980px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .actions-row {
+        justify-content: flex-start;
+      }
     }
   </style>
 </head>
@@ -250,16 +290,16 @@
   <div id="loginView" class="login-wrap">
     <div class="card login-card">
       <div class="brand">Mexa.Digital</div>
-      <div class="subtitle">Control simple de inventario para operar de verdad.</div>
+      <div class="subtitle">Control de inventario y movimientos para tu negocio.</div>
 
       <h2>Entrar</h2>
       <input id="loginEmail" type="email" placeholder="Correo" />
       <input id="loginPassword" type="password" placeholder="Contraseña" />
-      <button id="loginBtn">Iniciar sesión</button>
+      <button id="loginBtn" class="btn-primary">Iniciar sesión</button>
       <div id="loginMsg" class="msg"></div>
 
       <p class="muted" style="margin-top:14px;">
-        Ajusta la URL del backend en la constante <b>API_BASE</b> si hace falta.
+        Backend actual: <b>https://mexa-core-1.onrender.com</b>
       </p>
     </div>
   </div>
@@ -268,18 +308,18 @@
   <div id="appView" class="hidden">
     <div class="container">
       <div class="topbar">
-        <div>
+        <div class="topbar-box">
           <h1>Panel Mexa.Digital</h1>
-          <p class="subtitle" style="margin: 6px 0 0;">Feo si quieres, pero usable. Y eso vende.</p>
+          <p class="subtitle" style="margin: 6px 0 0;">Control de inventario y movimientos para tu negocio.</p>
         </div>
 
-        <div class="user-box">
+        <div class="user-box topbar-box">
           <div><b id="userName">Usuario</b></div>
           <div id="userEmail" class="muted">correo@empresa.com</div>
           <div id="orgName" class="muted">Organización</div>
         </div>
 
-        <div style="display:flex; gap:10px; flex-wrap: wrap;">
+        <div class="actions-row">
           <button id="refreshBtn" class="btn-secondary" style="width:auto;">Actualizar</button>
           <button id="logoutBtn" class="btn-danger" style="width:auto;">Cerrar sesión</button>
         </div>
@@ -316,12 +356,12 @@
             </div>
 
             <div class="card" style="margin-top:20px;">
-              <h3>Qué se hace aquí</h3>
-              <p style="margin-top:10px;">
+              <h3>Flujo de uso</h3>
+              <p style="margin-top:10px; line-height:1.7;">
                 1. Das de alta productos.<br>
                 2. Registras entradas y salidas.<br>
-                3. Ves el inventario actual.<br>
-                4. Si ocupas, creas usuarios en Configuración.
+                3. Verificas el inventario actual.<br>
+                4. Si hace falta, agregas usuarios en Configuración.
               </p>
             </div>
           </section>
@@ -366,7 +406,9 @@
             <div class="grid-2">
               <div class="card">
                 <h2>Registrar movimiento</h2>
-                <select id="movProducto"></select>
+                <select id="movProducto">
+                  <option value="">Selecciona un producto</option>
+                </select>
                 <select id="movTipo">
                   <option value="entrada">Entrada</option>
                   <option value="salida">Salida</option>
@@ -379,7 +421,7 @@
 
               <div class="card">
                 <h2>Historial</h2>
-                <p class="muted" style="margin-top:8px;">Aquí está el valor: qué salió, cuánto y quién lo hizo.</p>
+                <p class="muted" style="margin-top:8px;">Qué salió, cuánto y quién lo hizo.</p>
                 <div class="table-wrap">
                   <table>
                     <thead>
@@ -403,7 +445,7 @@
           <section id="inventarioSection" class="section">
             <div class="card">
               <h2>Inventario actual</h2>
-              <p class="muted" style="margin-top:8px;">Lo que realmente tienen ahorita.</p>
+              <p class="muted" style="margin-top:8px;">Existencias actuales del negocio.</p>
               <div class="table-wrap">
                 <table>
                   <thead>
@@ -429,7 +471,7 @@
                 <input id="usuarioNombre" type="text" placeholder="Nombre" />
                 <input id="usuarioEmail" type="email" placeholder="Correo" />
                 <input id="usuarioPassword" type="password" placeholder="Contraseña" />
-                <button id="crearUsuarioBtn">Guardar usuario</button>
+                <button id="crearUsuarioBtn" class="btn-primary">Guardar usuario</button>
                 <div id="usuarioMsg" class="msg"></div>
               </div>
 
@@ -457,9 +499,6 @@
   </div>
 
   <script>
-    // =========================
-    // AJUSTA ESTA URL SI HACE FALTA
-    // =========================
     const API_BASE = "https://mexa-core-1.onrender.com";
     const TOKEN_KEY = "mexa_token";
 
@@ -524,10 +563,23 @@
     });
 
     async function apiFetch(path, options = {}) {
-      const res = await fetch(`${API_BASE}${path}`, options);
-      const text = await res.text();
+      let res;
 
+      try {
+        res = await fetch(`${API_BASE}${path}`, options);
+      } catch (error) {
+        throw new Error("No se pudo conectar con el backend");
+      }
+
+      if (res.status === 401) {
+        clearToken();
+        logout(false);
+        throw new Error("Sesión vencida o token inválido");
+      }
+
+      const text = await res.text();
       let data = {};
+
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
@@ -566,20 +618,25 @@
     }
 
     async function loadCurrentUser() {
-      // Ajusta esta ruta si tu backend usa otra para devolver usuario logueado
       try {
         currentUser = await apiFetch("/auth/me", {
           method: "GET",
           headers: authHeaders()
         });
-      } catch (e) {
-        // Fallback si todavía no existe /auth/me
-        currentUser = {
-          nombre: "Usuario",
-          email: "Sin /auth/me",
-          organizacion_id: null,
-          organizacion_nombre: "Organización actual"
-        };
+      } catch {
+        try {
+          currentUser = await apiFetch("/auth/me/", {
+            method: "GET",
+            headers: authHeaders()
+          });
+        } catch {
+          currentUser = {
+            nombre: "Usuario",
+            email: "Sin endpoint /auth/me",
+            organizacion_id: null,
+            organizacion_nombre: "Organización actual"
+          };
+        }
       }
 
       document.getElementById("userName").textContent = currentUser.nombre || "Usuario";
@@ -589,7 +646,7 @@
     }
 
     async function loadProductos() {
-      const data = await apiFetch("/productos", {
+      const data = await apiFetch("/productos/", {
         method: "GET",
         headers: authHeaders()
       });
@@ -646,7 +703,7 @@
 
     async function loadMovimientos() {
       try {
-        const data = await apiFetch("/movimientos", {
+        const data = await apiFetch("/movimientos/", {
           method: "GET",
           headers: authHeaders()
         });
@@ -667,7 +724,7 @@
       movimientosCache.forEach(m => {
         const productoNombre =
           m.producto_nombre ||
-          productosCache.find(p => p.id === m.producto_id)?.nombre ||
+          productosCache.find(p => Number(p.id) === Number(m.producto_id))?.nombre ||
           `#${m.producto_id ?? "-"}`;
 
         tbody.innerHTML += `
@@ -692,7 +749,7 @@
       tbody.innerHTML = "";
 
       try {
-        const data = await apiFetch("/usuarios", {
+        const data = await apiFetch("/usuarios/", {
           method: "GET",
           headers: authHeaders()
         });
@@ -711,7 +768,7 @@
       } catch {
         tbody.innerHTML = `
           <tr>
-            <td colspan="4">No se pudieron cargar usuarios o el endpoint /usuarios aún no está listo.</td>
+            <td colspan="4">No se pudieron cargar usuarios o el endpoint /usuarios/ aún no está listo.</td>
           </tr>
         `;
       }
@@ -738,12 +795,11 @@
           precio: Number(document.getElementById("productoPrecio").value || 0)
         };
 
-        // Si tu backend exige organizacion_id en body, lo mandamos si existe
         if (currentUser?.organizacion_id) {
           payload.organizacion_id = currentUser.organizacion_id;
         }
 
-        await apiFetch("/productos", {
+        await apiFetch("/productos/", {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify(payload)
@@ -781,7 +837,7 @@
           payload.organizacion_id = currentUser.organizacion_id;
         }
 
-        await apiFetch("/movimientos", {
+        await apiFetch("/movimientos/", {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify(payload)
@@ -845,17 +901,23 @@
       }
     }
 
-    function logout() {
+    function logout(showMessage = true) {
       clearToken();
       currentUser = null;
       productosCache = [];
       movimientosCache = [];
-      loginView.classList.remove("hidden");
+
       appView.classList.add("hidden");
+      loginView.classList.remove("hidden");
+
+      if (showMessage) {
+        const msg = document.getElementById("loginMsg");
+        showMsg(msg, "Sesión cerrada correctamente", "ok");
+      }
     }
 
     document.getElementById("loginBtn").addEventListener("click", login);
-    document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("logoutBtn").addEventListener("click", () => logout(true));
     document.getElementById("refreshBtn").addEventListener("click", bootApp);
     document.getElementById("crearProductoBtn").addEventListener("click", crearProducto);
     document.getElementById("registrarMovimientoBtn").addEventListener("click", registrarMovimiento);
