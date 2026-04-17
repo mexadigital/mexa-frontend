@@ -5,990 +5,869 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mexa.Digital</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, Helvetica, sans-serif;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+    .hidden { display: none !important; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
     }
 
-    body {
-      background: #f4f7fb;
-      color: #1f2937;
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    .login-wrapper {
+    .login-wrap {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      background: linear-gradient(135deg, #0f172a, #1e3a8a);
+      padding: 20px;
     }
 
     .login-card {
       width: 100%;
       max-width: 420px;
-      background: #fff;
-      border-radius: 20px;
-      padding: 32px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
     }
+
+    h1, h2, h3 { color: #f8fafc; }
+    p { color: #cbd5e1; }
 
     .brand {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .brand h1 {
       font-size: 30px;
-      color: #0f172a;
-      margin-bottom: 6px;
+      font-weight: 800;
+      margin-bottom: 10px;
     }
 
-    .brand p {
-      color: #64748b;
-      font-size: 14px;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: #334155;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      outline: none;
-      font-size: 14px;
-      background: white;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .btn-primary {
-      width: 100%;
-      background: #2563eb;
-      color: white;
-    }
-
-    .btn-danger {
-      background: #dc2626;
-      color: white;
-    }
-
-    .btn-dark {
-      background: #0f172a;
-      color: white;
-    }
-
-    .btn-green {
-      background: #059669;
-      color: white;
-    }
-
-    .msg {
-      margin-top: 14px;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 14px;
-    }
-
-    .msg-error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .msg-success {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .topbar {
-      background: #0f172a;
-      color: white;
-      padding: 18px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .topbar-left h2 {
-      font-size: 24px;
-      margin-bottom: 4px;
-    }
-
-    .topbar-left p {
-      color: #cbd5e1;
-      font-size: 14px;
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      color: white;
-      font-size: 12px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-weight: bold;
-    }
-
-    .badge-role { background: #1d4ed8; }
-    .badge-type { background: #059669; }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    .subtitle {
+      color: #94a3b8;
       margin-bottom: 20px;
     }
 
-    .section-title {
-      font-size: 20px;
-      margin-bottom: 16px;
-      color: #0f172a;
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #e2e8f0;
+      margin-top: 10px;
     }
 
-    .module-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
-
-    .module-btn {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 22px;
-      text-align: left;
+    button {
       cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.05);
-      transition: 0.2s ease;
+      background: #2563eb;
+      border: none;
+      font-weight: 700;
+      transition: .2s;
     }
 
-    .module-btn:hover {
-      transform: translateY(-2px);
+    button:hover { opacity: .92; }
+
+    .btn-secondary { background: #334155; }
+    .btn-danger { background: #dc2626; }
+    .btn-green { background: #16a34a; }
+    .btn-orange { background: #ea580c; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .user-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-width: 280px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 20px;
+    }
+
+    .sidebar {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 16px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .menu-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin: 16px 0 8px;
+      letter-spacing: 1px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      text-align: left;
+      background: #0f172a;
+      border: 1px solid #334155;
+      margin-top: 8px;
+    }
+
+    .menu-btn.active {
+      background: #2563eb;
       border-color: #2563eb;
     }
 
-    .module-btn h3 {
-      color: #0f172a;
-      margin-bottom: 8px;
-      font-size: 18px;
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
-    .module-btn p {
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.4;
+    .section {
+      display: none;
     }
 
-    .panel-grid {
+    .section.active {
+      display: block;
+    }
+
+    .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
 
-    .list-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 14px;
-      max-height: 400px;
-      overflow: auto;
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
     }
 
-    .item {
-      background: white;
-      border: 1px solid #e2e8f0;
+    .stat {
+      background: #0f172a;
+      border: 1px solid #334155;
       border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 10px;
+      padding: 16px;
     }
 
-    .item strong {
-      display: block;
-      margin-bottom: 4px;
-      color: #0f172a;
+    .stat-label {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-bottom: 6px;
     }
 
-    .item span {
-      display: block;
-      color: #475569;
-      font-size: 14px;
-      margin-bottom: 2px;
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #f8fafc;
     }
 
-    .actions-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+    .table-wrap {
+      overflow-x: auto;
       margin-top: 14px;
+      border: 1px solid #334155;
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 650px;
+      background: #0f172a;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #334155;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #1e293b;
+      color: #f8fafc;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag-entrada { background: rgba(22,163,74,.15); color: #4ade80; }
+    .tag-salida { background: rgba(220,38,38,.15); color: #f87171; }
+
+    .msg {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .msg.ok {
+      display: block;
+      background: rgba(22,163,74,.15);
+      color: #86efac;
+      border: 1px solid rgba(22,163,74,.35);
+    }
+
+    .msg.error {
+      display: block;
+      background: rgba(220,38,38,.15);
+      color: #fca5a5;
+      border: 1px solid rgba(220,38,38,.35);
+    }
+
+    .muted {
+      color: #94a3b8;
+      font-size: 13px;
     }
 
     @media (max-width: 900px) {
-      .panel-grid {
-        grid-template-columns: 1fr;
-      }
+      .layout { grid-template-columns: 1fr; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
     }
   </style>
 </head>
 <body>
-
   <!-- LOGIN -->
-  <section id="loginSection" class="login-wrapper">
-    <div class="login-card">
-      <div class="brand">
-        <h1>Mexa.Digital</h1>
-        <p>Panel operativo para Mexa y clientes</p>
-      </div>
+  <div id="loginView" class="login-wrap">
+    <div class="card login-card">
+      <div class="brand">Mexa.Digital</div>
+      <div class="subtitle">Control simple de inventario para operar de verdad.</div>
 
-      <div class="form-group">
-        <label for="email">Correo</label>
-        <input type="email" id="email" placeholder="root@mexa.com">
-      </div>
+      <h2>Entrar</h2>
+      <input id="loginEmail" type="email" placeholder="Correo" />
+      <input id="loginPassword" type="password" placeholder="Contraseña" />
+      <button id="loginBtn">Iniciar sesión</button>
+      <div id="loginMsg" class="msg"></div>
 
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" placeholder="******">
-      </div>
-
-      <button class="btn btn-primary" onclick="login()">Entrar</button>
-      <div id="loginMessage" class="msg msg-error hidden"></div>
+      <p class="muted" style="margin-top:14px;">
+        Ajusta la URL del backend en la constante <b>API_BASE</b> si hace falta.
+      </p>
     </div>
-  </section>
+  </div>
 
-  <!-- DASHBOARD -->
-  <section id="dashboardSection" class="hidden">
-    <div class="topbar">
-      <div class="topbar-left">
-        <h2>Panel Mexa.Digital</h2>
-        <p id="userInfo">Cargando usuario...</p>
-      </div>
-
-      <div class="topbar-right">
-        <span id="roleBadge" class="badge badge-role">ROL</span>
-        <span id="typeBadge" class="badge badge-type">TIPO</span>
-        <button class="btn btn-danger" onclick="logout()">Cerrar sesión</button>
-      </div>
-    </div>
-
+  <!-- APP -->
+  <div id="appView" class="hidden">
     <div class="container">
-      <div class="card">
-        <h3 class="section-title">Módulos</h3>
-        <div id="moduleGrid" class="module-grid"></div>
-      </div>
+      <div class="topbar">
+        <div>
+          <h1>Panel Mexa.Digital</h1>
+          <p class="subtitle" style="margin: 6px 0 0;">Feo si quieres, pero usable. Y eso vende.</p>
+        </div>
 
-      <!-- PANEL SUPERADMIN -->
-      <div id="superadminPanel" class="hidden">
-        <div class="card">
-          <h3 class="section-title">Organizaciones</h3>
-          <div class="panel-grid">
-            <div>
-              <div class="form-group">
-                <label for="orgNombre">Nombre</label>
-                <input type="text" id="orgNombre" placeholder="Woppy">
-              </div>
+        <div class="user-box">
+          <div><b id="userName">Usuario</b></div>
+          <div id="userEmail" class="muted">correo@empresa.com</div>
+          <div id="orgName" class="muted">Organización</div>
+        </div>
 
-              <div class="form-group">
-                <label for="orgRfc">RFC</label>
-                <input type="text" id="orgRfc" placeholder="XAXX010101000">
-              </div>
-
-              <div class="form-group">
-                <label for="orgPlan">Plan</label>
-                <select id="orgPlan">
-                  <option value="free">free</option>
-                  <option value="basic">basic</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="orgTipo">Tipo</label>
-                <select id="orgTipo">
-                  <option value="control">control</option>
-                  <option value="retail">retail</option>
-                </select>
-              </div>
-
-              <button class="btn btn-green" onclick="crearOrganizacion()">Crear organización</button>
-              <div id="orgMessage" class="msg hidden"></div>
-
-              <div class="actions-row">
-                <button class="btn btn-dark" onclick="listarOrganizaciones()">Actualizar organizaciones</button>
-              </div>
-            </div>
-
-            <div>
-              <div id="organizacionesList" class="list-box">
-                <p style="color:#64748b;">Sin organizaciones cargadas.</p>
-              </div>
-            </div>
-          </div>
+        <div style="display:flex; gap:10px; flex-wrap: wrap;">
+          <button id="refreshBtn" class="btn-secondary" style="width:auto;">Actualizar</button>
+          <button id="logoutBtn" class="btn-danger" style="width:auto;">Cerrar sesión</button>
         </div>
       </div>
 
-      <!-- PANEL ADMIN/SUPERADMIN USUARIOS -->
-      <div id="usuariosPanel" class="hidden">
-        <div class="card">
-          <h3 class="section-title">Usuarios</h3>
-          <div class="panel-grid">
-            <div>
-              <div class="form-group">
-                <label for="usuarioOrganizacionId">Organización ID</label>
-                <input type="number" id="usuarioOrganizacionId" placeholder="1">
+      <div class="layout">
+        <aside class="sidebar">
+          <div class="menu-title">Operación</div>
+          <button class="menu-btn active" data-section="dashboardSection">Dashboard</button>
+          <button class="menu-btn" data-section="productosSection">Productos</button>
+          <button class="menu-btn" data-section="movimientosSection">Movimientos</button>
+          <button class="menu-btn" data-section="inventarioSection">Inventario</button>
+
+          <div class="menu-title">Configuración</div>
+          <button class="menu-btn" data-section="usuariosSection">Usuarios</button>
+        </aside>
+
+        <main class="content">
+          <!-- DASHBOARD -->
+          <section id="dashboardSection" class="section active">
+            <div class="grid-3">
+              <div class="stat">
+                <div class="stat-label">Productos</div>
+                <div class="stat-value" id="statProductos">0</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Movimientos</div>
+                <div class="stat-value" id="statMovimientos">0</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Existencias totales</div>
+                <div class="stat-value" id="statExistencias">0</div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+              <h3>Qué se hace aquí</h3>
+              <p style="margin-top:10px;">
+                1. Das de alta productos.<br>
+                2. Registras entradas y salidas.<br>
+                3. Ves el inventario actual.<br>
+                4. Si ocupas, creas usuarios en Configuración.
+              </p>
+            </div>
+          </section>
+
+          <!-- PRODUCTOS -->
+          <section id="productosSection" class="section">
+            <div class="grid-2">
+              <div class="card">
+                <h2>Nuevo producto</h2>
+                <input id="productoNombre" type="text" placeholder="Nombre del producto" />
+                <input id="productoCodigo" type="text" placeholder="Código" />
+                <input id="productoCantidad" type="number" placeholder="Cantidad inicial" min="0" />
+                <input id="productoUbicacion" type="text" placeholder="Ubicación (opcional)" />
+                <input id="productoPrecio" type="number" step="0.01" placeholder="Precio (opcional)" />
+                <button id="crearProductoBtn" class="btn-green">Guardar producto</button>
+                <div id="productoMsg" class="msg"></div>
               </div>
 
-              <div class="form-group">
-                <label for="nuevoNombre">Nombre</label>
-                <input type="text" id="nuevoNombre" placeholder="Admin Woppy">
+              <div class="card">
+                <h2>Lista de productos</h2>
+                <p class="muted" style="margin-top:8px;">Lo importante es que existan y se puedan mover.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Código</th>
+                        <th>Cantidad</th>
+                        <th>Ubicación</th>
+                      </tr>
+                    </thead>
+                    <tbody id="productosTbody"></tbody>
+                  </table>
+                </div>
               </div>
+            </div>
+          </section>
 
-              <div class="form-group">
-                <label for="nuevoEmail">Correo</label>
-                <input type="email" id="nuevoEmail" placeholder="admin@woppy.com">
-              </div>
-
-              <div class="form-group">
-                <label for="nuevoPassword">Contraseña</label>
-                <input type="password" id="nuevoPassword" placeholder="123456">
-              </div>
-
-              <div class="form-group">
-                <label for="nuevoRol">Rol</label>
-                <select id="nuevoRol">
-                  <option value="usuario">usuario</option>
-                  <option value="admin">admin</option>
-                  <option value="superadmin">superadmin</option>
+          <!-- MOVIMIENTOS -->
+          <section id="movimientosSection" class="section">
+            <div class="grid-2">
+              <div class="card">
+                <h2>Registrar movimiento</h2>
+                <select id="movProducto"></select>
+                <select id="movTipo">
+                  <option value="entrada">Entrada</option>
+                  <option value="salida">Salida</option>
                 </select>
+                <input id="movCantidad" type="number" placeholder="Cantidad" min="1" />
+                <input id="movNota" type="text" placeholder="Nota (opcional)" />
+                <button id="registrarMovimientoBtn" class="btn-orange">Registrar movimiento</button>
+                <div id="movimientoMsg" class="msg"></div>
               </div>
 
-              <button class="btn btn-green" onclick="crearUsuario()">Crear usuario</button>
-              <div id="usuarioMessage" class="msg hidden"></div>
-
-              <div class="actions-row">
-                <button class="btn btn-dark" onclick="listarUsuarios()">Actualizar usuarios</button>
-              </div>
-            </div>
-
-            <div>
-              <div id="usuariosList" class="list-box">
-                <p style="color:#64748b;">Sin usuarios cargados.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PANEL UBICACIONES / SUCURSALES -->
-      <div id="ubicacionesPanel" class="hidden">
-        <div class="card">
-          <h3 class="section-title">Sucursales / Ubicaciones</h3>
-          <div class="panel-grid">
-            <div>
-              <div class="form-group">
-                <label for="ubicacionOrganizacionId">Organización ID</label>
-                <input type="number" id="ubicacionOrganizacionId" placeholder="1">
-              </div>
-
-              <div class="form-group">
-                <label for="ubicacionNombre">Nombre</label>
-                <input type="text" id="ubicacionNombre" placeholder="Sucursal Centro">
-              </div>
-
-              <div class="form-group">
-                <label for="ubicacionTipo">Tipo</label>
-                <select id="ubicacionTipo">
-                  <option value="sucursal">sucursal</option>
-                  <option value="almacen">almacen</option>
-                  <option value="contenedor">contenedor</option>
-                </select>
-              </div>
-
-              <button class="btn btn-green" onclick="crearUbicacion()">Crear sucursal</button>
-              <div id="ubicacionMessage" class="msg hidden"></div>
-
-              <div class="actions-row">
-                <button class="btn btn-dark" onclick="listarUbicaciones()">Actualizar sucursales</button>
+              <div class="card">
+                <h2>Historial</h2>
+                <p class="muted" style="margin-top:8px;">Aquí está el valor: qué salió, cuánto y quién lo hizo.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Usuario</th>
+                        <th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody id="movimientosTbody"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div>
-              <div id="ubicacionesList" class="list-box">
-                <p style="color:#64748b;">Sin ubicaciones cargadas.</p>
+          <!-- INVENTARIO -->
+          <section id="inventarioSection" class="section">
+            <div class="card">
+              <h2>Inventario actual</h2>
+              <p class="muted" style="margin-top:8px;">Lo que realmente tienen ahorita.</p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Producto</th>
+                      <th>Código</th>
+                      <th>Cantidad</th>
+                      <th>Ubicación</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventarioTbody"></tbody>
+                </table>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
 
-      <!-- PANEL ESTADO -->
-      <div class="card">
-        <h3 class="section-title">Estado</h3>
-        <div class="list-box">
-          <div class="item">
-            <strong>Backend</strong>
-            <span id="backendStatus">Conectando...</span>
-          </div>
-          <div class="item">
-            <strong>Usuario actual</strong>
-            <span id="currentUserStatus">Cargando...</span>
-          </div>
-          <div class="item">
-            <strong>Acceso</strong>
-            <span id="accessStatus">Validando...</span>
-          </div>
-        </div>
+          <!-- USUARIOS -->
+          <section id="usuariosSection" class="section">
+            <div class="grid-2">
+              <div class="card">
+                <h2>Crear usuario</h2>
+                <input id="usuarioNombre" type="text" placeholder="Nombre" />
+                <input id="usuarioEmail" type="email" placeholder="Correo" />
+                <input id="usuarioPassword" type="password" placeholder="Contraseña" />
+                <button id="crearUsuarioBtn">Guardar usuario</button>
+                <div id="usuarioMsg" class="msg"></div>
+              </div>
+
+              <div class="card">
+                <h2>Usuarios de la organización</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Activo</th>
+                      </tr>
+                    </thead>
+                    <tbody id="usuariosTbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
     </div>
-  </section>
+  </div>
 
   <script>
-    const API_URL = "https://mexa-core-1.onrender.com";
-    let currentUser = null;
+    // =========================
+    // AJUSTA ESTA URL SI HACE FALTA
+    // =========================
+    const API_BASE = "https://mexa-core-1.onrender.com";
+    const TOKEN_KEY = "mexa_token";
 
-    function setMessage(elementId, text, type = "error") {
-      const el = document.getElementById(elementId);
-      el.classList.remove("hidden", "msg-error", "msg-success");
+    let currentUser = null;
+    let productosCache = [];
+    let movimientosCache = [];
+
+    const loginView = document.getElementById("loginView");
+    const appView = document.getElementById("appView");
+
+    function getToken() {
+      return localStorage.getItem(TOKEN_KEY);
+    }
+
+    function setToken(token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+
+    function clearToken() {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+
+    function authHeaders() {
+      return {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getToken()}`
+      };
+    }
+
+    function showMsg(el, text, type = "ok") {
+      el.className = `msg ${type}`;
       el.textContent = text;
-      if (type === "success") {
-        el.classList.add("msg-success");
-      } else {
-        el.classList.add("msg-error");
+    }
+
+    function clearMsg(el) {
+      el.className = "msg";
+      el.textContent = "";
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      try {
+        return new Date(value).toLocaleString("es-MX");
+      } catch {
+        return value;
       }
     }
 
-    function clearMessage(elementId) {
-      const el = document.getElementById(elementId);
-      el.classList.add("hidden");
-      el.textContent = "";
-      el.classList.remove("msg-error", "msg-success");
+    function activateSection(sectionId) {
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+
+      const section = document.getElementById(sectionId);
+      if (section) section.classList.add("active");
+
+      const btn = document.querySelector(`.menu-btn[data-section="${sectionId}"]`);
+      if (btn) btn.classList.add("active");
     }
 
-    function getToken() {
-      return localStorage.getItem("mexa_token");
-    }
+    document.querySelectorAll(".menu-btn").forEach(btn => {
+      btn.addEventListener("click", () => activateSection(btn.dataset.section));
+    });
 
-    function saveToken(token) {
-      localStorage.setItem("mexa_token", token);
-    }
+    async function apiFetch(path, options = {}) {
+      const res = await fetch(`${API_BASE}${path}`, options);
+      const text = await res.text();
 
-    function logout() {
-      localStorage.removeItem("mexa_token");
-      currentUser = null;
-      document.getElementById("dashboardSection").classList.add("hidden");
-      document.getElementById("loginSection").classList.remove("hidden");
-      clearMessage("loginMessage");
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
+      }
+
+      if (!res.ok) {
+        const msg = data.detail || data.message || JSON.stringify(data);
+        throw new Error(msg);
+      }
+
+      return data;
     }
 
     async function login() {
-      clearMessage("loginMessage");
-
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-
-      if (!email || !password) {
-        setMessage("loginMessage", "Pon correo y contraseña.");
-        return;
-      }
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      const msg = document.getElementById("loginMsg");
+      clearMsg(msg);
 
       try {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const data = await apiFetch("/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password })
         });
 
-        const data = await res.json();
+        const token = data.access_token || data.token;
+        if (!token) throw new Error("No se recibió token");
 
-        if (!res.ok) {
-          setMessage("loginMessage", data.detail || "No se pudo iniciar sesión.");
-          return;
-        }
-
-        saveToken(data.access_token);
-        await loadDashboard();
+        setToken(token);
+        await bootApp();
       } catch (error) {
-        setMessage("loginMessage", "Error de conexión con el backend.");
+        showMsg(msg, error.message, "error");
       }
     }
 
-    async function getMe() {
-      const token = getToken();
-      if (!token) return null;
-
-      const res = await fetch(`${API_URL}/auth/me`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) throw new Error("No autorizado");
-
-      return await res.json();
-    }
-
-    function renderUserInfo(user) {
-      document.getElementById("userInfo").textContent =
-        `${user.nombre} | ${user.email} | ${user.organizacion_nombre}`;
-
-      document.getElementById("roleBadge").textContent = user.rol.toUpperCase();
-      document.getElementById("typeBadge").textContent = user.organizacion_tipo.toUpperCase();
-
-      document.getElementById("backendStatus").textContent = "Conectado con Render";
-      document.getElementById("currentUserStatus").textContent = `${user.nombre} (${user.email})`;
-      document.getElementById("accessStatus").textContent = `Rol ${user.rol} | Tipo ${user.organizacion_tipo}`;
-    }
-
-    function getModules(user) {
-      if (user.rol === "superadmin") {
-        return [
-          { title: "Organizaciones", desc: "Alta y control global de empresas." },
-          { title: "Usuarios", desc: "Crear y administrar usuarios." },
-          { title: "Sucursales", desc: "Crear ubicaciones para clientes." }
-        ];
-      }
-
-      if (user.rol === "admin" && user.organizacion_tipo === "retail") {
-        return [
-          { title: "Usuarios", desc: "Usuarios internos del negocio." },
-          { title: "Sucursales", desc: "Tiendas y bodega." },
-          { title: "Productos", desc: "Catálogo de productos." },
-          { title: "Inventario", desc: "Existencias por tienda." },
-          { title: "Traspasos", desc: "Mover mercancía entre sucursales." },
-          { title: "Ventas", desc: "Control de ventas." }
-        ];
-      }
-
-      if (user.rol === "admin" && user.organizacion_tipo === "control") {
-        return [
-          { title: "Usuarios", desc: "Usuarios internos del cliente." },
-          { title: "Ubicaciones", desc: "Contenedores y almacenes." },
-          { title: "Productos", desc: "Materiales y herramientas." },
-          { title: "Inventario", desc: "Control por ubicación." },
-          { title: "Traspasos", desc: "Movimientos entre ubicaciones." },
-          { title: "Movimientos", desc: "Entradas y salidas." }
-        ];
-      }
-
-      return [
-        { title: "Operación", desc: "Uso diario del sistema." }
-      ];
-    }
-
-    function renderModules(user) {
-      const moduleGrid = document.getElementById("moduleGrid");
-      moduleGrid.innerHTML = "";
-
-      const modules = getModules(user);
-
-      modules.forEach(mod => {
-        const card = document.createElement("button");
-        card.className = "module-btn";
-        card.innerHTML = `
-          <h3>${mod.title}</h3>
-          <p>${mod.desc}</p>
-        `;
-        card.onclick = () => openModule(mod.title);
-        moduleGrid.appendChild(card);
-      });
-    }
-
-    function openModule(title) {
-      if (title === "Organizaciones") {
-        document.getElementById("superadminPanel").scrollIntoView({ behavior: "smooth" });
-        return;
-      }
-
-      if (title === "Usuarios") {
-        document.getElementById("usuariosPanel").scrollIntoView({ behavior: "smooth" });
-        return;
-      }
-
-      if (title === "Sucursales" || title === "Ubicaciones") {
-        document.getElementById("ubicacionesPanel").scrollIntoView({ behavior: "smooth" });
-        return;
-      }
-
-      alert(`Módulo en construcción: ${title}`);
-    }
-
-    async function loadDashboard() {
+    async function loadCurrentUser() {
+      // Ajusta esta ruta si tu backend usa otra para devolver usuario logueado
       try {
-        const user = await getMe();
-        currentUser = user;
-
-        document.getElementById("loginSection").classList.add("hidden");
-        document.getElementById("dashboardSection").classList.remove("hidden");
-
-        renderUserInfo(user);
-        renderModules(user);
-
-        configurePanelsByRole();
-      } catch (error) {
-        logout();
-        setMessage("loginMessage", "Tu sesión expiró o no es válida.");
-      }
-    }
-
-    function configurePanelsByRole() {
-      const superadminPanel = document.getElementById("superadminPanel");
-      const usuariosPanel = document.getElementById("usuariosPanel");
-      const ubicacionesPanel = document.getElementById("ubicacionesPanel");
-
-      superadminPanel.classList.add("hidden");
-      usuariosPanel.classList.add("hidden");
-      ubicacionesPanel.classList.add("hidden");
-
-      if (!currentUser) return;
-
-      if (currentUser.rol === "superadmin") {
-        superadminPanel.classList.remove("hidden");
-        usuariosPanel.classList.remove("hidden");
-        ubicacionesPanel.classList.remove("hidden");
-
-        document.getElementById("usuarioOrganizacionId").value = currentUser.organizacion_id;
-        document.getElementById("ubicacionOrganizacionId").value = currentUser.organizacion_id;
-
-        listarOrganizaciones();
-        listarUsuarios();
-        listarUbicaciones();
-        return;
-      }
-
-      if (currentUser.rol === "admin") {
-        usuariosPanel.classList.remove("hidden");
-        ubicacionesPanel.classList.remove("hidden");
-
-        document.getElementById("usuarioOrganizacionId").value = currentUser.organizacion_id;
-        document.getElementById("ubicacionOrganizacionId").value = currentUser.organizacion_id;
-
-        if (document.getElementById("nuevoRol")) {
-          document.getElementById("nuevoRol").innerHTML = `
-            <option value="usuario">usuario</option>
-            <option value="admin">admin</option>
-          `;
-        }
-
-        listarUsuarios();
-        listarUbicaciones();
-      }
-    }
-
-    async function crearOrganizacion() {
-      clearMessage("orgMessage");
-
-      const token = getToken();
-      const nombre = document.getElementById("orgNombre").value.trim();
-      const rfc = document.getElementById("orgRfc").value.trim();
-      const plan = document.getElementById("orgPlan").value;
-      const tipo = document.getElementById("orgTipo").value;
-
-      if (!nombre || !rfc || !plan || !tipo) {
-        setMessage("orgMessage", "Completa todos los campos.");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/organizaciones/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ nombre, rfc, plan, tipo })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setMessage("orgMessage", data.detail || "No se pudo crear la organización.");
-          return;
-        }
-
-        setMessage("orgMessage", "Organización creada correctamente.", "success");
-
-        document.getElementById("orgNombre").value = "";
-        document.getElementById("orgRfc").value = "";
-        document.getElementById("orgPlan").value = "free";
-        document.getElementById("orgTipo").value = "control";
-
-        await listarOrganizaciones();
-      } catch (error) {
-        setMessage("orgMessage", "Error de conexión al crear organización.");
-      }
-    }
-
-    async function listarOrganizaciones() {
-      const token = getToken();
-      const box = document.getElementById("organizacionesList");
-      box.innerHTML = `<p style="color:#64748b;">Cargando organizaciones...</p>`;
-
-      try {
-        const res = await fetch(`${API_URL}/organizaciones/`, {
+        currentUser = await apiFetch("/auth/me", {
           method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
+          headers: authHeaders()
+        });
+      } catch (e) {
+        // Fallback si todavía no existe /auth/me
+        currentUser = {
+          nombre: "Usuario",
+          email: "Sin /auth/me",
+          organizacion_id: null,
+          organizacion_nombre: "Organización actual"
+        };
+      }
+
+      document.getElementById("userName").textContent = currentUser.nombre || "Usuario";
+      document.getElementById("userEmail").textContent = currentUser.email || "-";
+      document.getElementById("orgName").textContent =
+        currentUser.organizacion_nombre || `Organización ID: ${currentUser.organizacion_id ?? "-"}`;
+    }
+
+    async function loadProductos() {
+      const data = await apiFetch("/productos", {
+        method: "GET",
+        headers: authHeaders()
+      });
+
+      productosCache = Array.isArray(data) ? data : (data.items || []);
+      renderProductos();
+      renderInventario();
+      renderProductoOptions();
+      updateStats();
+    }
+
+    function renderProductos() {
+      const tbody = document.getElementById("productosTbody");
+      tbody.innerHTML = "";
+
+      productosCache.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${p.id ?? "-"}</td>
+            <td>${p.nombre ?? "-"}</td>
+            <td>${p.codigo ?? "-"}</td>
+            <td>${p.cantidad ?? 0}</td>
+            <td>${p.ubicacion ?? "-"}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderInventario() {
+      const tbody = document.getElementById("inventarioTbody");
+      tbody.innerHTML = "";
+
+      productosCache.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${p.id ?? "-"}</td>
+            <td>${p.nombre ?? "-"}</td>
+            <td>${p.codigo ?? "-"}</td>
+            <td>${p.cantidad ?? 0}</td>
+            <td>${p.ubicacion ?? "-"}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderProductoOptions() {
+      const select = document.getElementById("movProducto");
+      select.innerHTML = `<option value="">Selecciona un producto</option>`;
+
+      productosCache.forEach(p => {
+        select.innerHTML += `<option value="${p.id}">${p.nombre} (${p.codigo || "sin código"})</option>`;
+      });
+    }
+
+    async function loadMovimientos() {
+      try {
+        const data = await apiFetch("/movimientos", {
+          method: "GET",
+          headers: authHeaders()
         });
 
-        const data = await res.json();
+        movimientosCache = Array.isArray(data) ? data : (data.items || []);
+      } catch {
+        movimientosCache = [];
+      }
 
-        if (!res.ok) {
-          box.innerHTML = `<p style="color:#991b1b;">${data.detail || "No se pudieron cargar organizaciones."}</p>`;
-          return;
-        }
+      renderMovimientos();
+      updateStats();
+    }
 
-        if (!Array.isArray(data) || data.length === 0) {
-          box.innerHTML = `<p style="color:#64748b;">No hay organizaciones todavía.</p>`;
-          return;
-        }
+    function renderMovimientos() {
+      const tbody = document.getElementById("movimientosTbody");
+      tbody.innerHTML = "";
 
-        box.innerHTML = "";
-        data.forEach(org => {
-          const item = document.createElement("div");
-          item.className = "item";
-          item.innerHTML = `
-            <strong>${org.nombre}</strong>
-            <span>ID: ${org.id}</span>
-            <span>RFC: ${org.rfc}</span>
-            <span>Plan: ${org.plan}</span>
-            <span>Tipo: ${org.tipo}</span>
+      movimientosCache.forEach(m => {
+        const productoNombre =
+          m.producto_nombre ||
+          productosCache.find(p => p.id === m.producto_id)?.nombre ||
+          `#${m.producto_id ?? "-"}`;
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${m.id ?? "-"}</td>
+            <td>${productoNombre}</td>
+            <td>
+              <span class="tag ${m.tipo === "entrada" ? "tag-entrada" : "tag-salida"}">
+                ${m.tipo ?? "-"}
+              </span>
+            </td>
+            <td>${m.cantidad ?? 0}</td>
+            <td>${m.usuario ?? "-"}</td>
+            <td>${formatDate(m.created_at || m.fecha)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function loadUsuarios() {
+      const tbody = document.getElementById("usuariosTbody");
+      tbody.innerHTML = "";
+
+      try {
+        const data = await apiFetch("/usuarios", {
+          method: "GET",
+          headers: authHeaders()
+        });
+
+        const usuarios = Array.isArray(data) ? data : (data.items || []);
+        usuarios.forEach(u => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${u.id ?? "-"}</td>
+              <td>${u.nombre ?? "-"}</td>
+              <td>${u.email ?? "-"}</td>
+              <td>${u.activo ?? "-"}</td>
+            </tr>
           `;
-          box.appendChild(item);
         });
+      } catch {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4">No se pudieron cargar usuarios o el endpoint /usuarios aún no está listo.</td>
+          </tr>
+        `;
+      }
+    }
+
+    function updateStats() {
+      document.getElementById("statProductos").textContent = productosCache.length;
+      document.getElementById("statMovimientos").textContent = movimientosCache.length;
+
+      const total = productosCache.reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
+      document.getElementById("statExistencias").textContent = total;
+    }
+
+    async function crearProducto() {
+      const msg = document.getElementById("productoMsg");
+      clearMsg(msg);
+
+      try {
+        const payload = {
+          nombre: document.getElementById("productoNombre").value.trim(),
+          codigo: document.getElementById("productoCodigo").value.trim(),
+          cantidad: Number(document.getElementById("productoCantidad").value || 0),
+          ubicacion: document.getElementById("productoUbicacion").value.trim(),
+          precio: Number(document.getElementById("productoPrecio").value || 0)
+        };
+
+        // Si tu backend exige organizacion_id en body, lo mandamos si existe
+        if (currentUser?.organizacion_id) {
+          payload.organizacion_id = currentUser.organizacion_id;
+        }
+
+        await apiFetch("/productos", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        showMsg(msg, "Producto creado correctamente");
+        document.getElementById("productoNombre").value = "";
+        document.getElementById("productoCodigo").value = "";
+        document.getElementById("productoCantidad").value = "";
+        document.getElementById("productoUbicacion").value = "";
+        document.getElementById("productoPrecio").value = "";
+
+        await loadProductos();
       } catch (error) {
-        box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar organizaciones.</p>`;
+        showMsg(msg, error.message, "error");
+      }
+    }
+
+    async function registrarMovimiento() {
+      const msg = document.getElementById("movimientoMsg");
+      clearMsg(msg);
+
+      try {
+        const payload = {
+          producto_id: Number(document.getElementById("movProducto").value),
+          tipo: document.getElementById("movTipo").value,
+          cantidad: Number(document.getElementById("movCantidad").value || 0),
+          usuario: currentUser?.nombre || "Usuario"
+        };
+
+        const nota = document.getElementById("movNota").value.trim();
+        if (nota) payload.nota = nota;
+
+        if (currentUser?.organizacion_id) {
+          payload.organizacion_id = currentUser.organizacion_id;
+        }
+
+        await apiFetch("/movimientos", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        showMsg(msg, "Movimiento registrado correctamente");
+        document.getElementById("movProducto").value = "";
+        document.getElementById("movCantidad").value = "";
+        document.getElementById("movNota").value = "";
+
+        await loadProductos();
+        await loadMovimientos();
+        activateSection("inventarioSection");
+      } catch (error) {
+        showMsg(msg, error.message, "error");
       }
     }
 
     async function crearUsuario() {
-      clearMessage("usuarioMessage");
-
-      const token = getToken();
-      const organizacion_id = parseInt(document.getElementById("usuarioOrganizacionId").value, 10);
-      const nombre = document.getElementById("nuevoNombre").value.trim();
-      const email = document.getElementById("nuevoEmail").value.trim();
-      const password = document.getElementById("nuevoPassword").value.trim();
-      const rol = document.getElementById("nuevoRol").value;
-
-      if (!organizacion_id || !nombre || !email || !password || !rol) {
-        setMessage("usuarioMessage", "Completa todos los campos.");
-        return;
-      }
+      const msg = document.getElementById("usuarioMsg");
+      clearMsg(msg);
 
       try {
-        const res = await fetch(`${API_URL}/usuarios/`, {
+        const payload = {
+          nombre: document.getElementById("usuarioNombre").value.trim(),
+          email: document.getElementById("usuarioEmail").value.trim(),
+          password: document.getElementById("usuarioPassword").value.trim(),
+          organizacion_id: currentUser?.organizacion_id
+        };
+
+        await apiFetch("/auth/register", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            organizacion_id,
-            nombre,
-            email,
-            password,
-            rol
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
 
-        const data = await res.json();
+        showMsg(msg, "Usuario creado correctamente");
+        document.getElementById("usuarioNombre").value = "";
+        document.getElementById("usuarioEmail").value = "";
+        document.getElementById("usuarioPassword").value = "";
 
-        if (!res.ok) {
-          setMessage("usuarioMessage", data.detail || "No se pudo crear el usuario.");
-          return;
-        }
-
-        setMessage("usuarioMessage", "Usuario creado correctamente.", "success");
-
-        document.getElementById("nuevoNombre").value = "";
-        document.getElementById("nuevoEmail").value = "";
-        document.getElementById("nuevoPassword").value = "";
-        document.getElementById("nuevoRol").value = "usuario";
-
-        await listarUsuarios();
+        await loadUsuarios();
       } catch (error) {
-        setMessage("usuarioMessage", "Error de conexión al crear usuario.");
+        showMsg(msg, error.message, "error");
       }
     }
 
-    async function listarUsuarios() {
-      const token = getToken();
-      const box = document.getElementById("usuariosList");
-      box.innerHTML = `<p style="color:#64748b;">Cargando usuarios...</p>`;
+    async function bootApp() {
+      loginView.classList.add("hidden");
+      appView.classList.remove("hidden");
 
       try {
-        const res = await fetch(`${API_URL}/usuarios/`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          box.innerHTML = `<p style="color:#991b1b;">${data.detail || "No se pudieron cargar usuarios."}</p>`;
-          return;
-        }
-
-        if (!Array.isArray(data) || data.length === 0) {
-          box.innerHTML = `<p style="color:#64748b;">No hay usuarios todavía.</p>`;
-          return;
-        }
-
-        box.innerHTML = "";
-        data.forEach(user => {
-          const item = document.createElement("div");
-          item.className = "item";
-          item.innerHTML = `
-            <strong>${user.nombre}</strong>
-            <span>ID: ${user.id}</span>
-            <span>${user.email}</span>
-            <span>Rol: ${user.rol}</span>
-            <span>Organización: ${user.organizacion_id}</span>
-            <span>Activo: ${user.activo}</span>
-          `;
-          box.appendChild(item);
-        });
+        await loadCurrentUser();
+        await Promise.all([
+          loadProductos(),
+          loadMovimientos(),
+          loadUsuarios()
+        ]);
       } catch (error) {
-        box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar usuarios.</p>`;
+        console.error(error);
       }
     }
 
-    async function crearUbicacion() {
-      clearMessage("ubicacionMessage");
-
-      const token = getToken();
-      const organizacion_id = parseInt(document.getElementById("ubicacionOrganizacionId").value, 10);
-      const nombre = document.getElementById("ubicacionNombre").value.trim();
-      const tipo = document.getElementById("ubicacionTipo").value;
-
-      if (!organizacion_id || !nombre || !tipo) {
-        setMessage("ubicacionMessage", "Completa todos los campos.");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/ubicaciones/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            organizacion_id,
-            nombre,
-            tipo
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setMessage("ubicacionMessage", data.detail || "No se pudo crear la ubicación.");
-          return;
-        }
-
-        setMessage("ubicacionMessage", "Ubicación creada correctamente.", "success");
-
-        document.getElementById("ubicacionNombre").value = "";
-        document.getElementById("ubicacionTipo").value = "sucursal";
-
-        await listarUbicaciones();
-      } catch (error) {
-        setMessage("ubicacionMessage", "Error de conexión al crear ubicación.");
-      }
+    function logout() {
+      clearToken();
+      currentUser = null;
+      productosCache = [];
+      movimientosCache = [];
+      loginView.classList.remove("hidden");
+      appView.classList.add("hidden");
     }
 
-    async function listarUbicaciones() {
-      const token = getToken();
-      const box = document.getElementById("ubicacionesList");
-      box.innerHTML = `<p style="color:#64748b;">Cargando ubicaciones...</p>`;
+    document.getElementById("loginBtn").addEventListener("click", login);
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("refreshBtn").addEventListener("click", bootApp);
+    document.getElementById("crearProductoBtn").addEventListener("click", crearProducto);
+    document.getElementById("registrarMovimientoBtn").addEventListener("click", registrarMovimiento);
+    document.getElementById("crearUsuarioBtn").addEventListener("click", crearUsuario);
 
-      try {
-        const res = await fetch(`${API_URL}/ubicaciones/`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          box.innerHTML = `<p style="color:#991b1b;">${data.detail || "No se pudieron cargar ubicaciones."}</p>`;
-          return;
-        }
-
-        if (!Array.isArray(data) || data.length === 0) {
-          box.innerHTML = `<p style="color:#64748b;">No hay ubicaciones todavía.</p>`;
-          return;
-        }
-
-        box.innerHTML = "";
-        data.forEach(ubicacion => {
-          const item = document.createElement("div");
-          item.className = "item";
-          item.innerHTML = `
-            <strong>${ubicacion.nombre}</strong>
-            <span>ID: ${ubicacion.id}</span>
-            <span>Organización: ${ubicacion.organizacion_id}</span>
-            <span>Tipo: ${ubicacion.tipo}</span>
-            <span>Activo: ${ubicacion.activo}</span>
-          `;
-          box.appendChild(item);
-        });
-      } catch (error) {
-        box.innerHTML = `<p style="color:#991b1b;">Error de conexión al listar ubicaciones.</p>`;
-      }
-    }
+    document.getElementById("loginPassword").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") login();
+    });
 
     window.addEventListener("load", async () => {
-      const token = getToken();
-      if (token) {
-        await loadDashboard();
+      if (getToken()) {
+        await bootApp();
       }
     });
   </script>
