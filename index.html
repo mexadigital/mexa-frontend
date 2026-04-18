@@ -234,6 +234,7 @@
       border-radius: 12px;
       font-size: 14px;
       display: none;
+      line-height: 1.4;
     }
 
     .msg.ok {
@@ -248,6 +249,13 @@
       background: rgba(239,47,47,.12);
       color: #ffaaaa;
       border: 1px solid rgba(239,47,47,.28);
+    }
+
+    .msg.info {
+      display: block;
+      background: rgba(47,102,226,.12);
+      color: #b8d3ff;
+      border: 1px solid rgba(47,102,226,.28);
     }
 
     .muted {
@@ -562,14 +570,36 @@
       btn.addEventListener("click", () => activateSection(btn.dataset.section));
     });
 
+    async function wakeBackend() {
+      try {
+        await fetch(`${API_BASE}/`, { method: "GET" });
+      } catch (e) {
+        console.log("Backend aún despertando...");
+      }
+    }
+
     async function apiFetch(path, options = {}) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 90000);
+
       let res;
 
       try {
-        res = await fetch(`${API_BASE}${path}`, options);
+        res = await fetch(`${API_BASE}${path}`, {
+          ...options,
+          signal: controller.signal
+        });
       } catch (error) {
+        clearTimeout(timeout);
+
+        if (error.name === "AbortError") {
+          throw new Error("El backend tardó demasiado en responder. Probablemente está despertando en Render.");
+        }
+
         throw new Error("No se pudo conectar con el backend");
       }
+
+      clearTimeout(timeout);
 
       if (res.status === 401) {
         clearToken();
@@ -601,6 +631,9 @@
       clearMsg(msg);
 
       try {
+        showMsg(msg, "Conectando con el backend...", "info");
+        await wakeBackend();
+
         const data = await apiFetch("/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -611,6 +644,7 @@
         if (!token) throw new Error("No se recibió token");
 
         setToken(token);
+        clearMsg(msg);
         await bootApp();
       } catch (error) {
         showMsg(msg, error.message, "error");
@@ -805,7 +839,7 @@
           body: JSON.stringify(payload)
         });
 
-        showMsg(msg, "Producto creado correctamente");
+        showMsg(msg, "Producto creado correctamente", "ok");
         document.getElementById("productoNombre").value = "";
         document.getElementById("productoCodigo").value = "";
         document.getElementById("productoCantidad").value = "";
@@ -823,10 +857,21 @@
       clearMsg(msg);
 
       try {
+        const productoId = Number(document.getElementById("movProducto").value);
+        const cantidad = Number(document.getElementById("movCantidad").value || 0);
+
+        if (!productoId) {
+          throw new Error("Selecciona un producto");
+        }
+
+        if (!cantidad || cantidad <= 0) {
+          throw new Error("La cantidad debe ser mayor a 0");
+        }
+
         const payload = {
-          producto_id: Number(document.getElementById("movProducto").value),
+          producto_id: productoId,
           tipo: document.getElementById("movTipo").value,
-          cantidad: Number(document.getElementById("movCantidad").value || 0),
+          cantidad: cantidad,
           usuario: currentUser?.nombre || "Usuario"
         };
 
@@ -843,7 +888,7 @@
           body: JSON.stringify(payload)
         });
 
-        showMsg(msg, "Movimiento registrado correctamente");
+        showMsg(msg, "Movimiento registrado correctamente", "ok");
         document.getElementById("movProducto").value = "";
         document.getElementById("movCantidad").value = "";
         document.getElementById("movNota").value = "";
@@ -874,7 +919,7 @@
           body: JSON.stringify(payload)
         });
 
-        showMsg(msg, "Usuario creado correctamente");
+        showMsg(msg, "Usuario creado correctamente", "ok");
         document.getElementById("usuarioNombre").value = "";
         document.getElementById("usuarioEmail").value = "";
         document.getElementById("usuarioPassword").value = "";
@@ -890,6 +935,7 @@
       appView.classList.remove("hidden");
 
       try {
+        await wakeBackend();
         await loadCurrentUser();
         await Promise.all([
           loadProductos(),
