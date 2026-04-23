@@ -3,75 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mexa.Digital - Inventario</title>
+  <title>Mexa.Digital</title>
   <style>
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
       font-family: Arial, sans-serif;
     }
 
     body {
-      background: #f4f7fb;
-      color: #1f2937;
-      padding: 20px;
+      margin: 0;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 16px 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
     }
 
     .container {
       max-width: 1200px;
-      margin: 0 auto;
+      margin: 20px auto;
+      padding: 0 16px;
     }
 
     .card {
-      background: #fff;
+      background: white;
       border-radius: 14px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      padding: 20px;
-      margin-bottom: 20px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     }
 
-    h1, h2, h3 {
-      margin-bottom: 14px;
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
     }
 
-    .row {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 14px;
+      gap: 12px;
     }
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 14px;
+    .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 
     label {
-      font-size: 14px;
+      display: block;
+      margin-bottom: 6px;
       font-weight: bold;
-      color: #374151;
+      font-size: 14px;
     }
 
-    input, select, button, textarea {
-      padding: 12px;
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px 12px;
       border-radius: 10px;
       border: 1px solid #d1d5db;
       font-size: 14px;
     }
 
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    textarea {
+      resize: vertical;
+      min-height: 90px;
     }
 
     button {
-      cursor: pointer;
       border: none;
       font-weight: bold;
-      transition: 0.2s ease;
+      cursor: pointer;
     }
 
     .btn-primary {
@@ -83,6 +94,15 @@
       background: #1d4ed8;
     }
 
+    .btn-secondary {
+      background: #374151;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #1f2937;
+    }
+
     .btn-danger {
       background: #dc2626;
       color: white;
@@ -92,51 +112,42 @@
       background: #b91c1c;
     }
 
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    .btn-secondary:hover {
-      background: #d1d5db;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .topbar {
+    .row-actions {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 20px;
+      margin-top: 12px;
+    }
+
+    .row-actions button {
+      width: auto;
+      min-width: 140px;
     }
 
     .status {
-      padding: 12px 14px;
+      padding: 12px;
       border-radius: 10px;
-      font-size: 14px;
       margin-bottom: 16px;
-    }
-
-    .status.ok {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #86efac;
-    }
-
-    .status.error {
-      background: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fca5a5;
+      font-size: 14px;
     }
 
     .status.info {
       background: #dbeafe;
       color: #1d4ed8;
-      border: 1px solid #93c5fd;
+    }
+
+    .status.ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .hidden {
+      display: none;
     }
 
     table {
@@ -144,15 +155,15 @@
       border-collapse: collapse;
       margin-top: 12px;
       background: white;
-      overflow: hidden;
       border-radius: 12px;
+      overflow: hidden;
     }
 
     th, td {
-      padding: 12px;
       border-bottom: 1px solid #e5e7eb;
-      text-align: left;
+      padding: 10px;
       font-size: 14px;
+      text-align: left;
       vertical-align: top;
     }
 
@@ -167,7 +178,7 @@
 
     .pill {
       display: inline-block;
-      padding: 6px 10px;
+      padding: 4px 10px;
       border-radius: 999px;
       font-size: 12px;
       font-weight: bold;
@@ -188,167 +199,183 @@
       font-size: 13px;
     }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .empty {
-      padding: 20px;
-      text-align: center;
-      color: #6b7280;
-      background: #f9fafb;
-      border: 1px dashed #cbd5e1;
-      border-radius: 12px;
-      margin-top: 12px;
-    }
-
     .small {
       font-size: 12px;
       color: #6b7280;
-      margin-top: 5px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     @media (max-width: 768px) {
       th, td {
         font-size: 12px;
-        padding: 10px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="topbar">
-      <div>
-        <h1>Mexa.Digital</h1>
-        <div class="muted">Inventario básico con login, productos y movimientos</div>
-      </div>
-      <div class="actions">
-        <button id="btnReload" class="btn-secondary hidden">Recargar</button>
-        <button id="btnLogout" class="btn-danger hidden">Cerrar sesión</button>
-      </div>
-    </div>
+  <header>
+    <h1>Mexa.Digital</h1>
+  </header>
 
+  <div class="container">
     <div id="statusBox" class="status info">Listo.</div>
 
     <!-- LOGIN -->
     <section id="loginSection" class="card">
       <h2>Login</h2>
-      <div class="row">
-        <div class="field">
+      <div class="grid grid-2">
+        <div>
           <label for="email">Correo</label>
-          <input id="email" type="email" placeholder="admin2@mexa.com" />
+          <input id="email" type="email" placeholder="admin@mexa.com" />
         </div>
-        <div class="field">
+        <div>
           <label for="password">Contraseña</label>
           <input id="password" type="password" placeholder="********" />
         </div>
       </div>
-      <div class="actions">
+      <div class="row-actions">
         <button id="btnLogin" class="btn-primary">Entrar</button>
       </div>
-      <div class="small">
-        API: <span id="apiUrlText"></span>
-      </div>
+      <p class="small">API: https://mexa-core-1.onrender.com</p>
     </section>
 
     <!-- APP -->
     <section id="appSection" class="hidden">
       <div class="card">
+        <div class="section-title">
+          <h2>Sesión activa</h2>
+          <button id="btnLogout" class="btn-danger">Cerrar sesión</button>
+        </div>
+        <div class="muted">Ya no ocupas Swagger mañana.</div>
+      </div>
+
+      <!-- BUSCAR PRODUCTOS -->
+      <div class="card">
+        <h2>Buscar productos</h2>
+        <div class="grid grid-3">
+          <div>
+            <label for="buscarProducto">Nombre</label>
+            <input id="buscarProducto" type="text" placeholder="Ej. disco, guante, llave..." />
+          </div>
+          <div style="align-self:end;">
+            <button id="btnBuscarProducto" class="btn-primary">Buscar</button>
+          </div>
+          <div style="align-self:end;">
+            <button id="btnCargarTodos" class="btn-secondary">Ver todos</button>
+          </div>
+        </div>
+
+        <div id="productosBox"></div>
+      </div>
+
+      <!-- REGISTRAR MOVIMIENTO -->
+      <div class="card">
         <h2>Registrar movimiento</h2>
-
-        <div class="row">
-          <div class="field">
-            <label for="productoSelect">Producto</label>
-            <select id="productoSelect">
-              <option value="">Selecciona un producto</option>
-            </select>
+        <div class="grid grid-3">
+          <div>
+            <label for="movProductoId">Producto ID</label>
+            <input id="movProductoId" type="number" min="1" placeholder="Ej. 1" />
           </div>
 
-          <div class="field">
-            <label for="tipoMovimiento">Tipo</label>
-            <select id="tipoMovimiento">
-              <option value="entrada">Entrada</option>
+          <div>
+            <label for="movTipo">Tipo</label>
+            <select id="movTipo">
               <option value="salida">Salida</option>
+              <option value="entrada">Entrada</option>
             </select>
           </div>
 
-          <div class="field">
-            <label for="cantidadMovimiento">Cantidad</label>
-            <input id="cantidadMovimiento" type="number" min="1" placeholder="Ej. 5" />
+          <div>
+            <label for="movCantidad">Cantidad</label>
+            <input id="movCantidad" type="number" min="1" value="1" />
           </div>
 
-          <div class="field">
-            <label for="usuarioMovimiento">Usuario</label>
-            <input id="usuarioMovimiento" type="text" placeholder="Ej. admin2@mexa.com" />
+          <div>
+            <label for="movUsuario">Usuario</label>
+            <input id="movUsuario" type="text" placeholder="Quien entrega / registra" />
+          </div>
+
+          <div>
+            <label for="movRecibe">Recibe</label>
+            <input id="movRecibe" type="text" placeholder="Nombre del trabajador" />
+          </div>
+
+          <div>
+            <label for="movEmpleado">Empleado</label>
+            <input id="movEmpleado" type="text" placeholder="Número / ficha" />
           </div>
         </div>
 
-        <div class="field">
-          <label for="notaMovimiento">Nota</label>
-          <textarea id="notaMovimiento" rows="3" placeholder="Opcional"></textarea>
+        <div style="margin-top:12px;">
+          <label for="movNota">Nota</label>
+          <textarea id="movNota" placeholder="Observación opcional"></textarea>
         </div>
 
-        <div class="actions">
+        <div class="row-actions">
           <button id="btnGuardarMovimiento" class="btn-primary">Guardar movimiento</button>
         </div>
       </div>
 
+      <!-- PRESTADAS -->
       <div class="card">
-        <h2>Productos</h2>
-        <div id="productosContainer"></div>
+        <div class="section-title">
+          <h2>Herramientas prestadas</h2>
+          <button id="btnPrestadas" class="btn-secondary">Actualizar prestadas</button>
+        </div>
+        <div id="prestadasBox"></div>
       </div>
 
+      <!-- MOVIMIENTOS -->
       <div class="card">
-        <h2>Movimientos</h2>
-        <div id="movimientosContainer"></div>
+        <div class="section-title">
+          <h2>Movimientos</h2>
+          <button id="btnMovimientos" class="btn-secondary">Actualizar movimientos</button>
+        </div>
+        <div id="movimientosBox"></div>
       </div>
     </section>
   </div>
 
   <script>
-    // =========================
-    // CONFIG
-    // =========================
     const API_BASE = "https://mexa-core-1.onrender.com";
-    document.getElementById("apiUrlText").textContent = API_BASE;
 
-    // =========================
-    // ELEMENTOS
-    // =========================
     const statusBox = document.getElementById("statusBox");
-
     const loginSection = document.getElementById("loginSection");
     const appSection = document.getElementById("appSection");
 
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+
     const btnLogin = document.getElementById("btnLogin");
     const btnLogout = document.getElementById("btnLogout");
-    const btnReload = document.getElementById("btnReload");
+
+    const buscarProducto = document.getElementById("buscarProducto");
+    const btnBuscarProducto = document.getElementById("btnBuscarProducto");
+    const btnCargarTodos = document.getElementById("btnCargarTodos");
+    const productosBox = document.getElementById("productosBox");
+
+    const movProductoId = document.getElementById("movProductoId");
+    const movTipo = document.getElementById("movTipo");
+    const movCantidad = document.getElementById("movCantidad");
+    const movUsuario = document.getElementById("movUsuario");
+    const movRecibe = document.getElementById("movRecibe");
+    const movEmpleado = document.getElementById("movEmpleado");
+    const movNota = document.getElementById("movNota");
     const btnGuardarMovimiento = document.getElementById("btnGuardarMovimiento");
 
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
+    const btnPrestadas = document.getElementById("btnPrestadas");
+    const prestadasBox = document.getElementById("prestadasBox");
 
-    const productoSelect = document.getElementById("productoSelect");
-    const tipoMovimiento = document.getElementById("tipoMovimiento");
-    const cantidadMovimiento = document.getElementById("cantidadMovimiento");
-    const usuarioMovimiento = document.getElementById("usuarioMovimiento");
-    const notaMovimiento = document.getElementById("notaMovimiento");
+    const btnMovimientos = document.getElementById("btnMovimientos");
+    const movimientosBox = document.getElementById("movimientosBox");
 
-    const productosContainer = document.getElementById("productosContainer");
-    const movimientosContainer = document.getElementById("movimientosContainer");
-
-    // =========================
-    // ESTADO
-    // =========================
-    let productos = [];
-    let movimientos = [];
-
-    // =========================
-    // HELPERS
-    // =========================
     function setStatus(message, type = "info") {
       statusBox.className = `status ${type}`;
       statusBox.textContent = message;
@@ -366,53 +393,23 @@
       localStorage.removeItem("mexa_token");
     }
 
-    function authHeaders(extra = {}) {
-      const token = getToken();
+    function authHeaders() {
       return {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...extra
+        "Authorization": `Bearer ${getToken()}`
       };
     }
 
-    function formatDate(dateStr) {
-      if (!dateStr) return "-";
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr;
-      return date.toLocaleString("es-MX");
+    function toggleApp(isLoggedIn) {
+      loginSection.classList.toggle("hidden", isLoggedIn);
+      appSection.classList.toggle("hidden", !isLoggedIn);
     }
 
-    function escapeHtml(text) {
-      if (text === null || text === undefined) return "";
-      return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function toggleApp(isLogged) {
-      loginSection.classList.toggle("hidden", isLogged);
-      appSection.classList.toggle("hidden", !isLogged);
-      btnLogout.classList.toggle("hidden", !isLogged);
-      btnReload.classList.toggle("hidden", !isLogged);
-    }
-
-    function getProductoNombre(productoId) {
-      const producto = productos.find(p => Number(p.id) === Number(productoId));
-      return producto ? producto.nombre : `Producto #${productoId}`;
-    }
-
-    // =========================
-    // API
-    // =========================
     async function apiFetch(path, options = {}) {
       const response = await fetch(`${API_BASE}${path}`, options);
-
-      let data = null;
       const text = await response.text();
 
+      let data;
       try {
         data = text ? JSON.parse(text) : null;
       } catch {
@@ -421,219 +418,208 @@
 
       if (!response.ok) {
         const detail =
-          (data && data.detail && typeof data.detail === "string" && data.detail) ||
-          (typeof data === "string" && data) ||
-          `Error ${response.status}`;
-        throw new Error(detail);
+          (data && data.detail) ||
+          (typeof data === "string" ? data : `Error ${response.status}`);
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
       }
 
       return data;
     }
 
     async function login() {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
-
-      if (!email || !password) {
-        setStatus("Escribe correo y contraseña.", "error");
-        return;
-      }
-
       try {
         setStatus("Entrando...", "info");
 
         const data = await apiFetch("/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({
+            email: email.value.trim(),
+            password: password.value.trim()
+          })
         });
 
-        const token = data.access_token || data.token;
-        if (!token) {
-          throw new Error("El backend no devolvió token.");
-        }
+        setToken(data.access_token);
+        movUsuario.value = email.value.trim();
 
-        setToken(token);
         toggleApp(true);
-        usuarioMovimiento.value = email;
-
         setStatus("Login correcto.", "ok");
-        await cargarTodo();
+
+        await cargarProductos();
+        await cargarPrestadas();
+        await cargarMovimientos();
       } catch (error) {
-        clearToken();
-        toggleApp(false);
         setStatus(`No se pudo iniciar sesión: ${error.message}`, "error");
       }
     }
 
-    async function cargarProductos() {
-      const data = await apiFetch("/productos/", {
-        method: "GET",
-        headers: authHeaders()
-      });
+    async function cargarProductos(q = "") {
+      try {
+        setStatus("Cargando productos...", "info");
 
-      productos = Array.isArray(data) ? data : [];
-      renderProductos();
-      renderProductoOptions();
-    }
+        const query = q ? `?q=${encodeURIComponent(q)}` : "";
+        const productos = await apiFetch(`/productos/${query}`, {
+          method: "GET",
+          headers: authHeaders()
+        });
 
-    async function cargarMovimientos() {
-      const data = await apiFetch("/movimientos/", {
-        method: "GET",
-        headers: authHeaders()
-      });
-
-      movimientos = Array.isArray(data) ? data : [];
-      renderMovimientos();
+        renderProductos(productos);
+        setStatus("Productos cargados.", "ok");
+      } catch (error) {
+        setStatus(`Error cargando productos: ${error.message}`, "error");
+      }
     }
 
     async function guardarMovimiento() {
-      const producto_id = productoSelect.value;
-      const tipo = tipoMovimiento.value;
-      const cantidad = Number(cantidadMovimiento.value);
-      const usuario = usuarioMovimiento.value.trim();
-      const nota = notaMovimiento.value.trim();
-
-      if (!producto_id) {
-        setStatus("Selecciona un producto.", "error");
-        return;
-      }
-
-      if (!cantidad || cantidad <= 0) {
-        setStatus("La cantidad debe ser mayor a 0.", "error");
-        return;
-      }
-
-      if (!usuario) {
-        setStatus("Escribe el usuario.", "error");
-        return;
-      }
-
       try {
         setStatus("Guardando movimiento...", "info");
 
-        const body = {
-          producto_id: Number(producto_id),
-          tipo,
-          cantidad,
-          usuario,
-          nota
+        const payload = {
+          producto_id: Number(movProductoId.value),
+          tipo: movTipo.value,
+          cantidad: Number(movCantidad.value),
+          usuario: movUsuario.value.trim(),
+          recibe: movRecibe.value.trim() || null,
+          empleado: movEmpleado.value.trim() || null,
+          nota: movNota.value.trim() || null
         };
+
+        if (!payload.producto_id || payload.producto_id <= 0) {
+          throw new Error("Pon un producto ID válido.");
+        }
+
+        if (!payload.usuario) {
+          throw new Error("Pon el usuario.");
+        }
+
+        if (!payload.cantidad || payload.cantidad <= 0) {
+          throw new Error("La cantidad debe ser mayor a 0.");
+        }
 
         await apiFetch("/movimientos/", {
           method: "POST",
           headers: authHeaders(),
-          body: JSON.stringify(body)
+          body: JSON.stringify(payload)
         });
 
-        cantidadMovimiento.value = "";
-        notaMovimiento.value = "";
-
         setStatus("Movimiento guardado correctamente.", "ok");
-        await cargarTodo();
+
+        movCantidad.value = 1;
+        movRecibe.value = "";
+        movEmpleado.value = "";
+        movNota.value = "";
+
+        await cargarPrestadas();
+        await cargarMovimientos();
+        await cargarProductos(buscarProducto.value.trim());
       } catch (error) {
-        setStatus(`No se pudo guardar el movimiento: ${error.message}`, "error");
+        setStatus(`Error guardando movimiento: ${error.message}`, "error");
       }
     }
 
-    async function cargarTodo() {
+    async function cargarPrestadas() {
       try {
-        setStatus("Cargando productos y movimientos...", "info");
-        await Promise.all([cargarProductos(), cargarMovimientos()]);
-        setStatus("Datos cargados correctamente.", "ok");
-      } catch (error) {
-        setStatus(`No se pudieron cargar los datos: ${error.message}`, "error");
+        setStatus("Cargando prestadas...", "info");
 
-        if (
-          String(error.message).toLowerCase().includes("not authenticated") ||
-          String(error.message).toLowerCase().includes("token") ||
-          String(error.message).toLowerCase().includes("credenciales")
-        ) {
-          clearToken();
-          toggleApp(false);
-        }
+        const data = await apiFetch("/movimientos/prestadas", {
+          method: "GET",
+          headers: authHeaders()
+        });
+
+        renderPrestadas(data);
+        setStatus("Prestadas actualizadas.", "ok");
+      } catch (error) {
+        setStatus(`Error cargando prestadas: ${error.message}`, "error");
       }
     }
 
-    // =========================
-    // RENDER
-    // =========================
-    function renderProductoOptions() {
-      productoSelect.innerHTML = `<option value="">Selecciona un producto</option>`;
+    async function cargarMovimientos() {
+      try {
+        setStatus("Cargando movimientos...", "info");
 
-      productos.forEach(producto => {
-        const option = document.createElement("option");
-        option.value = producto.id;
-        option.textContent = `${producto.nombre} (Stock: ${producto.cantidad ?? 0})`;
-        productoSelect.appendChild(option);
-      });
+        const data = await apiFetch("/movimientos/", {
+          method: "GET",
+          headers: authHeaders()
+        });
+
+        renderMovimientos(data);
+        setStatus("Movimientos cargados.", "ok");
+      } catch (error) {
+        setStatus(`Error cargando movimientos: ${error.message}`, "error");
+      }
     }
 
-    function renderProductos() {
-      if (!productos.length) {
-        productosContainer.innerHTML = `<div class="empty">No hay productos para mostrar.</div>`;
+    function renderProductos(productos) {
+      if (!productos || !productos.length) {
+        productosBox.innerHTML = `<p class="muted">No hay productos.</p>`;
         return;
       }
 
-      const rows = productos.map(producto => `
-        <tr>
-          <td>${producto.id ?? "-"}</td>
-          <td>${escapeHtml(producto.nombre ?? "-")}</td>
-          <td>${escapeHtml(producto.codigo ?? "-")}</td>
-          <td>${escapeHtml(producto.tipo ?? "-")}</td>
-          <td>${producto.cantidad ?? 0}</td>
-          <td>${escapeHtml(producto.ubicacion ?? "-")}</td>
-          <td>${producto.precio ?? "-"}</td>
-          <td>${formatDate(producto.created_at)}</td>
-        </tr>
-      `).join("");
-
-      productosContainer.innerHTML = `
+      productosBox.innerHTML = `
         <table>
           <thead>
             <tr>
               <th>ID</th>
               <th>Nombre</th>
               <th>Código</th>
-              <th>Tipo</th>
-              <th>Stock</th>
+              <th>Cantidad</th>
               <th>Ubicación</th>
-              <th>Precio</th>
-              <th>Creado</th>
             </tr>
           </thead>
           <tbody>
-            ${rows}
+            ${productos.map(p => `
+              <tr>
+                <td>${p.id}</td>
+                <td>${p.nombre}</td>
+                <td>${p.codigo}</td>
+                <td>${p.cantidad}</td>
+                <td>${p.ubicacion ?? "-"}</td>
+              </tr>
+            `).join("")}
           </tbody>
         </table>
       `;
     }
 
-    function renderMovimientos() {
-      if (!movimientos.length) {
-        movimientosContainer.innerHTML = `<div class="empty">No hay movimientos para mostrar.</div>`;
+    function renderPrestadas(items) {
+      if (!items || !items.length) {
+        prestadasBox.innerHTML = `<p class="muted">No hay herramientas prestadas.</p>`;
         return;
       }
 
-      const rows = movimientos.map(mov => `
-        <tr>
-          <td>${mov.id ?? "-"}</td>
-          <td>${escapeHtml(getProductoNombre(mov.producto_id))}</td>
-          <td>
-            <span class="pill ${escapeHtml(mov.tipo)}">
-              ${escapeHtml((mov.tipo || "").toUpperCase())}
-            </span>
-          </td>
-          <td>${mov.cantidad ?? 0}</td>
-          <td>${escapeHtml(mov.usuario ?? "-")}</td>
-          <td>${escapeHtml(mov.recibe ?? "-")}</td>
-          <td>${escapeHtml(mov.empleado ?? "-")}</td>
-          <td>${escapeHtml(mov.nota ?? "-")}</td>
-          <td>${formatDate(mov.created_at)}</td>
-        </tr>
-      `).join("");
+      prestadasBox.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Recibe</th>
+              <th>Empleado</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(i => `
+              <tr>
+                <td>${i.producto}</td>
+                <td>${i.cantidad}</td>
+                <td>${i.recibe ?? "No registrado"}</td>
+                <td>${i.empleado ?? "No registrado"}</td>
+                <td>${i.fecha ?? "-"}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
 
-      movimientosContainer.innerHTML = `
+    function renderMovimientos(items) {
+      if (!items || !items.length) {
+        movimientosBox.innerHTML = `<p class="muted">No hay movimientos.</p>`;
+        return;
+      }
+
+      movimientosBox.innerHTML = `
         <table>
           <thead>
             <tr>
@@ -649,15 +635,24 @@
             </tr>
           </thead>
           <tbody>
-            ${rows}
+            ${items.map(i => `
+              <tr>
+                <td>${i.id}</td>
+                <td>${i.producto}</td>
+                <td><span class="pill ${i.tipo}">${i.tipo}</span></td>
+                <td>${i.cantidad}</td>
+                <td>${i.usuario ?? "-"}</td>
+                <td>${i.recibe ?? "-"}</td>
+                <td>${i.empleado ?? "-"}</td>
+                <td>${i.nota ?? "-"}</td>
+                <td>${i.created_at ?? "-"}</td>
+              </tr>
+            `).join("")}
           </tbody>
         </table>
       `;
     }
 
-    // =========================
-    // EVENTOS
-    // =========================
     btnLogin.addEventListener("click", login);
 
     btnLogout.addEventListener("click", () => {
@@ -666,32 +661,46 @@
       setStatus("Sesión cerrada.", "info");
     });
 
-    btnReload.addEventListener("click", cargarTodo);
+    btnBuscarProducto.addEventListener("click", () => {
+      cargarProductos(buscarProducto.value.trim());
+    });
+
+    btnCargarTodos.addEventListener("click", () => {
+      buscarProducto.value = "";
+      cargarProductos();
+    });
+
     btnGuardarMovimiento.addEventListener("click", guardarMovimiento);
+    btnPrestadas.addEventListener("click", cargarPrestadas);
+    btnMovimientos.addEventListener("click", cargarMovimientos);
 
-    passwordInput.addEventListener("keydown", (e) => {
+    password.addEventListener("keydown", (e) => {
       if (e.key === "Enter") login();
     });
 
-    emailInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") login();
+    buscarProducto.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") cargarProductos(buscarProducto.value.trim());
     });
 
-    // =========================
-    // INIT
-    // =========================
-    (async function init() {
+    window.addEventListener("load", async () => {
       const token = getToken();
 
       if (token) {
         toggleApp(true);
-        setStatus("Token encontrado. Cargando datos...", "info");
-        await cargarTodo();
+        setStatus("Token detectado. Cargando...", "info");
+        try {
+          await cargarProductos();
+          await cargarPrestadas();
+          await cargarMovimientos();
+        } catch {
+          clearToken();
+          toggleApp(false);
+        }
       } else {
         toggleApp(false);
-        setStatus("Inicia sesión para continuar.", "info");
+        setStatus("Inicia sesión.", "info");
       }
-    })();
+    });
   </script>
 </body>
 </html>
