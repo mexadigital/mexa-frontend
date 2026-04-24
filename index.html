@@ -1,40 +1,107 @@
+```html id="mxu92a"
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mexa - Demo</title>
-</head>
-<body>
+<meta charset="UTF-8">
+<title>Mexa Digital</title>
 
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  margin: 0;
+  padding: 20px;
+}
+
+h2 {
+  margin-top: 30px;
+  color: #38bdf8;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+input {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
+  width: 150px;
+}
+
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  background: #38bdf8;
+  color: black;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0ea5e9;
+}
+
+#listaProductos li {
+  padding: 8px;
+  border-bottom: 1px solid #334155;
+}
+
+.ok {
+  color: #4ade80;
+}
+
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="card">
 <h2>🔐 Login</h2>
 <input id="email" placeholder="email">
 <input id="password" type="password" placeholder="password">
-<button onclick="login()">Login</button>
+<button onclick="login()">Entrar</button>
+<p id="loginStatus"></p>
+</div>
 
-<hr>
-
+<div class="card">
 <h2>📦 Productos</h2>
 <button onclick="cargarProductos()">Cargar productos</button>
 <ul id="listaProductos"></ul>
+</div>
 
-<hr>
-
+<div class="card">
 <h2>➕ Crear Producto</h2>
 <input id="nombre" placeholder="Nombre">
 <input id="codigo" placeholder="Código">
 <input id="tipo" placeholder="Tipo">
 <input id="cantidad" placeholder="Cantidad">
 <button onclick="crearProducto()">Crear</button>
+</div>
 
-<hr>
-
-<h2>📤 Salida</h2>
-<input id="producto_id" placeholder="Producto ID">
+<div class="card">
+<h2>📤 Registrar salida</h2>
+<input id="producto_id" placeholder="ID Producto">
 <input id="cantidad_salida" placeholder="Cantidad">
 <button onclick="salida()">Salida</button>
+<p id="salidaStatus"></p>
+</div>
+
+</div>
 
 <script>
-let token = "";
+let token = localStorage.getItem("token") || "";
 
 async function login() {
   const res = await fetch("https://mexa-core-1.onrender.com/auth/login", {
@@ -45,15 +112,23 @@ async function login() {
       password: document.getElementById("password").value
     })
   });
+
   const data = await res.json();
-  token = data.access_token;
-  alert("Login OK");
+
+  if (data.access_token) {
+    token = data.access_token;
+    localStorage.setItem("token", token);
+    document.getElementById("loginStatus").innerText = "✅ Conectado";
+  } else {
+    document.getElementById("loginStatus").innerText = "❌ Error login";
+  }
 }
 
 async function cargarProductos() {
   const res = await fetch("https://mexa-core-1.onrender.com/productos/", {
     headers: { "Authorization": "Bearer " + token }
   });
+
   const data = await res.json();
 
   const lista = document.getElementById("listaProductos");
@@ -61,7 +136,7 @@ async function cargarProductos() {
 
   data.forEach(p => {
     const li = document.createElement("li");
-    li.innerText = p.id + " - " + p.nombre + " (" + p.cantidad + ")";
+    li.innerText = `ID: ${p.id} | ${p.nombre} | Stock: ${p.cantidad}`;
     lista.appendChild(li);
   });
 }
@@ -80,7 +155,8 @@ async function crearProducto() {
       cantidad: parseInt(document.getElementById("cantidad").value)
     })
   });
-  alert("Producto creado");
+
+  cargarProductos();
 }
 
 async function salida() {
@@ -96,7 +172,9 @@ async function salida() {
       cantidad: parseInt(document.getElementById("cantidad_salida").value)
     })
   });
-  alert("Salida registrada");
+
+  document.getElementById("salidaStatus").innerText = "✅ Salida registrada";
+  cargarProductos();
 }
 </script>
 
