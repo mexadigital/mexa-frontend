@@ -109,6 +109,7 @@ li {
 <script>
 const API = "https://mexa-core-1.onrender.com";
 let token = localStorage.getItem("mexa_token") || "";
+let usuario = ""; // ← guardamos el usuario del login
 
 if (token) {
   document.getElementById("loginStatus").innerText = "✅ Sesión guardada";
@@ -134,13 +135,18 @@ async function login() {
   }
 
   token = data.access_token;
+  usuario = email; // ← usamos el email como usuario
   localStorage.setItem("mexa_token", token);
+  localStorage.setItem("mexa_usuario", usuario);
 
   document.getElementById("loginStatus").innerText = "✅ Conectado";
   document.getElementById("loginStatus").className = "ok";
 
   await cargarProductos();
 }
+
+// recuperar usuario si ya estaba guardado
+usuario = localStorage.getItem("mexa_usuario") || "";
 
 async function cargarProductos() {
   const res = await fetch(`${API}/productos/`, {
@@ -239,7 +245,8 @@ async function salida() {
     body: JSON.stringify({
       producto_id,
       tipo: "salida",
-      cantidad
+      cantidad,
+      usuario: usuario || "admin@mexa.com" // ← FIX AQUÍ
     })
   });
 
