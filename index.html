@@ -6,16 +6,11 @@
 
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background: #0f172a;
   color: white;
   margin: 0;
   padding: 20px;
-}
-
-h2 {
-  margin-top: 30px;
-  color: #38bdf8;
 }
 
 .container {
@@ -30,12 +25,15 @@ h2 {
   margin-bottom: 20px;
 }
 
+h2 {
+  color: #38bdf8;
+}
+
 input {
   padding: 10px;
   margin: 5px;
   border-radius: 6px;
   border: none;
-  width: 150px;
 }
 
 button {
@@ -51,7 +49,11 @@ button:hover {
   background: #0ea5e9;
 }
 
-#listaProductos li {
+ul {
+  padding-left: 20px;
+}
+
+li {
   padding: 8px;
   border-bottom: 1px solid #334155;
 }
@@ -60,123 +62,203 @@ button:hover {
   color: #4ade80;
 }
 
+.error {
+  color: #f87171;
+}
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
-<div class="card">
-<h2>🔐 Login</h2>
-<input id="email" placeholder="email">
-<input id="password" type="password" placeholder="password">
-<button onclick="login()">Entrar</button>
-<p id="loginStatus"></p>
-</div>
+  <div class="card">
+    <h2>🔐 Login</h2>
+    <input id="email" placeholder="email">
+    <input id="password" type="password" placeholder="password">
+    <button onclick="login()">Entrar</button>
+    <p id="loginStatus"></p>
+  </div>
 
-<div class="card">
-<h2>📦 Productos</h2>
-<button onclick="cargarProductos()">Cargar productos</button>
-<ul id="listaProductos"></ul>
-</div>
+  <div class="card">
+    <h2>📦 Productos</h2>
+    <button onclick="cargarProductos()">Cargar productos</button>
+    <ul id="listaProductos"></ul>
+  </div>
 
-<div class="card">
-<h2>➕ Crear Producto</h2>
-<input id="nombre" placeholder="Nombre">
-<input id="codigo" placeholder="Código">
-<input id="tipo" placeholder="Tipo">
-<input id="cantidad" placeholder="Cantidad">
-<button onclick="crearProducto()">Crear</button>
-</div>
+  <div class="card">
+    <h2>➕ Crear Producto</h2>
+    <input id="nombre" placeholder="Nombre">
+    <input id="codigo" placeholder="Código">
+    <input id="tipo" placeholder="Tipo">
+    <input id="cantidad" type="number" placeholder="Cantidad">
+    <button onclick="crearProducto()">Crear</button>
+    <p id="productoStatus"></p>
+  </div>
 
-<div class="card">
-<h2>📤 Registrar salida</h2>
-<input id="producto_id" placeholder="ID Producto">
-<input id="cantidad_salida" placeholder="Cantidad">
-<button onclick="salida()">Salida</button>
-<p id="salidaStatus"></p>
-</div>
+  <div class="card">
+    <h2>📤 Registrar salida</h2>
+    <input id="producto_id" type="number" placeholder="ID Producto">
+    <input id="cantidad_salida" type="number" placeholder="Cantidad">
+    <button onclick="salida()">Salida</button>
+    <p id="salidaStatus"></p>
+  </div>
 
 </div>
 
 <script>
-let token = localStorage.getItem("token") || "";
+const API = "https://mexa-core-1.onrender.com";
+let token = localStorage.getItem("mexa_token") || "";
+
+if (token) {
+  document.getElementById("loginStatus").innerText = "✅ Sesión guardada";
+  document.getElementById("loginStatus").className = "ok";
+}
 
 async function login() {
-  const res = await fetch("https://mexa-core-1.onrender.com/auth/login", {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch(`${API}/auth/login`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
-    })
+    body: JSON.stringify({ email, password })
   });
 
   const data = await res.json();
 
-  if (data.access_token) {
-    token = data.access_token;
-    localStorage.setItem("token", token);
-    document.getElementById("loginStatus").innerText = "✅ Conectado";
-  } else {
-    document.getElementById("loginStatus").innerText = "❌ Error login";
+  if (!res.ok) {
+    document.getElementById("loginStatus").innerText = "❌ Error: " + JSON.stringify(data);
+    document.getElementById("loginStatus").className = "error";
+    return;
   }
+
+  token = data.access_token;
+  localStorage.setItem("mexa_token", token);
+
+  document.getElementById("loginStatus").innerText = "✅ Conectado";
+  document.getElementById("loginStatus").className = "ok";
+
+  await cargarProductos();
 }
 
 async function cargarProductos() {
-  const res = await fetch("https://mexa-core-1.onrender.com/productos/", {
-    headers: { "Authorization": "Bearer " + token }
+  const res = await fetch(`${API}/productos/`, {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
   });
 
   const data = await res.json();
+
+  if (!res.ok) {
+    alert("Error al cargar productos: " + JSON.stringify(data));
+    return;
+  }
 
   const lista = document.getElementById("listaProductos");
   lista.innerHTML = "";
 
   data.forEach(p => {
     const li = document.createElement("li");
-    li.innerText = `ID: ${p.id} | ${p.nombre} | Stock: ${p.cantidad}`;
+    li.innerText = `ID: ${p.id} | ${p.nombre} | Código: ${p.codigo} | Stock: ${p.cantidad}`;
     lista.appendChild(li);
   });
 }
 
 async function crearProducto() {
-  await fetch("https://mexa-core-1.onrender.com/productos/", {
+  const nombre = document.getElementById("nombre").value;
+  const codigo = document.getElementById("codigo").value;
+  const tipo = document.getElementById("tipo").value;
+  const cantidad = parseInt(document.getElementById("cantidad").value);
+
+  if (!nombre || !codigo || !tipo || !cantidad) {
+    alert("Faltan datos del producto");
+    return;
+  }
+
+  const confirmar = confirm(
+    `¿Agregar este producto?\n\nNombre: ${nombre}\nCódigo: ${codigo}\nTipo: ${tipo}\nCantidad: ${cantidad}`
+  );
+
+  if (!confirmar) return;
+
+  const res = await fetch(`${API}/productos/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + token
     },
     body: JSON.stringify({
-      nombre: document.getElementById("nombre").value,
-      codigo: document.getElementById("codigo").value,
-      tipo: document.getElementById("tipo").value,
-      cantidad: parseInt(document.getElementById("cantidad").value)
+      nombre,
+      codigo,
+      tipo,
+      cantidad
     })
   });
 
-  cargarProductos();
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert("Error al crear producto: " + JSON.stringify(data));
+    return;
+  }
+
+  document.getElementById("nombre").value = "";
+  document.getElementById("codigo").value = "";
+  document.getElementById("tipo").value = "";
+  document.getElementById("cantidad").value = "";
+
+  document.getElementById("productoStatus").innerText = "✅ Producto creado correctamente";
+  document.getElementById("productoStatus").className = "ok";
+
+  await cargarProductos();
 }
 
 async function salida() {
-  await fetch("https://mexa-core-1.onrender.com/movimientos/", {
+  const producto_id = parseInt(document.getElementById("producto_id").value);
+  const cantidad = parseInt(document.getElementById("cantidad_salida").value);
+
+  if (!producto_id || !cantidad) {
+    alert("Faltan datos para la salida");
+    return;
+  }
+
+  const confirmar = confirm(
+    `¿Registrar salida?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`
+  );
+
+  if (!confirmar) return;
+
+  const res = await fetch(`${API}/movimientos/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + token
     },
     body: JSON.stringify({
-      producto_id: parseInt(document.getElementById("producto_id").value),
+      producto_id,
       tipo: "salida",
-      cantidad: parseInt(document.getElementById("cantidad_salida").value)
+      cantidad
     })
   });
 
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert("Error al registrar salida: " + JSON.stringify(data));
+    return;
+  }
+
+  document.getElementById("producto_id").value = "";
+  document.getElementById("cantidad_salida").value = "";
+
   document.getElementById("salidaStatus").innerText = "✅ Salida registrada";
-  cargarProductos();
+  document.getElementById("salidaStatus").className = "ok";
+
+  await cargarProductos();
 }
 </script>
 
 </body>
 </html>
-```
