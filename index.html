@@ -14,22 +14,27 @@ body {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: auto;
 }
 
 .card {
   background: #1e293b;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 20px;
+}
+
+h1 {
+  color: #38bdf8;
+  margin-bottom: 5px;
 }
 
 h2 {
   color: #38bdf8;
 }
 
-input {
+input, select {
   padding: 10px;
   margin: 5px;
   border-radius: 6px;
@@ -43,19 +48,26 @@ button {
   background: #38bdf8;
   color: black;
   cursor: pointer;
+  font-weight: bold;
 }
 
 button:hover {
   background: #0ea5e9;
 }
 
-ul {
-  padding-left: 20px;
+.producto {
+  padding: 12px;
+  border-bottom: 1px solid #334155;
 }
 
-li {
-  padding: 8px;
+.producto strong {
+  color: #facc15;
+}
+
+.movimiento {
+  padding: 10px;
   border-bottom: 1px solid #334155;
+  font-size: 14px;
 }
 
 .ok {
@@ -65,12 +77,22 @@ li {
 .error {
   color: #f87171;
 }
+
+.small {
+  color: #94a3b8;
+  font-size: 13px;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
+
+  <div class="card">
+    <h1>Mexa Digital</h1>
+    <p class="small">Control básico de productos, entradas, salidas e historial.</p>
+  </div>
 
   <div class="card">
     <h2>🔐 Login</h2>
@@ -83,7 +105,7 @@ li {
   <div class="card">
     <h2>📦 Productos</h2>
     <button onclick="cargarProductos()">Cargar productos</button>
-    <ul id="listaProductos"></ul>
+    <div id="listaProductos"></div>
   </div>
 
   <div class="card">
@@ -91,25 +113,48 @@ li {
     <input id="nombre" placeholder="Nombre">
     <input id="codigo" placeholder="Código">
     <input id="tipo" placeholder="Tipo">
-    <input id="cantidad" type="number" placeholder="Cantidad">
+    <input id="cantidad" type="number" placeholder="Cantidad inicial">
+    <input id="ubicacion" placeholder="Ubicación">
+    <input id="precio" type="number" placeholder="Precio">
     <button onclick="crearProducto()">Crear</button>
     <p id="productoStatus"></p>
   </div>
 
   <div class="card">
+    <h2>📥 Registrar entrada</h2>
+    <input id="producto_id_entrada" type="number" placeholder="ID Producto">
+    <input id="cantidad_entrada" type="number" placeholder="Cantidad">
+    <input id="recibe_entrada" placeholder="Quién recibe / entrega">
+    <input id="empleado_entrada" placeholder="Empleado / ficha">
+    <input id="nota_entrada" placeholder="Nota">
+    <button onclick="entrada()">Entrada</button>
+    <p id="entradaStatus"></p>
+  </div>
+
+  <div class="card">
     <h2>📤 Registrar salida</h2>
-    <input id="producto_id" type="number" placeholder="ID Producto">
+    <input id="producto_id_salida" type="number" placeholder="ID Producto">
     <input id="cantidad_salida" type="number" placeholder="Cantidad">
+    <input id="recibe_salida" placeholder="Quién recibe">
+    <input id="empleado_salida" placeholder="Empleado / ficha">
+    <input id="nota_salida" placeholder="Nota">
     <button onclick="salida()">Salida</button>
     <p id="salidaStatus"></p>
+  </div>
+
+  <div class="card">
+    <h2>📜 Historial de movimientos</h2>
+    <button onclick="cargarMovimientos()">Cargar historial</button>
+    <div id="listaMovimientos"></div>
   </div>
 
 </div>
 
 <script>
 const API = "https://mexa-core-1.onrender.com";
+
 let token = localStorage.getItem("mexa_token") || "";
-let usuario = ""; // ← guardamos el usuario del login
+let usuario = localStorage.getItem("mexa_usuario") || "";
 
 if (token) {
   document.getElementById("loginStatus").innerText = "✅ Sesión guardada";
@@ -135,7 +180,8 @@ async function login() {
   }
 
   token = data.access_token;
-  usuario = email; // ← usamos el email como usuario
+  usuario = email;
+
   localStorage.setItem("mexa_token", token);
   localStorage.setItem("mexa_usuario", usuario);
 
@@ -144,9 +190,6 @@ async function login() {
 
   await cargarProductos();
 }
-
-// recuperar usuario si ya estaba guardado
-usuario = localStorage.getItem("mexa_usuario") || "";
 
 async function cargarProductos() {
   const res = await fetch(`${API}/productos/`, {
@@ -166,9 +209,15 @@ async function cargarProductos() {
   lista.innerHTML = "";
 
   data.forEach(p => {
-    const li = document.createElement("li");
-    li.innerText = `ID: ${p.id} | ${p.nombre} | Código: ${p.codigo} | Stock: ${p.cantidad}`;
-    lista.appendChild(li);
+    const div = document.createElement("div");
+    div.className = "producto";
+    div.innerHTML = `
+      <strong>${p.nombre}</strong><br>
+      ID: ${p.id} | Código: ${p.codigo || "Sin código"}<br>
+      Tipo: ${p.tipo || "N/A"} | Stock: <strong>${p.cantidad}</strong><br>
+      Ubicación: ${p.ubicacion || "Sin ubicación"} | Precio: ${p.precio ?? "N/A"}
+    `;
+    lista.appendChild(div);
   });
 }
 
@@ -177,6 +226,9 @@ async function crearProducto() {
   const codigo = document.getElementById("codigo").value;
   const tipo = document.getElementById("tipo").value;
   const cantidad = parseInt(document.getElementById("cantidad").value);
+  const ubicacion = document.getElementById("ubicacion").value || null;
+  const precioValue = document.getElementById("precio").value;
+  const precio = precioValue ? parseFloat(precioValue) : 0;
 
   if (!nombre || !codigo || !tipo || !cantidad) {
     alert("Faltan datos del producto");
@@ -199,7 +251,9 @@ async function crearProducto() {
       nombre,
       codigo,
       tipo,
-      cantidad
+      cantidad,
+      ubicacion,
+      precio
     })
   });
 
@@ -214,6 +268,8 @@ async function crearProducto() {
   document.getElementById("codigo").value = "";
   document.getElementById("tipo").value = "";
   document.getElementById("cantidad").value = "";
+  document.getElementById("ubicacion").value = "";
+  document.getElementById("precio").value = "";
 
   document.getElementById("productoStatus").innerText = "✅ Producto creado correctamente";
   document.getElementById("productoStatus").className = "ok";
@@ -221,9 +277,67 @@ async function crearProducto() {
   await cargarProductos();
 }
 
+async function entrada() {
+  const producto_id = parseInt(document.getElementById("producto_id_entrada").value);
+  const cantidad = parseInt(document.getElementById("cantidad_entrada").value);
+  const recibe = document.getElementById("recibe_entrada").value || null;
+  const empleado = document.getElementById("empleado_entrada").value || null;
+  const nota = document.getElementById("nota_entrada").value || null;
+
+  if (!producto_id || !cantidad) {
+    alert("Faltan datos para la entrada");
+    return;
+  }
+
+  const confirmar = confirm(
+    `¿Registrar entrada?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`
+  );
+
+  if (!confirmar) return;
+
+  const res = await fetch(`${API}/movimientos/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      producto_id,
+      tipo: "entrada",
+      cantidad,
+      usuario: usuario || "admin@mexa.com",
+      recibe,
+      empleado,
+      nota
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert("Error al registrar entrada: " + JSON.stringify(data));
+    return;
+  }
+
+  document.getElementById("producto_id_entrada").value = "";
+  document.getElementById("cantidad_entrada").value = "";
+  document.getElementById("recibe_entrada").value = "";
+  document.getElementById("empleado_entrada").value = "";
+  document.getElementById("nota_entrada").value = "";
+
+  document.getElementById("entradaStatus").innerText = "✅ Entrada registrada";
+  document.getElementById("entradaStatus").className = "ok";
+
+  await cargarProductos();
+  await cargarMovimientos();
+}
+
 async function salida() {
-  const producto_id = parseInt(document.getElementById("producto_id").value);
+  const producto_id = parseInt(document.getElementById("producto_id_salida").value);
   const cantidad = parseInt(document.getElementById("cantidad_salida").value);
+  const recibe = document.getElementById("recibe_salida").value || null;
+  const empleado = document.getElementById("empleado_salida").value || null;
+  const nota = document.getElementById("nota_salida").value || null;
 
   if (!producto_id || !cantidad) {
     alert("Faltan datos para la salida");
@@ -246,7 +360,10 @@ async function salida() {
       producto_id,
       tipo: "salida",
       cantidad,
-      usuario: usuario || "admin@mexa.com" // ← FIX AQUÍ
+      usuario: usuario || "admin@mexa.com",
+      recibe,
+      empleado,
+      nota
     })
   });
 
@@ -257,13 +374,52 @@ async function salida() {
     return;
   }
 
-  document.getElementById("producto_id").value = "";
+  document.getElementById("producto_id_salida").value = "";
   document.getElementById("cantidad_salida").value = "";
+  document.getElementById("recibe_salida").value = "";
+  document.getElementById("empleado_salida").value = "";
+  document.getElementById("nota_salida").value = "";
 
   document.getElementById("salidaStatus").innerText = "✅ Salida registrada";
   document.getElementById("salidaStatus").className = "ok";
 
   await cargarProductos();
+  await cargarMovimientos();
+}
+
+async function cargarMovimientos() {
+  const res = await fetch(`${API}/movimientos/`, {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert("Error al cargar movimientos: " + JSON.stringify(data));
+    return;
+  }
+
+  const lista = document.getElementById("listaMovimientos");
+  lista.innerHTML = "";
+
+  data.slice(0, 20).forEach(m => {
+    const div = document.createElement("div");
+    div.className = "movimiento";
+
+    const icono = m.tipo === "entrada" ? "📥" : "📤";
+
+    div.innerHTML = `
+      ${icono} <strong>${m.tipo.toUpperCase()}</strong> | ${m.producto}<br>
+      Cantidad: ${m.cantidad} | Usuario: ${m.usuario || "N/A"}<br>
+      Recibe: ${m.recibe || "N/A"} | Empleado: ${m.empleado || "N/A"}<br>
+      Nota: ${m.nota || "Sin nota"}<br>
+      <span class="small">${m.created_at}</span>
+    `;
+
+    lista.appendChild(div);
+  });
 }
 </script>
 
