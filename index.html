@@ -25,16 +25,11 @@ body {
   margin-bottom: 20px;
 }
 
-h1 {
-  color: #38bdf8;
-  margin-bottom: 5px;
-}
-
-h2 {
+h1, h2 {
   color: #38bdf8;
 }
 
-input, select {
+input {
   padding: 10px;
   margin: 5px;
   border-radius: 6px;
@@ -55,19 +50,21 @@ button:hover {
   background: #0ea5e9;
 }
 
-.producto {
+.logout {
+  background: #f87171;
+}
+
+.logout:hover {
+  background: #ef4444;
+}
+
+.producto, .movimiento {
   padding: 12px;
   border-bottom: 1px solid #334155;
 }
 
 .producto strong {
   color: #facc15;
-}
-
-.movimiento {
-  padding: 10px;
-  border-bottom: 1px solid #334155;
-  font-size: 14px;
 }
 
 .ok {
@@ -92,9 +89,11 @@ button:hover {
   <div class="card">
     <h1>Mexa Digital</h1>
     <p class="small">Control básico de productos, entradas, salidas e historial.</p>
+    <p id="usuarioInfo" class="ok"></p>
+    <button id="logoutBtn" class="logout" onclick="logout()" style="display:none;">Cerrar sesión</button>
   </div>
 
-  <div class="card">
+  <div class="card" id="loginCard">
     <h2>🔐 Login</h2>
     <input id="email" placeholder="email">
     <input id="password" type="password" placeholder="password">
@@ -104,7 +103,6 @@ button:hover {
 
   <div class="card">
     <h2>📦 Productos</h2>
-    <button onclick="cargarProductos()">Cargar productos</button>
     <div id="listaProductos"></div>
   </div>
 
@@ -144,7 +142,7 @@ button:hover {
 
   <div class="card">
     <h2>📜 Historial de movimientos</h2>
-    <button onclick="cargarMovimientos()">Cargar historial</button>
+    <button onclick="cargarMovimientos()">Actualizar historial</button>
     <div id="listaMovimientos"></div>
   </div>
 
@@ -156,9 +154,30 @@ const API = "https://mexa-core-1.onrender.com";
 let token = localStorage.getItem("mexa_token") || "";
 let usuario = localStorage.getItem("mexa_usuario") || "";
 
-if (token) {
-  document.getElementById("loginStatus").innerText = "✅ Sesión guardada";
+function mostrarSesion() {
+  if (token && usuario) {
+    document.getElementById("usuarioInfo").innerText = "👤 Usuario: " + usuario;
+    document.getElementById("logoutBtn").style.display = "inline-block";
+    document.getElementById("loginCard").style.display = "none";
+  } else {
+    document.getElementById("usuarioInfo").innerText = "";
+    document.getElementById("logoutBtn").style.display = "none";
+    document.getElementById("loginCard").style.display = "block";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("mexa_token");
+  localStorage.removeItem("mexa_usuario");
+  token = "";
+  usuario = "";
+
+  document.getElementById("listaProductos").innerHTML = "";
+  document.getElementById("listaMovimientos").innerHTML = "";
+  document.getElementById("loginStatus").innerText = "Sesión cerrada";
   document.getElementById("loginStatus").className = "ok";
+
+  mostrarSesion();
 }
 
 async function login() {
@@ -185,17 +204,18 @@ async function login() {
   localStorage.setItem("mexa_token", token);
   localStorage.setItem("mexa_usuario", usuario);
 
-  document.getElementById("loginStatus").innerText = "✅ Conectado";
-  document.getElementById("loginStatus").className = "ok";
+  document.getElementById("email").value = "";
+  document.getElementById("password").value = "";
+
+  mostrarSesion();
 
   await cargarProductos();
+  await cargarMovimientos();
 }
 
 async function cargarProductos() {
   const res = await fetch(`${API}/productos/`, {
-    headers: {
-      "Authorization": "Bearer " + token
-    }
+    headers: { "Authorization": "Bearer " + token }
   });
 
   const data = await res.json();
@@ -208,7 +228,7 @@ async function cargarProductos() {
   const lista = document.getElementById("listaProductos");
   lista.innerHTML = "";
 
-  data.forEach(p => {
+  data.sort((a, b) => b.id - a.id).forEach(p => {
     const div = document.createElement("div");
     div.className = "producto";
     div.innerHTML = `
@@ -247,14 +267,7 @@ async function crearProducto() {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + token
     },
-    body: JSON.stringify({
-      nombre,
-      codigo,
-      tipo,
-      cantidad,
-      ubicacion,
-      precio
-    })
+    body: JSON.stringify({ nombre, codigo, tipo, cantidad, ubicacion, precio })
   });
 
   const data = await res.json();
@@ -271,7 +284,7 @@ async function crearProducto() {
   document.getElementById("ubicacion").value = "";
   document.getElementById("precio").value = "";
 
-  document.getElementById("productoStatus").innerText = "✅ Producto creado correctamente";
+  document.getElementById("productoStatus").innerText = "✔ Producto agregado al inventario";
   document.getElementById("productoStatus").className = "ok";
 
   await cargarProductos();
@@ -289,11 +302,7 @@ async function entrada() {
     return;
   }
 
-  const confirmar = confirm(
-    `¿Registrar entrada?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`
-  );
-
-  if (!confirmar) return;
+  if (!confirm(`¿Registrar entrada?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`)) return;
 
   const res = await fetch(`${API}/movimientos/`, {
     method: "POST",
@@ -325,7 +334,7 @@ async function entrada() {
   document.getElementById("empleado_entrada").value = "";
   document.getElementById("nota_entrada").value = "";
 
-  document.getElementById("entradaStatus").innerText = "✅ Entrada registrada";
+  document.getElementById("entradaStatus").innerText = "✔ Entrada registrada en sistema";
   document.getElementById("entradaStatus").className = "ok";
 
   await cargarProductos();
@@ -344,11 +353,7 @@ async function salida() {
     return;
   }
 
-  const confirmar = confirm(
-    `¿Registrar salida?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`
-  );
-
-  if (!confirmar) return;
+  if (!confirm(`¿Registrar salida?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`)) return;
 
   const res = await fetch(`${API}/movimientos/`, {
     method: "POST",
@@ -380,7 +385,7 @@ async function salida() {
   document.getElementById("empleado_salida").value = "";
   document.getElementById("nota_salida").value = "";
 
-  document.getElementById("salidaStatus").innerText = "✅ Salida registrada";
+  document.getElementById("salidaStatus").innerText = "✔ Salida registrada en sistema";
   document.getElementById("salidaStatus").className = "ok";
 
   await cargarProductos();
@@ -389,9 +394,7 @@ async function salida() {
 
 async function cargarMovimientos() {
   const res = await fetch(`${API}/movimientos/`, {
-    headers: {
-      "Authorization": "Bearer " + token
-    }
+    headers: { "Authorization": "Bearer " + token }
   });
 
   const data = await res.json();
@@ -421,6 +424,15 @@ async function cargarMovimientos() {
     lista.appendChild(div);
   });
 }
+
+window.onload = async () => {
+  mostrarSesion();
+
+  if (token) {
+    await cargarProductos();
+    await cargarMovimientos();
+  }
+};
 </script>
 
 </body>
