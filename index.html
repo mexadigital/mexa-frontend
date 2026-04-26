@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: auto;
 }
 
@@ -29,7 +29,7 @@ h1, h2 {
   color: #38bdf8;
 }
 
-input {
+input, select {
   padding: 10px;
   margin: 5px;
   border-radius: 6px;
@@ -58,7 +58,7 @@ button:hover {
   background: #ef4444;
 }
 
-.producto, .movimiento {
+.producto, .movimiento, .ubicacion {
   padding: 12px;
   border-bottom: 1px solid #334155;
 }
@@ -88,7 +88,7 @@ button:hover {
 
   <div class="card">
     <h1>Mexa Digital</h1>
-    <p class="small">Control básico de productos, entradas, salidas e historial.</p>
+    <p class="small">Control de productos, ubicaciones, entradas, salidas e historial.</p>
     <p id="usuarioInfo" class="ok"></p>
     <button id="logoutBtn" class="logout" onclick="logout()" style="display:none;">Cerrar sesión</button>
   </div>
@@ -102,6 +102,15 @@ button:hover {
   </div>
 
   <div class="card">
+    <h2>📍 Ubicaciones</h2>
+    <input id="ubicacion_nombre" placeholder="Nombre ubicación">
+    <input id="ubicacion_tipo" placeholder="Tipo: almacen, contenedor, patio">
+    <button onclick="crearUbicacion()">Crear ubicación</button>
+    <p id="ubicacionStatus"></p>
+    <div id="listaUbicaciones"></div>
+  </div>
+
+  <div class="card">
     <h2>📦 Productos</h2>
     <div id="listaProductos"></div>
   </div>
@@ -112,7 +121,9 @@ button:hover {
     <input id="codigo" placeholder="Código">
     <input id="tipo" placeholder="Tipo">
     <input id="cantidad" type="number" placeholder="Cantidad inicial">
-    <input id="ubicacion" placeholder="Ubicación">
+    <select id="ubicacion">
+      <option value="">Selecciona ubicación</option>
+    </select>
     <input id="precio" type="number" placeholder="Precio">
     <button onclick="crearProducto()">Crear</button>
     <p id="productoStatus"></p>
@@ -122,6 +133,9 @@ button:hover {
     <h2>📥 Registrar entrada</h2>
     <input id="producto_id_entrada" type="number" placeholder="ID Producto">
     <input id="cantidad_entrada" type="number" placeholder="Cantidad">
+    <select id="ubicacion_entrada">
+      <option value="">Selecciona ubicación</option>
+    </select>
     <input id="recibe_entrada" placeholder="Quién recibe / entrega">
     <input id="empleado_entrada" placeholder="Empleado / ficha">
     <input id="nota_entrada" placeholder="Nota">
@@ -133,6 +147,9 @@ button:hover {
     <h2>📤 Registrar salida</h2>
     <input id="producto_id_salida" type="number" placeholder="ID Producto">
     <input id="cantidad_salida" type="number" placeholder="Cantidad">
+    <select id="ubicacion_salida">
+      <option value="">Selecciona ubicación</option>
+    </select>
     <input id="recibe_salida" placeholder="Quién recibe">
     <input id="empleado_salida" placeholder="Empleado / ficha">
     <input id="nota_salida" placeholder="Nota">
@@ -174,8 +191,7 @@ function logout() {
 
   document.getElementById("listaProductos").innerHTML = "";
   document.getElementById("listaMovimientos").innerHTML = "";
-  document.getElementById("loginStatus").innerText = "Sesión cerrada";
-  document.getElementById("loginStatus").className = "ok";
+  document.getElementById("listaUbicaciones").innerHTML = "";
 
   mostrarSesion();
 }
@@ -209,8 +225,103 @@ async function login() {
 
   mostrarSesion();
 
+  await cargarTodo();
+}
+
+async function cargarTodo() {
+  await cargarUbicaciones();
   await cargarProductos();
   await cargarMovimientos();
+}
+
+async function cargarUbicaciones() {
+  const res = await fetch(`${API}/ubicaciones/`, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert("Error al cargar ubicaciones: " + JSON.stringify(data));
+    return;
+  }
+
+  const lista = document.getElementById("listaUbicaciones");
+  const selectProducto = document.getElementById("ubicacion");
+  const selectEntrada = document.getElementById("ubicacion_entrada");
+  const selectSalida = document.getElementById("ubicacion_salida");
+
+  lista.innerHTML = "";
+
+  selectProducto.innerHTML = `<option value="">Selecciona ubicación</option>`;
+  selectEntrada.innerHTML = `<option value="">Selecciona ubicación</option>`;
+  selectSalida.innerHTML = `<option value="">Selecciona ubicación</option>`;
+
+  data.sort((a, b) => b.id - a.id).forEach(u => {
+    const div = document.createElement("div");
+    div.className = "ubicacion";
+    div.innerHTML = `
+      📍 <strong>${u.nombre}</strong><br>
+      ID: ${u.id} | Tipo: ${u.tipo} | Activo: ${u.activo ? "Sí" : "No"}
+    `;
+    lista.appendChild(div);
+
+    const option1 = document.createElement("option");
+    option1.value = u.nombre;
+    option1.textContent = u.nombre;
+
+    const option2 = document.createElement("option");
+    option2.value = u.nombre;
+    option2.textContent = u.nombre;
+
+    const option3 = document.createElement("option");
+    option3.value = u.nombre;
+    option3.textContent = u.nombre;
+
+    selectProducto.appendChild(option1);
+    selectEntrada.appendChild(option2);
+    selectSalida.appendChild(option3);
+  });
+}
+
+async function crearUbicacion() {
+  const nombre = document.getElementById("ubicacion_nombre").value;
+  const tipo = document.getElementById("ubicacion_tipo").value;
+
+  if (!nombre || !tipo) {
+    alert("Faltan datos de la ubicación");
+    return;
+  }
+
+  if (!confirm(`¿Crear ubicación?\n\nNombre: ${nombre}\nTipo: ${tipo}`)) return;
+
+  const res = await fetch(`${API}/ubicaciones/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      organizacion_id: 1,
+      nombre,
+      tipo
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert("Error al crear ubicación: " + JSON.stringify(data));
+    return;
+  }
+
+  document.getElementById("ubicacion_nombre").value = "";
+  document.getElementById("ubicacion_tipo").value = "";
+
+  document.getElementById("ubicacionStatus").innerText = "✔ Ubicación creada";
+  document.getElementById("ubicacionStatus").className = "ok";
+
+  await cargarUbicaciones();
 }
 
 async function cargarProductos() {
@@ -255,11 +366,7 @@ async function crearProducto() {
     return;
   }
 
-  const confirmar = confirm(
-    `¿Agregar este producto?\n\nNombre: ${nombre}\nCódigo: ${codigo}\nTipo: ${tipo}\nCantidad: ${cantidad}`
-  );
-
-  if (!confirmar) return;
+  if (!confirm(`¿Agregar producto?\n\nNombre: ${nombre}\nCódigo: ${codigo}\nCantidad: ${cantidad}\nUbicación: ${ubicacion || "Sin ubicación"}`)) return;
 
   const res = await fetch(`${API}/productos/`, {
     method: "POST",
@@ -267,7 +374,14 @@ async function crearProducto() {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + token
     },
-    body: JSON.stringify({ nombre, codigo, tipo, cantidad, ubicacion, precio })
+    body: JSON.stringify({
+      nombre,
+      codigo,
+      tipo,
+      cantidad,
+      ubicacion,
+      precio
+    })
   });
 
   const data = await res.json();
@@ -293,16 +407,21 @@ async function crearProducto() {
 async function entrada() {
   const producto_id = parseInt(document.getElementById("producto_id_entrada").value);
   const cantidad = parseInt(document.getElementById("cantidad_entrada").value);
+  const ubicacion = document.getElementById("ubicacion_entrada").value;
   const recibe = document.getElementById("recibe_entrada").value || null;
   const empleado = document.getElementById("empleado_entrada").value || null;
-  const nota = document.getElementById("nota_entrada").value || null;
+  let nota = document.getElementById("nota_entrada").value || "";
 
   if (!producto_id || !cantidad) {
     alert("Faltan datos para la entrada");
     return;
   }
 
-  if (!confirm(`¿Registrar entrada?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`)) return;
+  if (ubicacion) {
+    nota = `[Ubicación: ${ubicacion}] ` + nota;
+  }
+
+  if (!confirm(`¿Registrar entrada?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}\nUbicación: ${ubicacion || "Sin ubicación"}`)) return;
 
   const res = await fetch(`${API}/movimientos/`, {
     method: "POST",
@@ -330,6 +449,7 @@ async function entrada() {
 
   document.getElementById("producto_id_entrada").value = "";
   document.getElementById("cantidad_entrada").value = "";
+  document.getElementById("ubicacion_entrada").value = "";
   document.getElementById("recibe_entrada").value = "";
   document.getElementById("empleado_entrada").value = "";
   document.getElementById("nota_entrada").value = "";
@@ -344,16 +464,21 @@ async function entrada() {
 async function salida() {
   const producto_id = parseInt(document.getElementById("producto_id_salida").value);
   const cantidad = parseInt(document.getElementById("cantidad_salida").value);
+  const ubicacion = document.getElementById("ubicacion_salida").value;
   const recibe = document.getElementById("recibe_salida").value || null;
   const empleado = document.getElementById("empleado_salida").value || null;
-  const nota = document.getElementById("nota_salida").value || null;
+  let nota = document.getElementById("nota_salida").value || "";
 
   if (!producto_id || !cantidad) {
     alert("Faltan datos para la salida");
     return;
   }
 
-  if (!confirm(`¿Registrar salida?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}`)) return;
+  if (ubicacion) {
+    nota = `[Ubicación: ${ubicacion}] ` + nota;
+  }
+
+  if (!confirm(`¿Registrar salida?\n\nProducto ID: ${producto_id}\nCantidad: ${cantidad}\nUbicación: ${ubicacion || "Sin ubicación"}`)) return;
 
   const res = await fetch(`${API}/movimientos/`, {
     method: "POST",
@@ -381,6 +506,7 @@ async function salida() {
 
   document.getElementById("producto_id_salida").value = "";
   document.getElementById("cantidad_salida").value = "";
+  document.getElementById("ubicacion_salida").value = "";
   document.getElementById("recibe_salida").value = "";
   document.getElementById("empleado_salida").value = "";
   document.getElementById("nota_salida").value = "";
@@ -429,8 +555,7 @@ window.onload = async () => {
   mostrarSesion();
 
   if (token) {
-    await cargarProductos();
-    await cargarMovimientos();
+    await cargarTodo();
   }
 };
 </script>
