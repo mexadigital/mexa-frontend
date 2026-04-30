@@ -17,6 +17,7 @@
       background: #020617;
       padding: 20px;
       text-align: center;
+      border-bottom: 1px solid #334155;
     }
 
     .container {
@@ -38,6 +39,7 @@
       margin-top: 8px;
       border-radius: 6px;
       border: none;
+      box-sizing: border-box;
     }
 
     input, select {
@@ -56,22 +58,45 @@
       background: #22c55e;
     }
 
-    .error { color: #f87171; }
-    .ok { color: #22c55e; }
+    .danger {
+      background: #dc2626;
+    }
+
+    .danger:hover {
+      background: #ef4444;
+    }
+
+    .error { color: #f87171; font-weight: bold; }
+    .ok { color: #22c55e; font-weight: bold; }
 
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
+      font-size: 14px;
     }
 
     th, td {
       padding: 8px;
       border-bottom: 1px solid #334155;
+      text-align: left;
     }
 
     th {
       background: #020617;
+      color: #93c5fd;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -85,38 +110,76 @@
 
 <div class="container">
 
-  <!-- LOGIN -->
   <div class="card">
     <h2>Login</h2>
     <input id="email" placeholder="email">
     <input id="password" type="password" placeholder="password">
     <button onclick="login()">Iniciar sesión</button>
+    <button class="danger" onclick="logout()">Cerrar sesión</button>
     <p id="loginStatus"></p>
   </div>
 
-  <!-- CREAR PRODUCTO -->
-  <div class="card">
-    <h2>Crear producto</h2>
+  <div class="grid">
 
-    <input id="p_nombre" placeholder="Nombre del producto">
-    <input id="p_codigo" placeholder="Código">
-    <input id="p_tipo" placeholder="Tipo (consumible, EPP, herramienta)">
+    <div class="card">
+      <h2>Crear ubicación</h2>
 
-    <button onclick="crearProducto()">Crear producto</button>
+      <input id="u_nombre" placeholder="Nombre: Nave 12, Spools, Contenedor A">
 
-    <p id="prodStatus"></p>
+      <select id="u_tipo">
+        <option value="almacen">Almacén</option>
+        <option value="contenedor">Contenedor</option>
+        <option value="nave">Nave</option>
+        <option value="patio">Patio</option>
+        <option value="obra">Obra</option>
+      </select>
+
+      <button onclick="crearUbicacion()">Crear ubicación</button>
+      <button onclick="cargarUbicaciones()">Cargar ubicaciones</button>
+
+      <p id="ubicStatus"></p>
+    </div>
+
+    <div class="card">
+      <h2>Crear producto</h2>
+
+      <input id="p_nombre" placeholder="Nombre del producto">
+      <input id="p_codigo" placeholder="Código">
+      <input id="p_tipo" placeholder="Tipo: consumible, EPP, herramienta">
+
+      <button onclick="crearProducto()">Crear producto</button>
+
+      <p id="prodStatus"></p>
+    </div>
+
   </div>
 
-  <!-- INVENTARIO -->
   <div class="card">
-    <h2>Inventario</h2>
-    <button onclick="cargarProductos()">Cargar</button>
+    <h2>Ubicaciones</h2>
 
     <table>
       <thead>
         <tr>
           <th>ID</th>
           <th>Nombre</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="ubicacionesBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Inventario general</h2>
+    <button onclick="cargarProductos()">Cargar productos</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Producto</th>
+          <th>Código</th>
+          <th>Tipo</th>
           <th>Cantidad</th>
         </tr>
       </thead>
@@ -124,9 +187,38 @@
     </table>
   </div>
 
-  <!-- MOVIMIENTOS -->
   <div class="card">
-    <h2>Movimiento</h2>
+    <h2>Asignar stock a ubicación</h2>
+
+    <select id="asig_producto"></select>
+    <select id="asig_ubicacion"></select>
+    <input id="asig_cantidad" type="number" placeholder="Cantidad a asignar">
+
+    <button onclick="asignarStockUbicacion()">Asignar stock</button>
+
+    <p id="asigStatus"></p>
+  </div>
+
+  <div class="card">
+    <h2>Inventario por ubicación</h2>
+
+    <button onclick="cargarInventarioUbicaciones()">Cargar inventario por ubicación</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Producto ID</th>
+          <th>Ubicación ID</th>
+          <th>Cantidad</th>
+        </tr>
+      </thead>
+      <tbody id="invUbicacionesBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Registrar movimiento general</h2>
 
     <select id="productoSelect"></select>
 
@@ -135,27 +227,30 @@
       <option value="salida">Salida</option>
     </select>
 
-    <input id="cantidad" placeholder="Cantidad">
+    <input id="cantidad" type="number" placeholder="Cantidad">
     <input id="recibe" placeholder="Recibe">
+    <input id="empleado" placeholder="Empleado / entrega">
+    <input id="nota" placeholder="Nota">
 
-    <button onclick="registrarMovimiento()">Registrar</button>
+    <button onclick="registrarMovimiento()">Registrar movimiento</button>
 
     <p id="movStatus"></p>
   </div>
 
-  <!-- HISTORIAL -->
   <div class="card">
-    <h2>Historial</h2>
-    <button onclick="cargarMovimientos()">Cargar</button>
+    <h2>Historial de movimientos</h2>
+    <button onclick="cargarMovimientos()">Cargar historial</button>
 
     <table>
       <thead>
         <tr>
           <th>Fecha</th>
-          <th>Producto</th>
+          <th>Producto ID</th>
           <th>Tipo</th>
           <th>Cantidad</th>
           <th>Recibe</th>
+          <th>Empleado</th>
+          <th>Nota</th>
         </tr>
       </thead>
       <tbody id="movimientosBody"></tbody>
@@ -165,7 +260,6 @@
 </div>
 
 <script>
-
 const API_URL = "https://mexa-core-1.onrender.com";
 
 function setStatus(id, msg, type="ok"){
@@ -178,9 +272,16 @@ function getToken(){
   return localStorage.getItem("token");
 }
 
+function authHeaders(){
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${getToken()}`
+  };
+}
+
 async function login(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
 
   try{
     const res = await fetch(`${API_URL}/auth/auth/login`, {
@@ -192,25 +293,105 @@ async function login(){
     const data = await res.json();
 
     if(!res.ok){
-      setStatus("loginStatus", data.detail || "error login","error");
+      setStatus("loginStatus", data.detail || "Error login","error");
       return;
     }
 
     localStorage.setItem("token", data.access_token);
-    setStatus("loginStatus","login correcto");
+    setStatus("loginStatus","Login correcto");
+
+    await cargarUbicaciones();
+    await cargarProductos();
+    await cargarMovimientos();
 
   }catch(e){
-    setStatus("loginStatus","error conexión","error");
+    setStatus("loginStatus","Error de conexión","error");
+  }
+}
+
+function logout(){
+  localStorage.removeItem("token");
+  setStatus("loginStatus","Sesión cerrada");
+}
+
+async function crearUbicacion(){
+  const payload = {
+    nombre: document.getElementById("u_nombre").value.trim(),
+    tipo: document.getElementById("u_tipo").value
+  };
+
+  if(!payload.nombre){
+    setStatus("ubicStatus","Nombre obligatorio","error");
+    return;
+  }
+
+  try{
+    const res = await fetch(`${API_URL}/ubicaciones/ubicaciones/`,{
+      method:"POST",
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      setStatus("ubicStatus", data.detail || "Error creando ubicación","error");
+      return;
+    }
+
+    setStatus("ubicStatus","Ubicación creada");
+    document.getElementById("u_nombre").value = "";
+
+    await cargarUbicaciones();
+
+  }catch(e){
+    setStatus("ubicStatus","Error conexión","error");
+  }
+}
+
+async function cargarUbicaciones(){
+  try{
+    const res = await fetch(`${API_URL}/ubicaciones/ubicaciones/`,{
+      headers:{ Authorization:`Bearer ${getToken()}` }
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      setStatus("ubicStatus", data.detail || "Error cargando ubicaciones","error");
+      return;
+    }
+
+    const body = document.getElementById("ubicacionesBody");
+    const select = document.getElementById("asig_ubicacion");
+
+    body.innerHTML = "";
+    select.innerHTML = "";
+
+    data.forEach(u => {
+      body.innerHTML += `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.nombre}</td>
+          <td>${u.tipo}</td>
+        </tr>
+      `;
+
+      select.innerHTML += `
+        <option value="${u.id}">${u.nombre} | ${u.tipo}</option>
+      `;
+    });
+
+  }catch(e){
+    setStatus("ubicStatus","Error conexión","error");
   }
 }
 
 async function crearProducto(){
-  const token = getToken();
-
   const payload = {
-    nombre: document.getElementById("p_nombre").value,
-    codigo: document.getElementById("p_codigo").value,
-    tipo: document.getElementById("p_tipo").value
+    nombre: document.getElementById("p_nombre").value.trim(),
+    codigo: document.getElementById("p_codigo").value.trim(),
+    tipo: document.getElementById("p_tipo").value.trim()
   };
 
   if(!payload.nombre || !payload.codigo){
@@ -221,116 +402,231 @@ async function crearProducto(){
   try{
     const res = await fetch(`${API_URL}/productos/`,{
       method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:`Bearer ${token}`
-      },
-      body:JSON.stringify(payload)
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
 
     if(!res.ok){
-      setStatus("prodStatus", data.detail || "error","error");
+      setStatus("prodStatus", data.detail || "Error creando producto","error");
       return;
     }
 
-    setStatus("prodStatus","Producto creado","ok");
+    setStatus("prodStatus","Producto creado");
 
-    document.getElementById("p_nombre").value="";
-    document.getElementById("p_codigo").value="";
-    document.getElementById("p_tipo").value="";
+    document.getElementById("p_nombre").value = "";
+    document.getElementById("p_codigo").value = "";
+    document.getElementById("p_tipo").value = "";
 
-    cargarProductos();
+    await cargarProductos();
 
   }catch(e){
-    setStatus("prodStatus","error conexión","error");
+    setStatus("prodStatus","Error conexión","error");
   }
 }
 
 async function cargarProductos(){
-  const token = getToken();
+  try{
+    const res = await fetch(`${API_URL}/productos/`,{
+      headers:{ Authorization:`Bearer ${getToken()}` }
+    });
 
-  const res = await fetch(`${API_URL}/productos/`,{
-    headers:{Authorization:`Bearer ${token}`}
-  });
+    const data = await res.json();
 
-  const data = await res.json();
+    if(!res.ok){
+      setStatus("prodStatus", data.detail || "Error cargando productos","error");
+      return;
+    }
 
-  const body = document.getElementById("productosBody");
-  const select = document.getElementById("productoSelect");
+    const body = document.getElementById("productosBody");
+    const selectMov = document.getElementById("productoSelect");
+    const selectAsig = document.getElementById("asig_producto");
 
-  body.innerHTML="";
-  select.innerHTML="";
+    body.innerHTML = "";
+    selectMov.innerHTML = "";
+    selectAsig.innerHTML = "";
 
-  data.forEach(p=>{
-    body.innerHTML+=`<tr>
-      <td>${p.id}</td>
-      <td>${p.nombre}</td>
-      <td>${p.cantidad ?? 0}</td>
-    </tr>`;
+    data.forEach(p => {
+      body.innerHTML += `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.nombre || ""}</td>
+          <td>${p.codigo || ""}</td>
+          <td>${p.tipo || ""}</td>
+          <td>${p.cantidad ?? 0}</td>
+        </tr>
+      `;
 
-    select.innerHTML+=`<option value="${p.id}">
-      ${p.nombre}
-    </option>`;
-  });
+      selectMov.innerHTML += `
+        <option value="${p.id}">${p.nombre} | Stock: ${p.cantidad ?? 0}</option>
+      `;
+
+      selectAsig.innerHTML += `
+        <option value="${p.id}">${p.nombre} | Stock: ${p.cantidad ?? 0}</option>
+      `;
+    });
+
+  }catch(e){
+    setStatus("prodStatus","Error conexión","error");
+  }
+}
+
+async function asignarStockUbicacion(){
+  const payload = {
+    producto_id: Number(document.getElementById("asig_producto").value),
+    ubicacion_id: Number(document.getElementById("asig_ubicacion").value),
+    cantidad: Number(document.getElementById("asig_cantidad").value)
+  };
+
+  if(!payload.producto_id || !payload.ubicacion_id || !payload.cantidad){
+    setStatus("asigStatus","Producto, ubicación y cantidad son obligatorios","error");
+    return;
+  }
+
+  try{
+    const res = await fetch(`${API_URL}/inventario-ubicaciones/asignar`,{
+      method:"POST",
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      setStatus("asigStatus", data.detail || "Error asignando stock","error");
+      return;
+    }
+
+    setStatus("asigStatus","Stock asignado a ubicación");
+    document.getElementById("asig_cantidad").value = "";
+
+    await cargarInventarioUbicaciones();
+
+  }catch(e){
+    setStatus("asigStatus","Error conexión","error");
+  }
+}
+
+async function cargarInventarioUbicaciones(){
+  try{
+    const res = await fetch(`${API_URL}/inventario-ubicaciones/`,{
+      headers:{ Authorization:`Bearer ${getToken()}` }
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      setStatus("asigStatus", data.detail || "Error cargando inventario por ubicación","error");
+      return;
+    }
+
+    const body = document.getElementById("invUbicacionesBody");
+    body.innerHTML = "";
+
+    data.forEach(i => {
+      body.innerHTML += `
+        <tr>
+          <td>${i.id ?? ""}</td>
+          <td>${i.producto_id ?? ""}</td>
+          <td>${i.ubicacion_id ?? ""}</td>
+          <td>${i.cantidad ?? 0}</td>
+        </tr>
+      `;
+    });
+
+  }catch(e){
+    setStatus("asigStatus","Error conexión","error");
+  }
 }
 
 async function registrarMovimiento(){
-  const token = getToken();
-
   const payload = {
     producto_id: Number(document.getElementById("productoSelect").value),
     tipo: document.getElementById("tipo").value,
     cantidad: Number(document.getElementById("cantidad").value),
-    recibe: document.getElementById("recibe").value
+    recibe: document.getElementById("recibe").value.trim(),
+    empleado: document.getElementById("empleado").value.trim(),
+    nota: document.getElementById("nota").value.trim()
   };
 
-  const res = await fetch(`${API_URL}/movimientos/`,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:`Bearer ${token}`
-    },
-    body:JSON.stringify(payload)
-  });
-
-  const data = await res.json();
-
-  if(!res.ok){
-    setStatus("movStatus", data.detail || "error","error");
+  if(!payload.producto_id || !payload.tipo || !payload.cantidad){
+    setStatus("movStatus","Producto, tipo y cantidad son obligatorios","error");
     return;
   }
 
-  setStatus("movStatus","Movimiento registrado");
+  try{
+    const res = await fetch(`${API_URL}/movimientos/`,{
+      method:"POST",
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
 
-  cargarProductos();
-  cargarMovimientos();
+    const data = await res.json();
+
+    if(!res.ok){
+      setStatus("movStatus", data.detail || "Error registrando movimiento","error");
+      return;
+    }
+
+    setStatus("movStatus","Movimiento registrado");
+
+    document.getElementById("cantidad").value = "";
+    document.getElementById("recibe").value = "";
+    document.getElementById("empleado").value = "";
+    document.getElementById("nota").value = "";
+
+    await cargarProductos();
+    await cargarMovimientos();
+
+  }catch(e){
+    setStatus("movStatus","Error conexión","error");
+  }
 }
 
 async function cargarMovimientos(){
-  const token = getToken();
+  try{
+    const res = await fetch(`${API_URL}/movimientos/`,{
+      headers:{ Authorization:`Bearer ${getToken()}` }
+    });
 
-  const res = await fetch(`${API_URL}/movimientos/`,{
-    headers:{Authorization:`Bearer ${token}`}
-  });
+    const data = await res.json();
 
-  const data = await res.json();
+    if(!res.ok){
+      setStatus("movStatus", data.detail || "Error cargando movimientos","error");
+      return;
+    }
 
-  const body = document.getElementById("movimientosBody");
-  body.innerHTML="";
+    const body = document.getElementById("movimientosBody");
+    body.innerHTML = "";
 
-  data.forEach(m=>{
-    body.innerHTML+=`<tr>
-      <td>${m.created_at}</td>
-      <td>${m.producto_id}</td>
-      <td>${m.tipo}</td>
-      <td>${m.cantidad}</td>
-      <td>${m.recibe || ""}</td>
-    </tr>`;
-  });
+    data.forEach(m => {
+      body.innerHTML += `
+        <tr>
+          <td>${m.created_at ? new Date(m.created_at).toLocaleString() : ""}</td>
+          <td>${m.producto_id ?? ""}</td>
+          <td>${m.tipo ?? ""}</td>
+          <td>${m.cantidad ?? 0}</td>
+          <td>${m.recibe || ""}</td>
+          <td>${m.empleado || ""}</td>
+          <td>${m.nota || ""}</td>
+        </tr>
+      `;
+    });
+
+  }catch(e){
+    setStatus("movStatus","Error conexión","error");
+  }
 }
 
+window.onload = async function(){
+  if(getToken()){
+    setStatus("loginStatus","Token detectado. Cargando datos...");
+    await cargarUbicaciones();
+    await cargarProductos();
+    await cargarMovimientos();
+  }
+};
 </script>
 
 </body>
