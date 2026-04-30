@@ -2,54 +2,93 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <title>Mexa Digital | Control ICA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mexa Digital - Control</title>
 
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: white;
-      margin: 0;
-      padding: 20px;
     }
 
-    h1, h2 {
-      color: #38bdf8;
+    header {
+      background: #020617;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #334155;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-top: 5px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
     }
 
     .card {
       background: #1e293b;
-      padding: 15px;
+      padding: 20px;
       border-radius: 12px;
       margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
     }
 
     input, select, button {
       width: 100%;
       padding: 12px;
-      margin: 6px 0;
+      margin-top: 8px;
+      margin-bottom: 12px;
       border-radius: 8px;
       border: none;
-      font-size: 16px;
+      font-size: 15px;
+    }
+
+    input, select {
+      background: #334155;
+      color: white;
     }
 
     button {
-      background: #38bdf8;
-      color: #020617;
+      background: #16a34a;
+      color: white;
       font-weight: bold;
       cursor: pointer;
     }
 
     button:hover {
-      background: #0ea5e9;
+      background: #22c55e;
+    }
+
+    .danger {
+      background: #dc2626;
+    }
+
+    .danger:hover {
+      background: #ef4444;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #020617;
-      margin-top: 10px;
+      margin-top: 15px;
+      font-size: 14px;
     }
 
     th, td {
@@ -58,97 +97,360 @@
       text-align: left;
     }
 
+    th {
+      background: #020617;
+      color: #93c5fd;
+    }
+
     .ok {
       color: #22c55e;
+      font-weight: bold;
     }
 
     .error {
-      color: #ef4444;
+      color: #f87171;
+      font-weight: bold;
+    }
+
+    .badge-entrada {
+      color: #22c55e;
+      font-weight: bold;
+    }
+
+    .badge-salida {
+      color: #f87171;
+      font-weight: bold;
+    }
+
+    @media (max-width: 800px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
 
 <body>
 
+<header>
   <h1>Mexa Digital</h1>
-  <p>Control de inventario básico</p>
+  <div class="subtitle">Control de materiales | Demo ICA</div>
+</header>
+
+<div class="container">
 
   <div class="card">
-    <h2>Login</h2>
-    <input id="email" type="email" placeholder="Correo" />
-    <input id="password" type="password" placeholder="Contraseña" />
-    <button onclick="login()">Entrar</button>
-    <p id="loginMsg"></p>
+    <h2>Acceso</h2>
+
+    <label>Email</label>
+    <input id="email" type="email" placeholder="admin@mexa.com" />
+
+    <label>Contraseña</label>
+    <input id="password" type="password" placeholder="********" />
+
+    <button onclick="login()">Iniciar sesión</button>
+    <button class="danger" onclick="logout()">Cerrar sesión</button>
+
+    <p id="loginStatus"></p>
+  </div>
+
+  <div class="row">
+
+    <div class="card">
+      <h2>Inventario actual</h2>
+      <button onclick="cargarProductos()">Cargar productos</button>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Producto</th>
+            <th>Código</th>
+            <th>Cantidad</th>
+            <th>Ubicación</th>
+          </tr>
+        </thead>
+        <tbody id="productosBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Registrar movimiento</h2>
+
+      <label>Producto</label>
+      <select id="productoSelect"></select>
+
+      <label>Tipo de movimiento</label>
+      <select id="tipo">
+        <option value="salida">Salida</option>
+        <option value="entrada">Entrada</option>
+      </select>
+
+      <label>Cantidad</label>
+      <input id="cantidad" type="number" placeholder="Ejemplo: 5" />
+
+      <label>Recibe</label>
+      <input id="recibe" type="text" placeholder="Nombre de quien recibe" />
+
+      <label>Empleado / entrega</label>
+      <input id="empleado" type="text" placeholder="Nombre de quien entrega" />
+
+      <label>Nota</label>
+      <input id="nota" type="text" placeholder="Ejemplo: salida para spools" />
+
+      <button onclick="registrarMovimiento()">Registrar movimiento</button>
+
+      <p id="movStatus"></p>
+    </div>
+
   </div>
 
   <div class="card">
-    <h2>Crear producto</h2>
-    <input id="nombreProducto" placeholder="Nombre del producto" />
-    <input id="codigoProducto" placeholder="Código / clave" />
-    <input id="tipoProducto" placeholder="Tipo: consumible, herramienta, epp" />
-    <input id="cantidadProducto" type="number" placeholder="Cantidad inicial" />
-    <input id="ubicacionProducto" placeholder="Ubicación: Nave 12, almacén, sucursal" />
-    <button onclick="crearProducto()">Guardar producto</button>
-    <p id="productoMsg"></p>
-  </div>
+    <h2>Historial de movimientos</h2>
+    <button onclick="cargarMovimientos()">Cargar historial</button>
 
-  <div class="card">
-    <h2>Productos</h2>
-    <button onclick="cargarProductos()">Cargar productos</button>
     <table>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Código</th>
+          <th>Fecha</th>
+          <th>Producto ID</th>
+          <th>Tipo</th>
           <th>Cantidad</th>
-          <th>Ubicación</th>
+          <th>Recibe</th>
+          <th>Empleado</th>
+          <th>Nota</th>
         </tr>
       </thead>
-      <tbody id="tablaProductos"></tbody>
+      <tbody id="movimientosBody"></tbody>
     </table>
   </div>
 
-  <div class="card">
-    <h2>Movimiento</h2>
-    <input id="productoIdMov" type="number" placeholder="ID del producto" />
-    <select id="tipoMovimiento">
-      <option value="entrada">Entrada</option>
-      <option value="salida">Salida</option>
-    </select>
-    <input id="cantidadMovimiento" type="number" placeholder="Cantidad" />
-    <input id="recibeMovimiento" placeholder="Quién recibe / entrega" />
-    <input id="empleadoMovimiento" placeholder="Empleado" />
-    <input id="notaMovimiento" placeholder="Nota" />
-    <button onclick="crearMovimiento()">Guardar movimiento</button>
-    <p id="movimientoMsg"></p>
-  </div>
+</div>
 
-  <script>
-    const API_URL = "https://mexa-core-1.onrender.com";
+<script>
+  const API_URL = "https://mexa-core-1.onrender.com";
 
-    function getToken() {
-      return localStorage.getItem("mexa_token");
+  function getToken() {
+    return localStorage.getItem("mexa_token");
+  }
+
+  function setStatus(id, message, type = "ok") {
+    const el = document.getElementById(id);
+    el.className = type;
+    el.innerText = message;
+  }
+
+  async function login() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+      setStatus("loginStatus", "Pon email y contraseña.", "error");
+      return;
     }
 
-    async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const msg = document.getElementById("loginMsg");
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-      try {
-        const res = await fetch(`${API_URL}/auth/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password
-          })
-        });
+      const data = await res.json();
 
-        const data = await res.json();
+      if (!res.ok) {
+        setStatus("loginStatus", data.detail || "Error al iniciar sesión.", "error");
+        return;
+      }
 
-        if (!res.ok) {
-          msg
+      localStorage.setItem("mexa_token", data.access_token);
+      setStatus("loginStatus", "Sesión iniciada correctamente.", "ok");
+
+      await cargarProductos();
+      await cargarMovimientos();
+
+    } catch (err) {
+      setStatus("loginStatus", "Error de conexión con backend.", "error");
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("mexa_token");
+    setStatus("loginStatus", "Sesión cerrada.", "ok");
+  }
+
+  async function cargarProductos() {
+    const token = getToken();
+
+    if (!token) {
+      setStatus("loginStatus", "Primero inicia sesión.", "error");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/productos/`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus("loginStatus", data.detail || "No se pudieron cargar productos.", "error");
+        return;
+      }
+
+      const tbody = document.getElementById("productosBody");
+      const select = document.getElementById("productoSelect");
+
+      tbody.innerHTML = "";
+      select.innerHTML = "";
+
+      data.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${p.id}</td>
+            <td>${p.nombre || ""}</td>
+            <td>${p.codigo || ""}</td>
+            <td>${p.cantidad ?? 0}</td>
+            <td>${p.ubicacion || ""}</td>
+          </tr>
+        `;
+
+        select.innerHTML += `
+          <option value="${p.id}">
+            ${p.nombre} | Stock: ${p.cantidad ?? 0}
+          </option>
+        `;
+      });
+
+    } catch (err) {
+      setStatus("loginStatus", "Error cargando productos.", "error");
+    }
+  }
+
+  async function registrarMovimiento() {
+    const token = getToken();
+
+    if (!token) {
+      setStatus("movStatus", "Primero inicia sesión.", "error");
+      return;
+    }
+
+    const producto_id = Number(document.getElementById("productoSelect").value);
+    const tipo = document.getElementById("tipo").value;
+    const cantidad = Number(document.getElementById("cantidad").value);
+    const recibe = document.getElementById("recibe").value.trim();
+    const empleado = document.getElementById("empleado").value.trim();
+    const nota = document.getElementById("nota").value.trim();
+
+    if (!producto_id || !tipo || !cantidad || cantidad <= 0) {
+      setStatus("movStatus", "Producto, tipo y cantidad son obligatorios.", "error");
+      return;
+    }
+
+    const payload = {
+      producto_id,
+      tipo,
+      cantidad,
+      recibe,
+      empleado,
+      nota
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/movimientos/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus("movStatus", data.detail || "No se pudo registrar movimiento.", "error");
+        return;
+      }
+
+      setStatus("movStatus", "Movimiento registrado correctamente.", "ok");
+
+      document.getElementById("cantidad").value = "";
+      document.getElementById("recibe").value = "";
+      document.getElementById("empleado").value = "";
+      document.getElementById("nota").value = "";
+
+      await cargarProductos();
+      await cargarMovimientos();
+
+    } catch (err) {
+      setStatus("movStatus", "Error de conexión registrando movimiento.", "error");
+    }
+  }
+
+  async function cargarMovimientos() {
+    const token = getToken();
+
+    if (!token) {
+      setStatus("loginStatus", "Primero inicia sesión.", "error");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/movimientos/`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus("loginStatus", data.detail || "No se pudieron cargar movimientos.", "error");
+        return;
+      }
+
+      const tbody = document.getElementById("movimientosBody");
+      tbody.innerHTML = "";
+
+      data.forEach(m => {
+        const tipoClass = m.tipo === "entrada" ? "badge-entrada" : "badge-salida";
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${m.created_at ? new Date(m.created_at).toLocaleString() : ""}</td>
+            <td>${m.producto_id}</td>
+            <td class="${tipoClass}">${m.tipo}</td>
+            <td>${m.cantidad}</td>
+            <td>${m.recibe || ""}</td>
+            <td>${m.empleado || ""}</td>
+            <td>${m.nota || ""}</td>
+          </tr>
+        `;
+      });
+
+    } catch (err) {
+      setStatus("loginStatus", "Error cargando movimientos.", "error");
+    }
+  }
+
+  window.onload = async function() {
+    if (getToken()) {
+      setStatus("loginStatus", "Token detectado. Cargando datos...", "ok");
+      await cargarProductos();
+      await cargarMovimientos();
+    }
+  };
+</script>
+
+</body>
+</html>
