@@ -17,31 +17,47 @@
       background: #020617;
       padding: 20px;
       text-align: center;
-      border-bottom: 1px solid #334155;
     }
 
-    h1 { margin: 0; }
-    .container { max-width: 1100px; margin: auto; padding: 20px; }
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+    }
 
     .card {
       background: #1e293b;
       padding: 20px;
-      border-radius: 12px;
+      border-radius: 10px;
       margin-bottom: 20px;
     }
 
     input, select, button {
       width: 100%;
       padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
+      margin-top: 8px;
+      border-radius: 6px;
       border: none;
     }
 
-    input, select { background: #334155; color: white; }
+    input, select {
+      background: #334155;
+      color: white;
+    }
 
-    button { background: #16a34a; color: white; font-weight: bold; }
-    .danger { background: red; }
+    button {
+      background: #16a34a;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #22c55e;
+    }
+
+    .error { color: #f87171; }
+    .ok { color: #22c55e; }
 
     table {
       width: 100%;
@@ -50,14 +66,13 @@
     }
 
     th, td {
-      border-bottom: 1px solid #334155;
       padding: 8px;
+      border-bottom: 1px solid #334155;
     }
 
-    th { background: #020617; }
-
-    .ok { color: #22c55e; }
-    .error { color: #f87171; }
+    th {
+      background: #020617;
+    }
   </style>
 </head>
 
@@ -65,11 +80,12 @@
 
 <header>
   <h1>Mexa Digital</h1>
-  <p>Control de materiales ICA</p>
+  <p>Control de materiales | Demo ICA</p>
 </header>
 
 <div class="container">
 
+  <!-- LOGIN -->
   <div class="card">
     <h2>Login</h2>
     <input id="email" placeholder="email">
@@ -78,36 +94,56 @@
     <p id="loginStatus"></p>
   </div>
 
+  <!-- CREAR PRODUCTO -->
+  <div class="card">
+    <h2>Crear producto</h2>
+
+    <input id="p_nombre" placeholder="Nombre del producto">
+    <input id="p_codigo" placeholder="Código">
+    <input id="p_tipo" placeholder="Tipo (consumible, EPP, herramienta)">
+
+    <button onclick="crearProducto()">Crear producto</button>
+
+    <p id="prodStatus"></p>
+  </div>
+
+  <!-- INVENTARIO -->
   <div class="card">
     <h2>Inventario</h2>
     <button onclick="cargarProductos()">Cargar</button>
+
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>Nombre</th><th>Cantidad</th>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Cantidad</th>
         </tr>
       </thead>
       <tbody id="productosBody"></tbody>
     </table>
   </div>
 
+  <!-- MOVIMIENTOS -->
   <div class="card">
     <h2>Movimiento</h2>
 
     <select id="productoSelect"></select>
 
     <select id="tipo">
-      <option value="salida">Salida</option>
       <option value="entrada">Entrada</option>
+      <option value="salida">Salida</option>
     </select>
 
-    <input id="cantidad" placeholder="cantidad">
-    <input id="recibe" placeholder="recibe">
+    <input id="cantidad" placeholder="Cantidad">
+    <input id="recibe" placeholder="Recibe">
 
     <button onclick="registrarMovimiento()">Registrar</button>
+
     <p id="movStatus"></p>
   </div>
 
+  <!-- HISTORIAL -->
   <div class="card">
     <h2>Historial</h2>
     <button onclick="cargarMovimientos()">Cargar</button>
@@ -115,7 +151,11 @@
     <table>
       <thead>
         <tr>
-          <th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Recibe</th>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Tipo</th>
+          <th>Cantidad</th>
+          <th>Recibe</th>
         </tr>
       </thead>
       <tbody id="movimientosBody"></tbody>
@@ -125,6 +165,7 @@
 </div>
 
 <script>
+
 const API_URL = "https://mexa-core-1.onrender.com";
 
 function setStatus(id, msg, type="ok"){
@@ -163,6 +204,50 @@ async function login(){
   }
 }
 
+async function crearProducto(){
+  const token = getToken();
+
+  const payload = {
+    nombre: document.getElementById("p_nombre").value,
+    codigo: document.getElementById("p_codigo").value,
+    tipo: document.getElementById("p_tipo").value
+  };
+
+  if(!payload.nombre || !payload.codigo){
+    setStatus("prodStatus","Nombre y código obligatorios","error");
+    return;
+  }
+
+  try{
+    const res = await fetch(`${API_URL}/productos/`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      setStatus("prodStatus", data.detail || "error","error");
+      return;
+    }
+
+    setStatus("prodStatus","Producto creado","ok");
+
+    document.getElementById("p_nombre").value="";
+    document.getElementById("p_codigo").value="";
+    document.getElementById("p_tipo").value="";
+
+    cargarProductos();
+
+  }catch(e){
+    setStatus("prodStatus","error conexión","error");
+  }
+}
+
 async function cargarProductos(){
   const token = getToken();
 
@@ -182,7 +267,7 @@ async function cargarProductos(){
     body.innerHTML+=`<tr>
       <td>${p.id}</td>
       <td>${p.nombre}</td>
-      <td>${p.cantidad}</td>
+      <td>${p.cantidad ?? 0}</td>
     </tr>`;
 
     select.innerHTML+=`<option value="${p.id}">
@@ -217,7 +302,8 @@ async function registrarMovimiento(){
     return;
   }
 
-  setStatus("movStatus","ok");
+  setStatus("movStatus","Movimiento registrado");
+
   cargarProductos();
   cargarMovimientos();
 }
@@ -244,6 +330,7 @@ async function cargarMovimientos(){
     </tr>`;
   });
 }
+
 </script>
 
 </body>
