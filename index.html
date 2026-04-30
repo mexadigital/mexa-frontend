@@ -13,16 +13,17 @@
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
     input, select, button {
       width:100%; padding:10px; margin-top:8px;
-      border-radius:6px; border:none;
+      border-radius:6px; border:none; box-sizing:border-box;
     }
     input, select { background:#334155; color:white; }
     button { background:#16a34a; color:white; font-weight:bold; cursor:pointer; }
     .danger { background:#dc2626; }
-    .ok { color:#22c55e; }
-    .error { color:#f87171; }
+    .ok { color:#22c55e; font-weight:bold; }
+    .error { color:#f87171; font-weight:bold; }
     table { width:100%; margin-top:10px; border-collapse:collapse; }
-    th, td { padding:8px; border-bottom:1px solid #334155; }
-    th { background:#020617; }
+    th, td { padding:8px; border-bottom:1px solid #334155; text-align:left; }
+    th { background:#020617; color:#93c5fd; }
+    label { display:block; margin-top:10px; color:#cbd5e1; font-size:14px; }
   </style>
 </head>
 
@@ -30,16 +31,22 @@
 
 <header>
   <h1>Mexa Digital</h1>
-  <p>Control ICA</p>
+  <p>Control de materiales | ICA</p>
 </header>
 
 <div class="container">
 
 <div class="card">
   <h2>Login</h2>
-  <input id="email">
-  <input id="password" type="password">
-  <button onclick="login()">Login</button>
+  <label>Email</label>
+  <input id="email" placeholder="admin3@mexa.com">
+
+  <label>Contraseña</label>
+  <input id="password" type="password" placeholder="Contraseña">
+
+  <button onclick="login()">Iniciar sesión</button>
+  <button class="danger" onclick="logout()">Cerrar sesión</button>
+
   <p id="loginStatus"></p>
 </div>
 
@@ -47,67 +54,112 @@
 
 <div class="card">
   <h2>Crear ubicación</h2>
-  <input id="u_nombre">
+
+  <label>Nombre de ubicación</label>
+  <input id="u_nombre" placeholder="Ejemplo: M-06, Nave 12, Patio Spools">
+
+  <label>Tipo de ubicación</label>
   <select id="u_tipo">
     <option value="contenedor">Contenedor</option>
     <option value="nave">Nave</option>
+    <option value="almacen">Almacén</option>
+    <option value="patio">Patio</option>
+    <option value="cielo_abierto">Cielo abierto</option>
   </select>
-  <button onclick="crearUbicacion()">Crear</button>
+
+  <button onclick="crearUbicacion()">Crear ubicación</button>
+  <button onclick="cargarUbicaciones()">Cargar ubicaciones</button>
+
   <p id="ubicStatus"></p>
 </div>
 
 <div class="card">
   <h2>Crear producto</h2>
-  <input id="p_nombre">
-  <input id="p_codigo">
-  <input id="p_tipo">
-  <button onclick="crearProducto()">Crear</button>
+
+  <label>Nombre del producto</label>
+  <input id="p_nombre" placeholder="Ejemplo: Disco corte 4.5">
+
+  <label>Código / clave</label>
+  <input id="p_codigo" placeholder="Ejemplo: DC-045">
+
+  <label>Tipo de producto</label>
+  <input id="p_tipo" placeholder="Ejemplo: consumible, EPP, herramienta">
+
+  <button onclick="crearProducto()">Crear producto</button>
+  <button onclick="cargarProductos()">Cargar productos</button>
+
   <p id="prodStatus"></p>
 </div>
 
 </div>
 
 <div class="card">
-  <h2>Ubicaciones</h2>
-  <button onclick="cargarUbicaciones()">Cargar</button>
+  <h2>Ubicaciones registradas</h2>
   <table>
+    <thead>
+      <tr><th>ID</th><th>Nombre</th><th>Tipo</th></tr>
+    </thead>
     <tbody id="ubicacionesBody"></tbody>
   </table>
 </div>
 
 <div class="card">
-  <h2>Productos</h2>
-  <button onclick="cargarProductos()">Cargar</button>
+  <h2>Productos registrados</h2>
   <table>
+    <thead>
+      <tr><th>ID</th><th>Producto</th><th>Código</th><th>Tipo</th></tr>
+    </thead>
     <tbody id="productosBody"></tbody>
   </table>
 </div>
 
 <div class="card">
-  <h2>Asignar stock</h2>
+  <h2>Asignar stock a ubicación</h2>
+
+  <label>Producto</label>
   <select id="asig_producto"></select>
+
+  <label>Ubicación</label>
   <select id="asig_ubicacion"></select>
-  <input id="asig_cantidad">
-  <button onclick="asignar()">Asignar</button>
+
+  <label>Cantidad</label>
+  <input id="asig_cantidad" type="number" placeholder="Ejemplo: 100">
+
+  <button onclick="asignar()">Asignar stock</button>
+
   <p id="asigStatus"></p>
 </div>
 
 <div class="card">
-  <h2>Movimientos</h2>
+  <h2>Registrar movimiento</h2>
+
+  <label>Producto</label>
   <select id="productoSelect"></select>
+
+  <label>Tipo</label>
   <select id="tipo">
     <option value="entrada">Entrada</option>
     <option value="salida">Salida</option>
   </select>
-  <input id="cantidad">
-  <button onclick="movimiento()">Registrar</button>
+
+  <label>Cantidad</label>
+  <input id="cantidad" type="number" placeholder="Ejemplo: 5">
+
+  <label>Recibe</label>
+  <input id="recibe" placeholder="Ejemplo: Juan Pérez">
+
+  <button onclick="movimiento()">Registrar movimiento</button>
+
   <p id="movStatus"></p>
 </div>
 
 <div class="card">
   <h2>Historial</h2>
-  <button onclick="historial()">Cargar</button>
+  <button onclick="historial()">Cargar historial</button>
   <table>
+    <thead>
+      <tr><th>Tipo</th><th>Cantidad</th><th>Producto ID</th><th>Recibe</th></tr>
+    </thead>
     <tbody id="movimientosBody"></tbody>
   </table>
 </div>
@@ -117,105 +169,208 @@
 <script>
 const API = "https://mexa-core-1.onrender.com";
 
-function s(id,m,t="ok"){
-  document.getElementById(id).innerText=typeof m==="string"?m:JSON.stringify(m);
-  document.getElementById(id).className=t;
+function s(id,m,tipo="ok"){
+  document.getElementById(id).innerText = typeof m === "string" ? m : JSON.stringify(m);
+  document.getElementById(id).className = tipo;
 }
 
-function t(){return localStorage.getItem("token")}
+function token(){
+  return localStorage.getItem("token");
+}
+
+function headers(){
+  return {
+    "Content-Type":"application/json",
+    "Authorization":"Bearer " + token()
+  };
+}
 
 async function login(){
-  let r=await fetch(API+"/auth/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({email:email.value,password:password.value})});
-  let d=await r.json();
-  if(!r.ok)return s("loginStatus",d,"error");
-  localStorage.setItem("token",d.access_token);
-  s("loginStatus","ok");
+  let r = await fetch(API+"/auth/auth/login", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      email:email.value,
+      password:password.value
+    })
+  });
+
+  let d = await r.json();
+
+  if(!r.ok) return s("loginStatus", d, "error");
+
+  localStorage.setItem("token", d.access_token);
+  s("loginStatus", "Login correcto");
+
+  cargarUbicaciones();
+  cargarProductos();
+  historial();
+}
+
+function logout(){
+  localStorage.removeItem("token");
+  s("loginStatus", "Sesión cerrada");
 }
 
 async function crearUbicacion(){
-  let r=await fetch(API+"/ubicaciones/ubicaciones/",{
+  let r = await fetch(API+"/ubicaciones/ubicaciones/", {
     method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+t()},
-    body:JSON.stringify({nombre:u_nombre.value,tipo:u_tipo.value,organizacion_id:1})
+    headers:headers(),
+    body:JSON.stringify({
+      nombre:u_nombre.value,
+      tipo:u_tipo.value,
+      organizacion_id:1
+    })
   });
-  let d=await r.json();
-  if(!r.ok)return s("ubicStatus",d,"error");
-  s("ubicStatus","ok");
+
+  let d = await r.json();
+
+  if(!r.ok) return s("ubicStatus", d, "error");
+
+  s("ubicStatus", "Ubicación creada correctamente");
+  u_nombre.value = "";
+  cargarUbicaciones();
 }
 
 async function crearProducto(){
-  let r=await fetch(API+"/productos/productos/",{
+  let r = await fetch(API+"/productos/productos/", {
     method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+t()},
-    body:JSON.stringify({nombre:p_nombre.value,codigo:p_codigo.value,tipo:p_tipo.value,organizacion_id:1})
+    headers:headers(),
+    body:JSON.stringify({
+      nombre:p_nombre.value,
+      codigo:p_codigo.value,
+      tipo:p_tipo.value,
+      organizacion_id:1
+    })
   });
-  let d=await r.json();
-  if(!r.ok)return s("prodStatus",d,"error");
-  s("prodStatus","ok");
+
+  let d = await r.json();
+
+  if(!r.ok) return s("prodStatus", d, "error");
+
+  s("prodStatus", "Producto creado correctamente");
+  p_nombre.value = "";
+  p_codigo.value = "";
+  p_tipo.value = "";
+  cargarProductos();
 }
 
 async function cargarUbicaciones(){
-  let r=await fetch(API+"/ubicaciones/ubicaciones/",{headers:{Authorization:"Bearer "+t()}});
-  let d=await r.json();
-  ubicacionesBody.innerHTML="";
-  asig_ubicacion.innerHTML="";
+  let r = await fetch(API+"/ubicaciones/ubicaciones/", {
+    headers:{Authorization:"Bearer "+token()}
+  });
+
+  let d = await r.json();
+
+  ubicacionesBody.innerHTML = "";
+  asig_ubicacion.innerHTML = "";
+
   d.forEach(x=>{
-    ubicacionesBody.innerHTML+=`<tr><td>${x.id}</td><td>${x.nombre}</td></tr>`;
-    asig_ubicacion.innerHTML+=`<option value="${x.id}">${x.nombre}</option>`;
+    ubicacionesBody.innerHTML += `
+      <tr>
+        <td>${x.id}</td>
+        <td>${x.nombre}</td>
+        <td>${x.tipo}</td>
+      </tr>
+    `;
+
+    asig_ubicacion.innerHTML += `
+      <option value="${x.id}">${x.nombre} | ${x.tipo}</option>
+    `;
   });
 }
 
 async function cargarProductos(){
-  let r=await fetch(API+"/productos/productos/",{headers:{Authorization:"Bearer "+t()}});
-  let d=await r.json();
-  productosBody.innerHTML="";
-  productoSelect.innerHTML="";
-  asig_producto.innerHTML="";
+  let r = await fetch(API+"/productos/productos/", {
+    headers:{Authorization:"Bearer "+token()}
+  });
+
+  let d = await r.json();
+
+  productosBody.innerHTML = "";
+  productoSelect.innerHTML = "";
+  asig_producto.innerHTML = "";
+
   d.forEach(x=>{
-    productosBody.innerHTML+=`<tr><td>${x.id}</td><td>${x.nombre}</td></tr>`;
-    productoSelect.innerHTML+=`<option value="${x.id}">${x.nombre}</option>`;
-    asig_producto.innerHTML+=`<option value="${x.id}">${x.nombre}</option>`;
+    productosBody.innerHTML += `
+      <tr>
+        <td>${x.id}</td>
+        <td>${x.nombre}</td>
+        <td>${x.codigo || ""}</td>
+        <td>${x.tipo || ""}</td>
+      </tr>
+    `;
+
+    productoSelect.innerHTML += `
+      <option value="${x.id}">${x.nombre}</option>
+    `;
+
+    asig_producto.innerHTML += `
+      <option value="${x.id}">${x.nombre}</option>
+    `;
   });
 }
 
 async function asignar(){
-  let r=await fetch(API+"/inventario-ubicaciones/asignar",{
+  let r = await fetch(API+"/inventario-ubicaciones/asignar", {
     method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+t()},
+    headers:headers(),
     body:JSON.stringify({
       producto_id:+asig_producto.value,
       ubicacion_id:+asig_ubicacion.value,
       cantidad:+asig_cantidad.value
     })
   });
-  let d=await r.json();
-  if(!r.ok)return s("asigStatus",d,"error");
-  s("asigStatus","ok");
+
+  let d = await r.json();
+
+  if(!r.ok) return s("asigStatus", d, "error");
+
+  s("asigStatus", "Stock asignado correctamente");
+  asig_cantidad.value = "";
 }
 
 async function movimiento(){
-  let r=await fetch(API+"/movimientos/",{
+  let r = await fetch(API+"/movimientos/", {
     method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+t()},
+    headers:headers(),
     body:JSON.stringify({
       producto_id:+productoSelect.value,
       tipo:tipo.value,
       cantidad:+cantidad.value,
+      recibe:recibe.value,
       organizacion_id:1
     })
   });
-  let d=await r.json();
-  if(!r.ok)return s("movStatus",d,"error");
-  s("movStatus","ok");
+
+  let d = await r.json();
+
+  if(!r.ok) return s("movStatus", d, "error");
+
+  s("movStatus", "Movimiento registrado correctamente");
+  cantidad.value = "";
+  recibe.value = "";
+  historial();
 }
 
 async function historial(){
-  let r=await fetch(API+"/movimientos/",{headers:{Authorization:"Bearer "+t()}});
-  let d=await r.json();
-  movimientosBody.innerHTML="";
+  let r = await fetch(API+"/movimientos/", {
+    headers:{Authorization:"Bearer "+token()}
+  });
+
+  let d = await r.json();
+
+  movimientosBody.innerHTML = "";
+
   d.forEach(x=>{
-    movimientosBody.innerHTML+=`<tr><td>${x.tipo}</td><td>${x.cantidad}</td></tr>`;
+    movimientosBody.innerHTML += `
+      <tr>
+        <td>${x.tipo}</td>
+        <td>${x.cantidad}</td>
+        <td>${x.producto_id}</td>
+        <td>${x.recibe || ""}</td>
+      </tr>
+    `;
   });
 }
 </script>
