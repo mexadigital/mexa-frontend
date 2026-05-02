@@ -5,24 +5,33 @@
 <title>Mexa Digital</title>
 
 <style>
-body{font-family:Arial;background:#0f172a;color:white;padding:20px}
-.card{background:#1e293b;padding:20px;border-radius:10px;margin-bottom:20px}
-input{padding:10px;margin:5px;border-radius:6px;border:none}
-button{padding:10px;border:none;border-radius:6px;background:#38bdf8;color:black;margin:5px}
+body{font-family:Arial,sans-serif;background:#0f172a;color:white;margin:0;padding:20px}
+.container{max-width:1100px;margin:auto}
+.card{background:#1e293b;padding:20px;border-radius:12px;margin-bottom:20px}
+h1,h2{color:#38bdf8}
+input,select{padding:10px;margin:5px;border-radius:6px;border:none}
+button{padding:10px 15px;border:none;border-radius:6px;background:#38bdf8;color:black;cursor:pointer;font-weight:bold;margin:5px}
+button:hover{background:#0ea5e9}
 .logout{background:#f87171}
-.item{border-bottom:1px solid #334155;padding:10px}
+.logout:hover{background:#ef4444}
+.item{padding:12px;border-bottom:1px solid #334155}
 .ok{color:#4ade80}
 .error{color:#f87171}
+.small{color:#94a3b8;font-size:13px}
 </style>
-
 </head>
 
 <body>
 
+<div class="container">
+
 <div class="card">
 <h1>Mexa Digital</h1>
 <p id="usuarioInfo"></p>
-<button id="logoutBtn" class="logout" onclick="logout()" style="display:none;">Cerrar sesión</button>
+
+<!-- 🔴 BOTÓN AGREGADO -->
+<button onclick="logout()" class="logout">Cerrar sesión</button>
+
 </div>
 
 <div class="card" id="loginCard">
@@ -50,161 +59,171 @@ button{padding:10px;border:none;border-radius:6px;background:#38bdf8;color:black
 <div id="listaProductos"></div>
 </div>
 
-<script>
-const API="https://mexa-core-1.onrender.com";
-const LOGIN_URL=`${API}/auth/auth/login`;
-const UBICACIONES_URL=`${API}/ubicaciones/ubicaciones/`;
-const PRODUCTOS_URL=`${API}/productos/productos/`;
+</div>
 
-let token=localStorage.getItem("mexa_token")||"";
-let usuario=localStorage.getItem("mexa_usuario")||"";
+<script>
+
+const API = "https://mexa-core-1.onrender.com";
+
+const LOGIN_URL = `${API}/auth/auth/login`;
+const UBICACIONES_URL = `${API}/ubicaciones/ubicaciones/`;
+const PRODUCTOS_URL = `${API}/productos/productos/`;
+
+let token = localStorage.getItem("mexa_token") || "";
+let usuario = localStorage.getItem("mexa_usuario") || "";
+
+/* 🔴 SOLO AGREGO LOGOUT */
+function logout() {
+  localStorage.removeItem("mexa_token");
+  localStorage.removeItem("mexa_usuario");
+  token = "";
+  usuario = "";
+  location.reload();
+}
 
 function normalizarLista(data){
- if(Array.isArray(data)) return data;
- if(data?.items) return data.items;
- if(data?.data) return data.data;
- if(data?.results) return data.results;
- return [];
+  if(Array.isArray(data)) return data;
+  if(data?.items) return data.items;
+  if(data?.data) return data.data;
+  if(data?.results) return data.results;
+  return [];
 }
 
 function mostrarSesion(){
- if(token){
-  usuarioInfo.innerText="Usuario: "+usuario;
-  logoutBtn.style.display="block";
-  loginCard.style.display="none";
- }else{
-  loginCard.style.display="block";
- }
-}
-
-function logout(){
- localStorage.clear();
- token="";
- usuario="";
- location.reload();
+  if(token){
+    document.getElementById("usuarioInfo").innerText = "Usuario: " + usuario;
+    document.getElementById("loginCard").style.display = "none";
+  }
 }
 
 async function login(){
- const email=emailInput.value||document.getElementById("email").value;
- const password=document.getElementById("password").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
- const res=await fetch(LOGIN_URL,{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({email,password})
- });
+  const res = await fetch(LOGIN_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email,password})
+  });
 
- const data=await res.json();
+  const data = await res.json();
 
- if(!res.ok){
-  loginStatus.innerText=JSON.stringify(data);
-  loginStatus.className="error";
-  return;
- }
+  if(!res.ok){
+    document.getElementById("loginStatus").innerText = JSON.stringify(data);
+    document.getElementById("loginStatus").className = "error";
+    return;
+  }
 
- token=data.access_token;
- usuario=email;
+  token = data.access_token;
+  usuario = email;
 
- localStorage.setItem("mexa_token",token);
- localStorage.setItem("mexa_usuario",usuario);
+  localStorage.setItem("mexa_token",token);
+  localStorage.setItem("mexa_usuario",usuario);
 
- loginStatus.innerText="Login correcto";
- loginStatus.className="ok";
+  document.getElementById("loginStatus").innerText = "Login correcto";
+  document.getElementById("loginStatus").className = "ok";
 
- mostrarSesion();
- cargarTodo();
+  mostrarSesion();
+  cargarTodo();
 }
 
 async function cargarTodo(){
- await cargarUbicaciones();
- await cargarProductos();
+  await cargarUbicaciones();
+  await cargarProductos();
 }
 
 async function cargarUbicaciones(){
- const res=await fetch(UBICACIONES_URL,{
-  headers:{Authorization:"Bearer "+token}
- });
+  const res = await fetch(UBICACIONES_URL,{
+    headers:{Authorization:"Bearer "+token}
+  });
 
- const data=await res.json();
+  const data = await res.json();
 
- if(!res.ok){
-  ubicacionStatus.innerText=data.detail||"Error";
-  ubicacionStatus.className="error";
-  return;
- }
+  if(!res.ok){
+    document.getElementById("ubicacionStatus").innerText = data.detail || "Error";
+    document.getElementById("ubicacionStatus").className = "error";
+    return;
+  }
 
- const lista=normalizarLista(data);
- listaUbicaciones.innerHTML="";
+  const lista = normalizarLista(data);
+  const contenedor = document.getElementById("listaUbicaciones");
 
- lista.forEach(u=>{
-  listaUbicaciones.innerHTML+=`
-  <div class="item">
-   ${u.nombre} (${u.tipo})
-  </div>`;
- });
+  contenedor.innerHTML = "";
 
- ubicacionStatus.innerText="OK";
- ubicacionStatus.className="ok";
+  lista.forEach(u=>{
+    contenedor.innerHTML += `
+      <div class="item">
+        ${u.nombre} (${u.tipo})
+      </div>
+    `;
+  });
+
+  document.getElementById("ubicacionStatus").innerText = "OK";
+  document.getElementById("ubicacionStatus").className = "ok";
 }
 
 async function crearUbicacion(){
- const nombre=document.getElementById("ubicacion_nombre").value;
- const tipo=document.getElementById("ubicacion_tipo").value;
+  const nombre = document.getElementById("ubicacion_nombre").value;
+  const tipo = document.getElementById("ubicacion_tipo").value;
 
- const res=await fetch(UBICACIONES_URL,{
-  method:"POST",
-  headers:{
-   "Content-Type":"application/json",
-   Authorization:"Bearer "+token
-  },
-  body:JSON.stringify({nombre,tipo})
- });
+  const res = await fetch(UBICACIONES_URL,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body:JSON.stringify({nombre,tipo})
+  });
 
- const data=await res.json();
+  const data = await res.json();
 
- if(!res.ok){
-  ubicacionStatus.innerText=data.detail;
-  ubicacionStatus.className="error";
-  return;
- }
+  if(!res.ok){
+    document.getElementById("ubicacionStatus").innerText = data.detail;
+    document.getElementById("ubicacionStatus").className = "error";
+    return;
+  }
 
- ubicacionStatus.innerText="Creado";
- ubicacionStatus.className="ok";
+  document.getElementById("ubicacionStatus").innerText = "Creado";
+  document.getElementById("ubicacionStatus").className = "ok";
 
- cargarUbicaciones();
+  cargarUbicaciones();
 }
 
 async function cargarProductos(){
- const res=await fetch(PRODUCTOS_URL,{
-  headers:{Authorization:"Bearer "+token}
- });
+  const res = await fetch(PRODUCTOS_URL,{
+    headers:{Authorization:"Bearer "+token}
+  });
 
- const data=await res.json();
+  const data = await res.json();
 
- if(!res.ok){
-  productosStatus.innerText="Error";
-  productosStatus.className="error";
-  return;
- }
+  if(!res.ok){
+    document.getElementById("productosStatus").innerText = "Error";
+    document.getElementById("productosStatus").className = "error";
+    return;
+  }
 
- const lista=normalizarLista(data);
- listaProductos.innerHTML="";
+  const lista = normalizarLista(data);
+  const contenedor = document.getElementById("listaProductos");
 
- lista.forEach(p=>{
-  listaProductos.innerHTML+=`
-  <div class="item">
-   ${p.nombre} - ${p.cantidad||0}
-  </div>`;
- });
+  contenedor.innerHTML = "";
 
- productosStatus.innerText="OK";
- productosStatus.className="ok";
+  lista.forEach(p=>{
+    contenedor.innerHTML += `
+      <div class="item">
+        ${p.nombre} - ${p.cantidad || 0}
+      </div>
+    `;
+  });
+
+  document.getElementById("productosStatus").innerText = "OK";
+  document.getElementById("productosStatus").className = "ok";
 }
 
-window.onload=()=>{
- mostrarSesion();
- if(token) cargarTodo();
+window.onload = ()=>{
+  mostrarSesion();
+  if(token) cargarTodo();
 };
+
 </script>
 
 </body>
