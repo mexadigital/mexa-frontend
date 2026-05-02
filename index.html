@@ -5,28 +5,20 @@
 <title>Mexa Digital</title>
 
 <style>
-body{font-family:Arial,sans-serif;background:#0f172a;color:white;margin:0;padding:20px}
-.container{max-width:1200px;margin:auto}
+body{font-family:Arial;background:#0f172a;color:white;padding:20px}
+.container{max-width:1300px;margin:auto}
 .card{background:#1e293b;padding:20px;border-radius:12px;margin-bottom:20px}
 h1,h2{color:#38bdf8}
 input,select{padding:10px;margin:5px;border-radius:6px;border:none}
-button{padding:10px 15px;border:none;border-radius:6px;background:#38bdf8;color:black;cursor:pointer;font-weight:bold;margin:5px}
-button:hover{background:#0ea5e9}
+button{padding:10px;border:none;border-radius:6px;background:#38bdf8;color:black;margin:5px}
 .logout{background:#f87171}
-.logout:hover{background:#ef4444}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #334155}
+th{color:#38bdf8}
+.badge{background:#0f172a;border:1px solid #475569;border-radius:20px;padding:3px 8px}
 .ok{color:#4ade80}
 .error{color:#f87171}
-.small{color:#94a3b8;font-size:13px}
-
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
-th{background:#334155;color:#38bdf8;text-align:left;padding:10px}
-td{border-bottom:1px solid #334155;padding:10px}
-tr:hover{background:#273449}
-.badge{background:#0f172a;border:1px solid #475569;border-radius:20px;padding:4px 8px;font-size:12px}
-.danger{background:#f87171;color:black}
 </style>
 </head>
 
@@ -34,347 +26,150 @@ tr:hover{background:#273449}
 <div class="container">
 
 <div class="card">
-  <h1>Mexa Digital</h1>
-  <p class="small">Dashboard limpio de ubicaciones y productos.</p>
-  <p id="usuarioInfo"></p>
-  <button id="logoutBtn" onclick="logout()" class="logout" style="display:none;">Cerrar sesión</button>
-</div>
-
-<div class="card" id="loginCard">
-  <h2>Login</h2>
-  <input id="email" placeholder="email">
-  <input id="password" type="password" placeholder="password">
-  <button onclick="login()">Entrar</button>
-  <p id="loginStatus"></p>
+<h1>Mexa Digital</h1>
+<p id="usuarioInfo"></p>
+<button onclick="logout()" class="logout">Cerrar sesión</button>
 </div>
 
 <div class="grid">
 
-  <div class="card">
-    <h2>📍 Ubicaciones</h2>
-    <p class="small">Crea y administra contenedores, naves y almacenes.</p>
+<div class="card">
+<h2>📍 Ubicaciones</h2>
+<input id="ubicacion_nombre" placeholder="Nombre">
+<select id="ubicacion_tipo">
+<option value="">Tipo</option>
+<option value="contenedor">Contenedor</option>
+<option value="nave">Nave</option>
+</select>
+<button onclick="crearUbicacion()">Crear</button>
+<button onclick="cargarUbicaciones()">Actualizar</button>
 
-    <input id="ubicacion_nombre" placeholder="Ej: M-06, C-01, Nave 12">
+<table>
+<thead>
+<tr><th>ID</th><th>Nombre</th><th>Tipo</th></tr>
+</thead>
+<tbody id="tablaUbicaciones"></tbody>
+</table>
+</div>
 
-    <select id="ubicacion_tipo">
-      <option value="">Selecciona tipo</option>
-      <option value="contenedor">Contenedor</option>
-      <option value="nave">Nave</option>
-      <option value="almacen_abierto">Almacén a cielo abierto</option>
-      <option value="bodega">Bodega</option>
-      <option value="patio">Patio</option>
-    </select>
+<div class="card">
+<h2>📦 Productos</h2>
+<input id="producto_nombre" placeholder="Nombre">
+<input id="producto_codigo" placeholder="Código">
+<select id="producto_tipo">
+<option value="">Tipo</option>
+<option value="consumible">Consumible</option>
+<option value="herramienta">Herramienta</option>
+<option value="epp">EPP</option>
+</select>
+<button onclick="crearProducto()">Crear</button>
+<button onclick="cargarProductos()">Actualizar</button>
 
-    <br>
+<table>
+<thead>
+<tr><th>ID</th><th>Nombre</th><th>Stock</th></tr>
+</thead>
+<tbody id="tablaProductos"></tbody>
+</table>
+</div>
 
-    <button onclick="crearUbicacion(event)">Crear ubicación</button>
-    <button onclick="cargarUbicaciones()">Actualizar</button>
+</div>
 
-    <p id="ubicacionStatus"></p>
+<div class="card">
+<h2>📥 Entrada</h2>
+<input id="entrada_producto" placeholder="ID Producto">
+<input id="entrada_cantidad" placeholder="Cantidad">
+<input id="entrada_recibe" placeholder="Recibe">
+<button onclick="entrada()">Registrar entrada</button>
+</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Tipo</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody id="tablaUbicaciones"></tbody>
-    </table>
-  </div>
+<div class="card">
+<h2>📤 Salida</h2>
+<input id="salida_producto" placeholder="ID Producto">
+<input id="salida_cantidad" placeholder="Cantidad">
+<input id="salida_recibe" placeholder="Recibe">
+<button onclick="salida()">Registrar salida</button>
+</div>
 
-  <div class="card">
-    <h2>📦 Productos</h2>
-    <p class="small">Crea productos. El stock sube después con entradas.</p>
-
-    <input id="producto_nombre" placeholder="Ej: Disco Corte 4.5">
-    <input id="producto_codigo" placeholder="Ej: DC-01">
-
-    <select id="producto_tipo">
-      <option value="">Selecciona tipo</option>
-      <option value="consumible">Consumible</option>
-      <option value="herramienta">Herramienta</option>
-      <option value="epp">EPP</option>
-    </select>
-
-    <br>
-
-    <button onclick="crearProducto(event)">Crear producto</button>
-    <button onclick="cargarProductos()">Actualizar</button>
-
-    <p id="productoStatus"></p>
-
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Producto</th>
-          <th>Código</th>
-          <th>Tipo</th>
-          <th>Stock</th>
-        </tr>
-      </thead>
-      <tbody id="tablaProductos"></tbody>
-    </table>
-  </div>
-
+<div class="card">
+<h2>📜 Historial</h2>
+<button onclick="cargarMovimientos()">Actualizar</button>
+<table>
+<thead>
+<tr><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Recibe</th></tr>
+</thead>
+<tbody id="tablaMovimientos"></tbody>
+</table>
 </div>
 
 </div>
 
 <script>
 const API="https://mexa-core-1.onrender.com";
-
-const LOGIN_URL=`${API}/auth/auth/login`;
-const UBICACIONES_URL=`${API}/ubicaciones/ubicaciones/`;
-const PRODUCTOS_URL=`${API}/productos/productos/`;
-
-const ORGANIZACION_ID = 8;
-
-let token=localStorage.getItem("mexa_token")||"";
-let usuario=localStorage.getItem("mexa_usuario")||"";
-
-function mostrarSesion(){
-  if(token){
-    usuarioInfo.innerText="Usuario: "+usuario;
-    loginCard.style.display="none";
-    logoutBtn.style.display="inline-block";
-  }else{
-    usuarioInfo.innerText="";
-    loginCard.style.display="block";
-    logoutBtn.style.display="none";
-  }
-}
-
-function logout(){
-  localStorage.removeItem("mexa_token");
-  localStorage.removeItem("mexa_usuario");
-  token="";
-  usuario="";
-  location.reload();
-}
-
-async function login(){
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value.trim();
-
-  loginStatus.innerText="Entrando...";
-  loginStatus.className="";
-
-  const res=await fetch(LOGIN_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({email,password})
-  });
-
-  const data=await res.json();
-
-  if(!res.ok){
-    loginStatus.innerText=JSON.stringify(data);
-    loginStatus.className="error";
-    return;
-  }
-
-  token=data.access_token;
-  usuario=email;
-
-  localStorage.setItem("mexa_token",token);
-  localStorage.setItem("mexa_usuario",usuario);
-
-  mostrarSesion();
-  await cargarTodo();
-}
-
-async function cargarTodo(){
-  await cargarUbicaciones();
-  await cargarProductos();
-}
+const token=localStorage.getItem("mexa_token");
 
 async function cargarUbicaciones(){
-  if(!token) return;
-
-  const res=await fetch(UBICACIONES_URL,{
-    headers:{Authorization:"Bearer "+token}
-  });
-
-  const data=await res.json();
-
-  if(!res.ok){
-    ubicacionStatus.innerText=JSON.stringify(data);
-    ubicacionStatus.className="error";
-    return;
-  }
-
-  const lista=Array.isArray(data)?data:(data.items||data.data||[]);
-
-  tablaUbicaciones.innerHTML="";
-
-  lista.forEach(u=>{
-    tablaUbicaciones.innerHTML+=`
-      <tr>
-        <td>${u.id}</td>
-        <td><strong>${u.nombre}</strong></td>
-        <td><span class="badge">${u.tipo}</span></td>
-        <td><button class="logout" onclick="eliminarUbicacion(${u.id})">Eliminar</button></td>
-      </tr>
-    `;
-  });
-
-  ubicacionStatus.innerText="✔ Ubicaciones cargadas: "+lista.length;
-  ubicacionStatus.className="ok";
+ const res=await fetch(API+"/ubicaciones/ubicaciones/",{headers:{Authorization:"Bearer "+token}});
+ const data=await res.json();
+ tablaUbicaciones.innerHTML="";
+ data.forEach(u=>{
+ tablaUbicaciones.innerHTML+=`<tr><td>${u.id}</td><td>${u.nombre}</td><td>${u.tipo}</td></tr>`;
+ });
 }
 
-async function crearUbicacion(event){
-  const btn=event.target;
-  btn.disabled=true;
-
-  const nombre=document.getElementById("ubicacion_nombre").value.trim();
-  const tipo=document.getElementById("ubicacion_tipo").value;
-
-  if(!nombre || !tipo){
-    alert("Completa nombre y tipo");
-    btn.disabled=false;
-    return;
-  }
-
-  const res=await fetch(UBICACIONES_URL,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token
-    },
-    body:JSON.stringify({
-      organizacion_id:ORGANIZACION_ID,
-      nombre,
-      tipo
-    })
-  });
-
-  const data=await res.json();
-
-  if(!res.ok){
-    ubicacionStatus.innerText=JSON.stringify(data);
-    ubicacionStatus.className="error";
-    btn.disabled=false;
-    return;
-  }
-
-  ubicacion_nombre.value="";
-  ubicacion_tipo.value="";
-
-  ubicacionStatus.innerText="✔ Ubicación creada";
-  ubicacionStatus.className="ok";
-
-  btn.disabled=false;
-  await cargarUbicaciones();
-}
-
-async function eliminarUbicacion(id){
-  if(!confirm("¿Seguro que quieres eliminar esta ubicación?")) return;
-
-  const res=await fetch(`${UBICACIONES_URL}${id}`,{
-    method:"DELETE",
-    headers:{Authorization:"Bearer "+token}
-  });
-
-  const data=await res.json();
-
-  if(!res.ok){
-    alert("Error: "+JSON.stringify(data));
-    return;
-  }
-
-  await cargarUbicaciones();
+async function crearUbicacion(){
+ await fetch(API+"/ubicaciones/ubicaciones/",{
+ method:"POST",
+ headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
+ body:JSON.stringify({organizacion_id:8,nombre:ubicacion_nombre.value,tipo:ubicacion_tipo.value})
+ });
+ cargarUbicaciones();
 }
 
 async function cargarProductos(){
-  if(!token) return;
-
-  const res=await fetch(PRODUCTOS_URL,{
-    headers:{Authorization:"Bearer "+token}
-  });
-
-  const data=await res.json();
-
-  if(!res.ok){
-    productoStatus.innerText=JSON.stringify(data);
-    productoStatus.className="error";
-    return;
-  }
-
-  const lista=Array.isArray(data)?data:(data.items||data.data||[]);
-
-  tablaProductos.innerHTML="";
-
-  lista.forEach(p=>{
-    tablaProductos.innerHTML+=`
-      <tr>
-        <td>${p.id}</td>
-        <td><strong>${p.nombre}</strong></td>
-        <td>${p.codigo || "Sin código"}</td>
-        <td><span class="badge">${p.tipo || "N/A"}</span></td>
-        <td><strong>${p.cantidad ?? 0}</strong></td>
-      </tr>
-    `;
-  });
-
-  productoStatus.innerText="✔ Productos cargados: "+lista.length;
-  productoStatus.className="ok";
+ const res=await fetch(API+"/productos/productos/",{headers:{Authorization:"Bearer "+token}});
+ const data=await res.json();
+ tablaProductos.innerHTML="";
+ data.forEach(p=>{
+ tablaProductos.innerHTML+=`<tr><td>${p.id}</td><td>${p.nombre}</td><td>${p.cantidad}</td></tr>`;
+ });
 }
 
-async function crearProducto(event){
-  const btn=event.target;
-  btn.disabled=true;
-
-  const nombre=document.getElementById("producto_nombre").value.trim();
-  const codigo=document.getElementById("producto_codigo").value.trim();
-  const tipo=document.getElementById("producto_tipo").value;
-
-  if(!nombre || !codigo || !tipo){
-    alert("Completa nombre, código y tipo");
-    btn.disabled=false;
-    return;
-  }
-
-  const res=await fetch(PRODUCTOS_URL,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token
-    },
-    body:JSON.stringify({
-      nombre,
-      codigo,
-      tipo
-    })
-  });
-
-  const data=await res.json();
-
-  if(!res.ok){
-    productoStatus.innerText=JSON.stringify(data);
-    productoStatus.className="error";
-    btn.disabled=false;
-    return;
-  }
-
-  producto_nombre.value="";
-  producto_codigo.value="";
-  producto_tipo.value="";
-
-  productoStatus.innerText="✔ Producto creado";
-  productoStatus.className="ok";
-
-  btn.disabled=false;
-  await cargarProductos();
+async function crearProducto(){
+ await fetch(API+"/productos/productos/",{
+ method:"POST",
+ headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
+ body:JSON.stringify({nombre:producto_nombre.value,codigo:producto_codigo.value,tipo:producto_tipo.value})
+ });
+ cargarProductos();
 }
 
-window.onload=()=>{
-  mostrarSesion();
-  if(token) cargarTodo();
-};
+async function entrada(){
+ await fetch(API+"/movimientos/",{
+ method:"POST",
+ headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
+ body:JSON.stringify({producto_id:entrada_producto.value,tipo:"entrada",cantidad:entrada_cantidad.value,usuario:"admin",recibe:entrada_recibe.value})
+ });
+ cargarProductos();
+}
+
+async function salida(){
+ await fetch(API+"/movimientos/",{
+ method:"POST",
+ headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
+ body:JSON.stringify({producto_id:salida_producto.value,tipo:"salida",cantidad:salida_cantidad.value,usuario:"admin",recibe:salida_recibe.value})
+ });
+ cargarProductos();
+}
+
+async function cargarMovimientos(){
+ const res=await fetch(API+"/movimientos/",{headers:{Authorization:"Bearer "+token}});
+ const data=await res.json();
+ tablaMovimientos.innerHTML="";
+ data.forEach(m=>{
+ tablaMovimientos.innerHTML+=`<tr><td>${m.producto}</td><td>${m.tipo}</td><td>${m.cantidad}</td><td>${m.recibe}</td></tr>`;
+ });
+}
 </script>
 
 </body>
