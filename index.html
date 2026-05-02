@@ -5,63 +5,63 @@
 <title>Mexa Digital</title>
 
 <style>
-body{font-family:Arial;background:#0f172a;color:white;padding:20px}
-.container{max-width:1000px;margin:auto}
-.card{background:#1e293b;padding:20px;border-radius:10px;margin-bottom:20px}
+body{font-family:Arial,sans-serif;background:#0f172a;color:white;margin:0;padding:20px}
+.container{max-width:1100px;margin:auto}
+.card{background:#1e293b;padding:20px;border-radius:12px;margin-bottom:20px}
+h1,h2{color:#38bdf8}
 input,select{padding:10px;margin:5px;border-radius:6px;border:none}
-button{padding:10px;border:none;border-radius:6px;background:#38bdf8;color:black;margin:5px}
+button{padding:10px 15px;border:none;border-radius:6px;background:#38bdf8;color:black;cursor:pointer;font-weight:bold;margin:5px}
+button:hover{background:#0ea5e9}
 .logout{background:#f87171}
-.item{border-bottom:1px solid #334155;padding:10px}
+.logout:hover{background:#ef4444}
+.item{padding:12px;border-bottom:1px solid #334155}
 .ok{color:#4ade80}
 .error{color:#f87171}
-.small{color:#94a3b8}
+.small{color:#94a3b8;font-size:13px}
 </style>
-
 </head>
 
 <body>
-
 <div class="container">
 
 <div class="card">
-<h1>Mexa Digital</h1>
-<p id="usuarioInfo"></p>
-<button id="logoutBtn" class="logout" onclick="logout()" style="display:none;">Cerrar sesión</button>
+  <h1>Mexa Digital</h1>
+  <p id="usuarioInfo"></p>
+  <button id="logoutBtn" onclick="logout()" class="logout" style="display:none;">Cerrar sesión</button>
 </div>
 
 <div class="card" id="loginCard">
-<h2>Login</h2>
-<input id="email" placeholder="email">
-<input id="password" type="password" placeholder="password">
-<button onclick="login()">Entrar</button>
-<p id="loginStatus"></p>
+  <h2>Login</h2>
+  <input id="email" placeholder="email">
+  <input id="password" type="password" placeholder="password">
+  <button onclick="login()">Entrar</button>
+  <p id="loginStatus"></p>
 </div>
 
-<!-- 🔥 UBICACIONES -->
 <div class="card">
-<h2>📍 Ubicaciones</h2>
+  <h2>📍 Ubicaciones</h2>
 
-<p class="small">Estás creando una nueva ubicación</p>
+  <p class="small">Estás creando una nueva ubicación</p>
 
-<input id="ubicacion_nombre" placeholder="Ej: Nave 12, Contenedor A">
+  <input id="ubicacion_nombre" placeholder="Ej: Nave 12, Contenedor A">
 
-<select id="ubicacion_tipo">
-<option value="">Selecciona tipo</option>
-<option value="contenedor">Contenedor</option>
-<option value="nave">Nave</option>
-<option value="almacen_abierto">Almacén a cielo abierto</option>
-<option value="bodega">Bodega</option>
-<option value="patio">Patio</option>
-</select>
+  <select id="ubicacion_tipo">
+    <option value="">Selecciona tipo</option>
+    <option value="contenedor">Contenedor</option>
+    <option value="nave">Nave</option>
+    <option value="almacen_abierto">Almacén a cielo abierto</option>
+    <option value="bodega">Bodega</option>
+    <option value="patio">Patio</option>
+  </select>
 
-<br>
+  <br>
 
-<button onclick="crearUbicacion(event)">Crear ubicación</button>
-<button onclick="cargarUbicaciones()">Actualizar</button>
+  <button onclick="crearUbicacion(event)">Crear ubicación</button>
+  <button onclick="cargarUbicaciones()">Actualizar</button>
 
-<p id="ubicacionStatus"></p>
+  <p id="ubicacionStatus"></p>
 
-<div id="listaUbicaciones"></div>
+  <div id="listaUbicaciones"></div>
 </div>
 
 </div>
@@ -142,7 +142,10 @@ async function cargarUbicaciones(){
  lista.forEach(u=>{
   listaUbicaciones.innerHTML+=`
   <div class="item">
-   ${u.nombre} (${u.tipo})
+   📍 <strong>${u.nombre}</strong> (${u.tipo})<br>
+   ID: ${u.id}
+   <br>
+   <button class="logout" onclick="eliminarUbicacion(${u.id})">Eliminar</button>
   </div>`;
  });
 }
@@ -188,6 +191,26 @@ async function crearUbicacion(event){
 
  btn.disabled=false;
 
+ cargarUbicaciones();
+}
+
+/* 🔥 NUEVO DELETE */
+async function eliminarUbicacion(id){
+ if(!confirm("¿Seguro que quieres eliminar esta ubicación?")) return;
+
+ const res=await fetch(`${UBICACIONES_URL}${id}`,{
+  method:"DELETE",
+  headers:{Authorization:"Bearer "+token}
+ });
+
+ const data=await res.json();
+
+ if(!res.ok){
+  alert("Error: "+JSON.stringify(data));
+  return;
+ }
+
+ alert("Ubicación eliminada");
  cargarUbicaciones();
 }
 
