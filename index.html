@@ -5,33 +5,28 @@
 <title>Mexa Digital</title>
 
 <style>
-body{font-family:Arial,sans-serif;background:#0f172a;color:white;margin:0;padding:20px}
-.container{max-width:1100px;margin:auto}
-.card{background:#1e293b;padding:20px;border-radius:12px;margin-bottom:20px}
-h1,h2{color:#38bdf8}
-input,select{padding:10px;margin:5px;border-radius:6px;border:none}
-button{padding:10px 15px;border:none;border-radius:6px;background:#38bdf8;color:black;cursor:pointer;font-weight:bold;margin:5px}
-button:hover{background:#0ea5e9}
-.logout{background:#f87171}.logout:hover{background:#ef4444}
-.item{padding:12px;border-bottom:1px solid #334155}
-.item strong{color:#facc15}
-.ok{color:#4ade80}.error{color:#f87171}
-.small{color:#94a3b8;font-size:13px}
+body{font-family:Arial;background:#0f172a;color:white;padding:20px}
+.card{background:#1e293b;padding:20px;border-radius:10px;margin-bottom:20px}
+input{padding:10px;margin:5px;border-radius:6px;border:none}
+button{padding:10px;border:none;border-radius:6px;background:#38bdf8;color:black;margin:5px}
+.logout{background:#f87171}
+.item{border-bottom:1px solid #334155;padding:10px}
+.ok{color:#4ade80}
+.error{color:#f87171}
 </style>
+
 </head>
 
 <body>
-<div class="container">
 
 <div class="card">
 <h1>Mexa Digital</h1>
-<p class="small">Control de productos, ubicaciones, entradas, salidas e historial.</p>
-<p id="usuarioInfo" class="ok"></p>
+<p id="usuarioInfo"></p>
 <button id="logoutBtn" class="logout" onclick="logout()" style="display:none;">Cerrar sesión</button>
 </div>
 
 <div class="card" id="loginCard">
-<h2>🔐 Login</h2>
+<h2>Login</h2>
 <input id="email" placeholder="email">
 <input id="password" type="password" placeholder="password">
 <button onclick="login()">Entrar</button>
@@ -39,409 +34,178 @@ button:hover{background:#0ea5e9}
 </div>
 
 <div class="card">
-<h2>📍 Ubicaciones</h2>
-<input id="ubicacion_nombre" placeholder="Nombre ubicación">
-<input id="ubicacion_tipo" placeholder="Tipo: almacen, contenedor, patio">
-<button onclick="crearUbicacion()">Crear ubicación</button>
-<button onclick="cargarUbicaciones()">Actualizar ubicaciones</button>
+<h2>Ubicaciones</h2>
+<input id="ubicacion_nombre" placeholder="Nombre">
+<input id="ubicacion_tipo" placeholder="Tipo">
+<button onclick="crearUbicacion()">Crear</button>
+<button onclick="cargarUbicaciones()">Actualizar</button>
 <p id="ubicacionStatus"></p>
 <div id="listaUbicaciones"></div>
 </div>
 
 <div class="card">
-<h2>📦 Productos</h2>
-<button onclick="cargarProductos()">Actualizar productos</button>
+<h2>Productos</h2>
+<button onclick="cargarProductos()">Actualizar</button>
 <p id="productosStatus"></p>
 <div id="listaProductos"></div>
 </div>
 
-<div class="card">
-<h2>➕ Crear Producto</h2>
-<input id="nombre" placeholder="Nombre">
-<input id="codigo" placeholder="Código">
-<input id="tipo" placeholder="Tipo: consumible, herramienta, epp">
-<button onclick="crearProducto()">Crear producto</button>
-<p class="small">Después de crear el producto, registra una entrada para agregar stock.</p>
-<p id="productoStatus"></p>
-</div>
-
-<div class="card">
-<h2>📥 Registrar entrada</h2>
-<input id="producto_id_entrada" type="number" placeholder="ID Producto">
-<input id="cantidad_entrada" type="number" placeholder="Cantidad">
-<select id="ubicacion_entrada"><option value="">Selecciona ubicación</option></select>
-<input id="recibe_entrada" placeholder="Quién recibe / entrega">
-<input id="empleado_entrada" placeholder="Empleado / ficha">
-<input id="nota_entrada" placeholder="Nota">
-<button onclick="entrada()">Entrada</button>
-<p id="entradaStatus"></p>
-</div>
-
-<div class="card">
-<h2>📤 Registrar salida</h2>
-<input id="producto_id_salida" type="number" placeholder="ID Producto">
-<input id="cantidad_salida" type="number" placeholder="Cantidad">
-<select id="ubicacion_salida"><option value="">Selecciona ubicación</option></select>
-<input id="recibe_salida" placeholder="Quién recibe">
-<input id="empleado_salida" placeholder="Empleado / ficha">
-<input id="nota_salida" placeholder="Nota">
-<button onclick="salida()">Salida</button>
-<p id="salidaStatus"></p>
-</div>
-
-<div class="card">
-<h2>📜 Historial de movimientos</h2>
-<button onclick="cargarMovimientos()">Actualizar historial</button>
-<p id="movimientosStatus"></p>
-<div id="listaMovimientos"></div>
-</div>
-
-</div>
-
 <script>
-const API = "https://mexa-core-1.onrender.com";
+const API="https://mexa-core-1.onrender.com";
+const LOGIN_URL=`${API}/auth/auth/login`;
+const UBICACIONES_URL=`${API}/ubicaciones/ubicaciones/`;
+const PRODUCTOS_URL=`${API}/productos/productos/`;
 
-const LOGIN_URL = `${API}/auth/auth/login`;
-const UBICACIONES_URL = `${API}/ubicaciones/ubicaciones/`;
-const PRODUCTOS_URL = `${API}/productos/productos/`;
-const MOVIMIENTOS_URL = `${API}/movimientos/movimientos/`;
+let token=localStorage.getItem("mexa_token")||"";
+let usuario=localStorage.getItem("mexa_usuario")||"";
 
-let token = localStorage.getItem("mexa_token") || "";
-let usuario = localStorage.getItem("mexa_usuario") || "";
-
-function normalizarLista(data) {
-  if (Array.isArray(data)) return data;
-  if (data && Array.isArray(data.items)) return data.items;
-  if (data && Array.isArray(data.results)) return data.results;
-  if (data && Array.isArray(data.data)) return data.data;
-  if (data && Array.isArray(data.ubicaciones)) return data.ubicaciones;
-  if (data && Array.isArray(data.productos)) return data.productos;
-  if (data && Array.isArray(data.movimientos)) return data.movimientos;
-  return [];
+function normalizarLista(data){
+ if(Array.isArray(data)) return data;
+ if(data?.items) return data.items;
+ if(data?.data) return data.data;
+ if(data?.results) return data.results;
+ return [];
 }
 
-function mostrarSesion() {
-  if (token && usuario) {
-    usuarioInfo.innerText = "👤 Usuario: " + usuario;
-    logoutBtn.style.display = "inline-block";
-    loginCard.style.display = "none";
-  } else {
-    usuarioInfo.innerText = "";
-    logoutBtn.style.display = "none";
-    loginCard.style.display = "block";
-  }
+function mostrarSesion(){
+ if(token){
+  usuarioInfo.innerText="Usuario: "+usuario;
+  logoutBtn.style.display="block";
+  loginCard.style.display="none";
+ }else{
+  loginCard.style.display="block";
+ }
 }
 
-function logout() {
-  localStorage.clear();
-  token = "";
-  usuario = "";
-  listaProductos.innerHTML = "";
-  listaMovimientos.innerHTML = "";
-  listaUbicaciones.innerHTML = "";
-  mostrarSesion();
+function logout(){
+ localStorage.clear();
+ token="";
+ usuario="";
+ location.reload();
 }
 
-async function login() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+async function login(){
+ const email=emailInput.value||document.getElementById("email").value;
+ const password=document.getElementById("password").value;
 
-  loginStatus.innerText = "Entrando...";
-  loginStatus.className = "";
+ const res=await fetch(LOGIN_URL,{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({email,password})
+ });
 
-  try {
-    const res = await fetch(LOGIN_URL, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ email, password })
-    });
+ const data=await res.json();
 
-    const data = await res.json();
+ if(!res.ok){
+  loginStatus.innerText=JSON.stringify(data);
+  loginStatus.className="error";
+  return;
+ }
 
-    if (!res.ok) {
-      loginStatus.innerText = "❌ Error: " + JSON.stringify(data);
-      loginStatus.className = "error";
-      return;
-    }
+ token=data.access_token;
+ usuario=email;
 
-    token = data.access_token;
-    usuario = email;
+ localStorage.setItem("mexa_token",token);
+ localStorage.setItem("mexa_usuario",usuario);
 
-    localStorage.setItem("mexa_token", token);
-    localStorage.setItem("mexa_usuario", usuario);
+ loginStatus.innerText="Login correcto";
+ loginStatus.className="ok";
 
-    loginStatus.innerText = "✔ Login correcto";
-    loginStatus.className = "ok";
-    mostrarSesion();
-    await cargarTodo();
-
-  } catch (e) {
-    loginStatus.innerText = "❌ Error de conexión: " + e.message;
-    loginStatus.className = "error";
-  }
+ mostrarSesion();
+ cargarTodo();
 }
 
-async function cargarTodo() {
-  await cargarUbicaciones();
-  await cargarProductos();
-  await cargarMovimientos();
+async function cargarTodo(){
+ await cargarUbicaciones();
+ await cargarProductos();
 }
 
-async function cargarUbicaciones() {
-  if (!token) return;
+async function cargarUbicaciones(){
+ const res=await fetch(UBICACIONES_URL,{
+  headers:{Authorization:"Bearer "+token}
+ });
 
-  const res = await fetch(UBICACIONES_URL, {
-    headers: { "Authorization": "Bearer " + token }
-  });
+ const data=await res.json();
 
-  const data = await res.json();
-  console.log("UBICACIONES:", data);
+ if(!res.ok){
+  ubicacionStatus.innerText=data.detail||"Error";
+  ubicacionStatus.className="error";
+  return;
+ }
 
-  if (!res.ok) {
-    ubicacionStatus.innerText = "❌ Error: " + JSON.stringify(data);
-    ubicacionStatus.className = "error";
-    return;
-  }
+ const lista=normalizarLista(data);
+ listaUbicaciones.innerHTML="";
 
-  const ubicaciones = normalizarLista(data);
+ lista.forEach(u=>{
+  listaUbicaciones.innerHTML+=`
+  <div class="item">
+   ${u.nombre} (${u.tipo})
+  </div>`;
+ });
 
-  listaUbicaciones.innerHTML = "";
-  ubicacion_entrada.innerHTML = `<option value="">Selecciona ubicación</option>`;
-  ubicacion_salida.innerHTML = `<option value="">Selecciona ubicación</option>`;
-
-  ubicacionStatus.innerText = "✔ Ubicaciones cargadas: " + ubicaciones.length;
-  ubicacionStatus.className = "ok";
-
-  if (ubicaciones.length === 0) {
-    listaUbicaciones.innerHTML = `<p class="small">No hay ubicaciones registradas.</p>`;
-    return;
-  }
-
-  ubicaciones.sort((a,b)=>(b.id||0)-(a.id||0)).forEach(u => {
-    const nombre = u.nombre || u.name || "Sin nombre";
-    const tipo = u.tipo || u.type || "N/A";
-
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `
-      📍 <strong>${nombre}</strong><br>
-      ID: ${u.id ?? "N/A"} | Tipo: ${tipo} | Activo: ${u.activo ?? "N/A"}
-    `;
-    listaUbicaciones.appendChild(div);
-
-    const op1 = new Option(nombre, nombre);
-    const op2 = new Option(nombre, nombre);
-    ubicacion_entrada.appendChild(op1);
-    ubicacion_salida.appendChild(op2);
-  });
+ ubicacionStatus.innerText="OK";
+ ubicacionStatus.className="ok";
 }
 
-async function crearUbicacion() {
-  const nombre = ubicacion_nombre.value.trim();
-  const tipo = ubicacion_tipo.value.trim();
+async function crearUbicacion(){
+ const nombre=document.getElementById("ubicacion_nombre").value;
+ const tipo=document.getElementById("ubicacion_tipo").value;
 
-  if (!token) return alert("Primero inicia sesión");
-  if (!nombre || !tipo) return alert("Faltan datos de ubicación");
+ const res=await fetch(UBICACIONES_URL,{
+  method:"POST",
+  headers:{
+   "Content-Type":"application/json",
+   Authorization:"Bearer "+token
+  },
+  body:JSON.stringify({nombre,tipo})
+ });
 
-  const res = await fetch(UBICACIONES_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({ nombre, tipo })
-  });
+ const data=await res.json();
 
-  const data = await res.json();
+ if(!res.ok){
+  ubicacionStatus.innerText=data.detail;
+  ubicacionStatus.className="error";
+  return;
+ }
 
-  if (!res.ok) {
-    ubicacionStatus.innerText = "❌ Error: " + JSON.stringify(data);
-    ubicacionStatus.className = "error";
-    return;
-  }
+ ubicacionStatus.innerText="Creado";
+ ubicacionStatus.className="ok";
 
-  ubicacion_nombre.value = "";
-  ubicacion_tipo.value = "";
-  ubicacionStatus.innerText = "✔ Ubicación creada";
-  ubicacionStatus.className = "ok";
-  await cargarUbicaciones();
+ cargarUbicaciones();
 }
 
-async function cargarProductos() {
-  if (!token) return;
+async function cargarProductos(){
+ const res=await fetch(PRODUCTOS_URL,{
+  headers:{Authorization:"Bearer "+token}
+ });
 
-  const res = await fetch(PRODUCTOS_URL, {
-    headers: { "Authorization": "Bearer " + token }
-  });
+ const data=await res.json();
 
-  const data = await res.json();
-  console.log("PRODUCTOS:", data);
+ if(!res.ok){
+  productosStatus.innerText="Error";
+  productosStatus.className="error";
+  return;
+ }
 
-  if (!res.ok) {
-    productosStatus.innerText = "❌ Error: " + JSON.stringify(data);
-    productosStatus.className = "error";
-    return;
-  }
+ const lista=normalizarLista(data);
+ listaProductos.innerHTML="";
 
-  const productos = normalizarLista(data);
-  listaProductos.innerHTML = "";
+ lista.forEach(p=>{
+  listaProductos.innerHTML+=`
+  <div class="item">
+   ${p.nombre} - ${p.cantidad||0}
+  </div>`;
+ });
 
-  productosStatus.innerText = "✔ Productos cargados: " + productos.length;
-  productosStatus.className = "ok";
-
-  if (productos.length === 0) {
-    listaProductos.innerHTML = `<p class="small">No hay productos registrados.</p>`;
-    return;
-  }
-
-  productos.sort((a,b)=>(b.id||0)-(a.id||0)).forEach(p => {
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `
-      📦 <strong>${p.nombre || p.name || "Sin nombre"}</strong><br>
-      ID: ${p.id ?? "N/A"} | Código: ${p.codigo || "Sin código"}<br>
-      Tipo: ${p.tipo || "N/A"} | Stock: <strong>${p.cantidad ?? 0}</strong><br>
-      Ubicación: ${p.ubicacion || "Sin ubicación"} | Precio: ${p.precio ?? "N/A"}
-    `;
-    listaProductos.appendChild(div);
-  });
+ productosStatus.innerText="OK";
+ productosStatus.className="ok";
 }
 
-async function crearProducto() {
-  const nombre = document.getElementById("nombre").value.trim();
-  const codigo = document.getElementById("codigo").value.trim();
-  const tipo = document.getElementById("tipo").value.trim();
-
-  if (!token) return alert("Primero inicia sesión");
-  if (!nombre || !codigo || !tipo) return alert("Faltan datos del producto");
-
-  const res = await fetch(PRODUCTOS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({ nombre, codigo, tipo })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    productoStatus.innerText = "❌ Error: " + JSON.stringify(data);
-    productoStatus.className = "error";
-    return;
-  }
-
-  document.getElementById("nombre").value = "";
-  document.getElementById("codigo").value = "";
-  document.getElementById("tipo").value = "";
-
-  productoStatus.innerText = "✔ Producto creado. Ahora registra entrada.";
-  productoStatus.className = "ok";
-  await cargarProductos();
-}
-
-async function entrada() {
-  await movimiento("entrada");
-}
-
-async function salida() {
-  await movimiento("salida");
-}
-
-async function movimiento(tipoMov) {
-  const producto_id = parseInt(document.getElementById(`producto_id_${tipoMov}`).value);
-  const cantidad = parseInt(document.getElementById(`cantidad_${tipoMov}`).value);
-  const ubicacion = document.getElementById(`ubicacion_${tipoMov}`).value;
-  const recibe = document.getElementById(`recibe_${tipoMov}`).value.trim() || null;
-  const empleado = document.getElementById(`empleado_${tipoMov}`).value.trim() || null;
-  let nota = document.getElementById(`nota_${tipoMov}`).value.trim() || "";
-
-  const status = document.getElementById(`${tipoMov}Status`);
-
-  if (!producto_id || !cantidad) return alert("Faltan datos");
-
-  if (ubicacion) nota = `[Ubicación: ${ubicacion}] ` + nota;
-
-  const res = await fetch(MOVIMIENTOS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({
-      producto_id,
-      tipo: tipoMov,
-      cantidad,
-      usuario,
-      recibe,
-      empleado,
-      nota
-    })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    status.innerText = "❌ Error: " + JSON.stringify(data);
-    status.className = "error";
-    return;
-  }
-
-  status.innerText = `✔ ${tipoMov} registrada`;
-  status.className = "ok";
-
-  await cargarProductos();
-  await cargarMovimientos();
-}
-
-async function cargarMovimientos() {
-  if (!token) return;
-
-  const res = await fetch(MOVIMIENTOS_URL, {
-    headers: { "Authorization": "Bearer " + token }
-  });
-
-  const data = await res.json();
-  console.log("MOVIMIENTOS:", data);
-
-  if (!res.ok) {
-    movimientosStatus.innerText = "❌ Error: " + JSON.stringify(data);
-    movimientosStatus.className = "error";
-    return;
-  }
-
-  const movimientos = normalizarLista(data);
-  listaMovimientos.innerHTML = "";
-
-  movimientosStatus.innerText = "✔ Movimientos cargados: " + movimientos.length;
-  movimientosStatus.className = "ok";
-
-  if (movimientos.length === 0) {
-    listaMovimientos.innerHTML = `<p class="small">No hay movimientos registrados.</p>`;
-    return;
-  }
-
-  movimientos.slice(0,20).forEach(m => {
-    const div = document.createElement("div");
-    div.className = "item";
-    const icono = m.tipo === "entrada" ? "📥" : "📤";
-    div.innerHTML = `
-      ${icono} <strong>${(m.tipo || "movimiento").toUpperCase()}</strong><br>
-      Producto: ${m.producto || m.producto_id || "N/A"} | Cantidad: ${m.cantidad || 0}<br>
-      Usuario: ${m.usuario || "N/A"} | Recibe: ${m.recibe || "N/A"}<br>
-      Empleado: ${m.empleado || "N/A"}<br>
-      Nota: ${m.nota || "Sin nota"}<br>
-      <span class="small">${m.created_at || ""}</span>
-    `;
-    listaMovimientos.appendChild(div);
-  });
-}
-
-window.onload = async () => {
-  mostrarSesion();
-  if (token) await cargarTodo();
+window.onload=()=>{
+ mostrarSesion();
+ if(token) cargarTodo();
 };
 </script>
+
 </body>
 </html>
