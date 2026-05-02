@@ -5,166 +5,198 @@
 <title>Mexa Digital</title>
 
 <style>
-body{font-family:Arial,sans-serif;background:#0f172a;color:white;margin:0;padding:20px}
-.container{max-width:1100px;margin:auto}
-.card{background:#1e293b;padding:20px;border-radius:12px;margin-bottom:20px}
-h1,h2{color:#38bdf8}
+body{font-family:Arial;background:#0f172a;color:white;padding:20px}
+.container{max-width:1000px;margin:auto}
+.card{background:#1e293b;padding:20px;border-radius:10px;margin-bottom:20px}
 input,select{padding:10px;margin:5px;border-radius:6px;border:none}
-button{padding:10px 15px;border:none;border-radius:6px;background:#38bdf8;color:black;cursor:pointer;font-weight:bold;margin:5px}
-button:hover{background:#0ea5e9}
+button{padding:10px;border:none;border-radius:6px;background:#38bdf8;color:black;margin:5px}
 .logout{background:#f87171}
-.logout:hover{background:#ef4444}
-.item{padding:12px;border-bottom:1px solid #334155}
+.item{border-bottom:1px solid #334155;padding:10px}
 .ok{color:#4ade80}
 .error{color:#f87171}
-.small{color:#94a3b8;font-size:13px}
+.small{color:#94a3b8}
 </style>
+
 </head>
 
 <body>
+
 <div class="container">
 
 <div class="card">
-  <h1>Mexa Digital</h1>
-  <p class="small">Control de productos, ubicaciones, entradas, salidas e historial.</p>
-  <p id="usuarioInfo" class="ok"></p>
-  <button id="logoutBtn" onclick="logout()" class="logout" style="display:none;">Cerrar sesión</button>
+<h1>Mexa Digital</h1>
+<p id="usuarioInfo"></p>
+<button id="logoutBtn" class="logout" onclick="logout()" style="display:none;">Cerrar sesión</button>
 </div>
 
 <div class="card" id="loginCard">
-  <h2>🔐 Login</h2>
-  <input id="email" placeholder="email">
-  <input id="password" type="password" placeholder="password">
-  <button onclick="login()">Entrar</button>
-  <p id="loginStatus"></p>
+<h2>Login</h2>
+<input id="email" placeholder="email">
+<input id="password" type="password" placeholder="password">
+<button onclick="login()">Entrar</button>
+<p id="loginStatus"></p>
 </div>
 
+<!-- 🔥 UBICACIONES -->
 <div class="card">
-  <h2>📍 Ubicaciones</h2>
-  <input id="ubicacion_nombre" placeholder="Nombre ubicación">
-  <input id="ubicacion_tipo" placeholder="Tipo">
-  <button onclick="crearUbicacion()">Crear ubicación</button>
-  <button onclick="cargarUbicaciones()">Actualizar ubicaciones</button>
-  <p id="ubicacionStatus"></p>
-  <div id="listaUbicaciones"></div>
+<h2>📍 Ubicaciones</h2>
+
+<p class="small">Estás creando una nueva ubicación</p>
+
+<input id="ubicacion_nombre" placeholder="Ej: Nave 12, Contenedor A">
+
+<select id="ubicacion_tipo">
+<option value="">Selecciona tipo</option>
+<option value="contenedor">Contenedor</option>
+<option value="nave">Nave</option>
+<option value="almacen_abierto">Almacén a cielo abierto</option>
+<option value="bodega">Bodega</option>
+<option value="patio">Patio</option>
+</select>
+
+<br>
+
+<button onclick="crearUbicacion(event)">Crear ubicación</button>
+<button onclick="cargarUbicaciones()">Actualizar</button>
+
+<p id="ubicacionStatus"></p>
+
+<div id="listaUbicaciones"></div>
 </div>
 
 </div>
 
 <script>
 
-const API = "https://mexa-core-1.onrender.com";
-const LOGIN_URL = `${API}/auth/auth/login`;
-const UBICACIONES_URL = `${API}/ubicaciones/ubicaciones/`;
+const API="https://mexa-core-1.onrender.com";
+const LOGIN_URL=`${API}/auth/auth/login`;
+const UBICACIONES_URL=`${API}/ubicaciones/ubicaciones/`;
 
-let token = localStorage.getItem("mexa_token") || "";
-let usuario = localStorage.getItem("mexa_usuario") || "";
+let token=localStorage.getItem("mexa_token")||"";
+let usuario=localStorage.getItem("mexa_usuario")||"";
 
 function mostrarSesion(){
-  if(token){
-    document.getElementById("usuarioInfo").innerText = "👤 Usuario: " + usuario;
-    document.getElementById("loginCard").style.display = "none";
-    document.getElementById("logoutBtn").style.display = "inline-block";
-  } else {
-    document.getElementById("usuarioInfo").innerText = "";
-    document.getElementById("loginCard").style.display = "block";
-    document.getElementById("logoutBtn").style.display = "none";
-  }
+ if(token){
+  usuarioInfo.innerText="Usuario: "+usuario;
+  loginCard.style.display="none";
+  logoutBtn.style.display="block";
+ }else{
+  loginCard.style.display="block";
+  logoutBtn.style.display="none";
+ }
 }
 
 function logout(){
-  localStorage.clear();
-  token = "";
-  usuario = "";
-  location.reload();
+ localStorage.clear();
+ location.reload();
 }
 
 async function login(){
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+ const email=document.getElementById("email").value;
+ const password=document.getElementById("password").value;
 
-  document.getElementById("loginStatus").innerText = "Entrando...";
+ loginStatus.innerText="Entrando...";
 
-  const res = await fetch(LOGIN_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({email,password})
-  });
+ const res=await fetch(LOGIN_URL,{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({email,password})
+ });
 
-  const data = await res.json();
+ const data=await res.json();
 
-  if(!res.ok){
-    document.getElementById("loginStatus").innerText = JSON.stringify(data);
-    return;
-  }
+ if(!res.ok){
+  loginStatus.innerText=JSON.stringify(data);
+  loginStatus.className="error";
+  return;
+ }
 
-  token = data.access_token;
-  usuario = email;
+ token=data.access_token;
+ usuario=email;
 
-  localStorage.setItem("mexa_token", token);
-  localStorage.setItem("mexa_usuario", usuario);
+ localStorage.setItem("mexa_token",token);
+ localStorage.setItem("mexa_usuario",usuario);
 
-  mostrarSesion();
-  cargarUbicaciones();
+ mostrarSesion();
+ cargarUbicaciones();
 }
 
 async function cargarUbicaciones(){
-  if(!token) return;
+ if(!token) return;
 
-  const res = await fetch(UBICACIONES_URL,{
-    headers:{Authorization:"Bearer "+token}
-  });
+ const res=await fetch(UBICACIONES_URL,{
+  headers:{Authorization:"Bearer "+token}
+ });
 
-  const data = await res.json();
+ const data=await res.json();
 
-  if(!res.ok){
-    document.getElementById("ubicacionStatus").innerText = JSON.stringify(data);
-    return;
-  }
+ if(!res.ok){
+  ubicacionStatus.innerText=JSON.stringify(data);
+  return;
+ }
 
-  const lista = Array.isArray(data) ? data : (data.items || data.data || []);
-  const contenedor = document.getElementById("listaUbicaciones");
+ const lista=Array.isArray(data)?data:(data.items||data.data||[]);
 
-  contenedor.innerHTML = "";
+ listaUbicaciones.innerHTML="";
 
-  lista.forEach(u=>{
-    contenedor.innerHTML += `<div class="item">${u.nombre} (${u.tipo})</div>`;
-  });
+ lista.forEach(u=>{
+  listaUbicaciones.innerHTML+=`
+  <div class="item">
+   ${u.nombre} (${u.tipo})
+  </div>`;
+ });
 }
 
-async function crearUbicacion(){
-  const nombre = document.getElementById("ubicacion_nombre").value;
-  const tipo = document.getElementById("ubicacion_tipo").value;
+async function crearUbicacion(event){
 
-  const res = await fetch(UBICACIONES_URL,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token
-    },
-    body:JSON.stringify({
-      organizacion_id: 8,
-      nombre,
-      tipo
-    })
-  });
+ const btn=event.target;
+ btn.disabled=true;
 
-  const data = await res.json();
+ const nombre=document.getElementById("ubicacion_nombre").value;
+ const tipo=document.getElementById("ubicacion_tipo").value;
 
-  if(!res.ok){
-    document.getElementById("ubicacionStatus").innerText = JSON.stringify(data);
-    return;
-  }
+ if(!nombre || !tipo){
+  alert("Completa los campos");
+  btn.disabled=false;
+  return;
+ }
 
-  document.getElementById("ubicacionStatus").innerText = "✔ creada";
-  cargarUbicaciones();
+ const res=await fetch(UBICACIONES_URL,{
+  method:"POST",
+  headers:{
+   "Content-Type":"application/json",
+   Authorization:"Bearer "+token
+  },
+  body:JSON.stringify({
+   organizacion_id:8,
+   nombre,
+   tipo
+  })
+ });
+
+ const data=await res.json();
+
+ if(!res.ok){
+  ubicacionStatus.innerText=JSON.stringify(data);
+  ubicacionStatus.className="error";
+  btn.disabled=false;
+  return;
+ }
+
+ ubicacionStatus.innerText="✔ Ubicación creada";
+ ubicacionStatus.className="ok";
+
+ btn.disabled=false;
+
+ cargarUbicaciones();
 }
 
-window.onload = ()=>{
-  mostrarSesion();
-  if(token) cargarUbicaciones();
+window.onload=()=>{
+ mostrarSesion();
+ if(token) cargarUbicaciones();
 };
 
 </script>
+
 </body>
 </html>
