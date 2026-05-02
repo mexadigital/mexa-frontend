@@ -15,6 +15,7 @@ button:hover{background:#0ea5e9}
 .logout{background:#f87171}
 .logout:hover{background:#ef4444}
 .item{padding:12px;border-bottom:1px solid #334155}
+.item strong{color:#facc15}
 .ok{color:#4ade80}
 .error{color:#f87171}
 .small{color:#94a3b8;font-size:13px}
@@ -26,6 +27,7 @@ button:hover{background:#0ea5e9}
 
 <div class="card">
   <h1>Mexa Digital</h1>
+  <p class="small">Control de ubicaciones y productos.</p>
   <p id="usuarioInfo"></p>
   <button id="logoutBtn" onclick="logout()" class="logout" style="display:none;">Cerrar sesión</button>
 </div>
@@ -43,7 +45,7 @@ button:hover{background:#0ea5e9}
 
   <p class="small">Estás creando una nueva ubicación</p>
 
-  <input id="ubicacion_nombre" placeholder="Ej: Nave 12, Contenedor A">
+  <input id="ubicacion_nombre" placeholder="Ej: M-06, C-01, Nave 12">
 
   <select id="ubicacion_tipo">
     <option value="">Selecciona tipo</option>
@@ -60,165 +62,286 @@ button:hover{background:#0ea5e9}
   <button onclick="cargarUbicaciones()">Actualizar</button>
 
   <p id="ubicacionStatus"></p>
-
   <div id="listaUbicaciones"></div>
+</div>
+
+<div class="card">
+  <h2>📦 Productos</h2>
+
+  <p class="small">Crea productos para después registrar entradas y salidas.</p>
+
+  <input id="producto_nombre" placeholder="Ej: Disco Corte 4.5">
+  <input id="producto_codigo" placeholder="Ej: DC-01">
+
+  <select id="producto_tipo">
+    <option value="">Selecciona tipo</option>
+    <option value="consumible">Consumible</option>
+    <option value="herramienta">Herramienta</option>
+    <option value="epp">EPP</option>
+  </select>
+
+  <br>
+
+  <button onclick="crearProducto(event)">Crear producto</button>
+  <button onclick="cargarProductos()">Actualizar</button>
+
+  <p id="productoStatus"></p>
+  <div id="listaProductos"></div>
 </div>
 
 </div>
 
 <script>
-
 const API="https://mexa-core-1.onrender.com";
+
 const LOGIN_URL=`${API}/auth/auth/login`;
 const UBICACIONES_URL=`${API}/ubicaciones/ubicaciones/`;
+const PRODUCTOS_URL=`${API}/productos/productos/`;
+
+const ORGANIZACION_ID = 8;
 
 let token=localStorage.getItem("mexa_token")||"";
 let usuario=localStorage.getItem("mexa_usuario")||"";
 
 function mostrarSesion(){
- if(token){
-  usuarioInfo.innerText="Usuario: "+usuario;
-  loginCard.style.display="none";
-  logoutBtn.style.display="block";
- }else{
-  loginCard.style.display="block";
-  logoutBtn.style.display="none";
- }
+  if(token){
+    usuarioInfo.innerText="Usuario: "+usuario;
+    loginCard.style.display="none";
+    logoutBtn.style.display="inline-block";
+  }else{
+    usuarioInfo.innerText="";
+    loginCard.style.display="block";
+    logoutBtn.style.display="none";
+  }
 }
 
 function logout(){
- localStorage.clear();
- location.reload();
+  localStorage.removeItem("mexa_token");
+  localStorage.removeItem("mexa_usuario");
+  token="";
+  usuario="";
+  location.reload();
 }
 
 async function login(){
- const email=document.getElementById("email").value;
- const password=document.getElementById("password").value;
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value.trim();
 
- loginStatus.innerText="Entrando...";
+  loginStatus.innerText="Entrando...";
+  loginStatus.className="";
 
- const res=await fetch(LOGIN_URL,{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({email,password})
- });
+  const res=await fetch(LOGIN_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email,password})
+  });
 
- const data=await res.json();
+  const data=await res.json();
 
- if(!res.ok){
-  loginStatus.innerText=JSON.stringify(data);
-  loginStatus.className="error";
-  return;
- }
+  if(!res.ok){
+    loginStatus.innerText=JSON.stringify(data);
+    loginStatus.className="error";
+    return;
+  }
 
- token=data.access_token;
- usuario=email;
+  token=data.access_token;
+  usuario=email;
 
- localStorage.setItem("mexa_token",token);
- localStorage.setItem("mexa_usuario",usuario);
+  localStorage.setItem("mexa_token",token);
+  localStorage.setItem("mexa_usuario",usuario);
 
- mostrarSesion();
- cargarUbicaciones();
+  mostrarSesion();
+  await cargarTodo();
+}
+
+async function cargarTodo(){
+  await cargarUbicaciones();
+  await cargarProductos();
 }
 
 async function cargarUbicaciones(){
- if(!token) return;
+  if(!token) return;
 
- const res=await fetch(UBICACIONES_URL,{
-  headers:{Authorization:"Bearer "+token}
- });
+  const res=await fetch(UBICACIONES_URL,{
+    headers:{Authorization:"Bearer "+token}
+  });
 
- const data=await res.json();
+  const data=await res.json();
 
- if(!res.ok){
-  ubicacionStatus.innerText=JSON.stringify(data);
-  return;
- }
+  if(!res.ok){
+    ubicacionStatus.innerText=JSON.stringify(data);
+    ubicacionStatus.className="error";
+    return;
+  }
 
- const lista=Array.isArray(data)?data:(data.items||data.data||[]);
+  const lista=Array.isArray(data)?data:(data.items||data.data||[]);
 
- listaUbicaciones.innerHTML="";
+  listaUbicaciones.innerHTML="";
 
- lista.forEach(u=>{
-  listaUbicaciones.innerHTML+=`
-  <div class="item">
-   📍 <strong>${u.nombre}</strong> (${u.tipo})<br>
-   ID: ${u.id}
-   <br>
-   <button class="logout" onclick="eliminarUbicacion(${u.id})">Eliminar</button>
-  </div>`;
- });
+  lista.forEach(u=>{
+    listaUbicaciones.innerHTML+=`
+      <div class="item">
+        📍 <strong>${u.nombre}</strong> (${u.tipo})<br>
+        ID: ${u.id}<br>
+        <button class="logout" onclick="eliminarUbicacion(${u.id})">Eliminar</button>
+      </div>
+    `;
+  });
+
+  ubicacionStatus.innerText="✔ Ubicaciones cargadas: "+lista.length;
+  ubicacionStatus.className="ok";
 }
 
 async function crearUbicacion(event){
+  const btn=event.target;
+  btn.disabled=true;
 
- const btn=event.target;
- btn.disabled=true;
+  const nombre=document.getElementById("ubicacion_nombre").value.trim();
+  const tipo=document.getElementById("ubicacion_tipo").value;
 
- const nombre=document.getElementById("ubicacion_nombre").value;
- const tipo=document.getElementById("ubicacion_tipo").value;
+  if(!nombre || !tipo){
+    alert("Completa nombre y tipo");
+    btn.disabled=false;
+    return;
+  }
 
- if(!nombre || !tipo){
-  alert("Completa los campos");
+  const res=await fetch(UBICACIONES_URL,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body:JSON.stringify({
+      organizacion_id:ORGANIZACION_ID,
+      nombre,
+      tipo
+    })
+  });
+
+  const data=await res.json();
+
+  if(!res.ok){
+    ubicacionStatus.innerText=JSON.stringify(data);
+    ubicacionStatus.className="error";
+    btn.disabled=false;
+    return;
+  }
+
+  ubicacion_nombre.value="";
+  ubicacion_tipo.value="";
+
+  ubicacionStatus.innerText="✔ Ubicación creada";
+  ubicacionStatus.className="ok";
+
   btn.disabled=false;
-  return;
- }
-
- const res=await fetch(UBICACIONES_URL,{
-  method:"POST",
-  headers:{
-   "Content-Type":"application/json",
-   Authorization:"Bearer "+token
-  },
-  body:JSON.stringify({
-   organizacion_id:8,
-   nombre,
-   tipo
-  })
- });
-
- const data=await res.json();
-
- if(!res.ok){
-  ubicacionStatus.innerText=JSON.stringify(data);
-  ubicacionStatus.className="error";
-  btn.disabled=false;
-  return;
- }
-
- ubicacionStatus.innerText="✔ Ubicación creada";
- ubicacionStatus.className="ok";
-
- btn.disabled=false;
-
- cargarUbicaciones();
+  await cargarUbicaciones();
 }
 
-/* 🔥 NUEVO DELETE */
 async function eliminarUbicacion(id){
- if(!confirm("¿Seguro que quieres eliminar esta ubicación?")) return;
+  if(!confirm("¿Seguro que quieres eliminar esta ubicación?")) return;
 
- const res=await fetch(`${UBICACIONES_URL}${id}`,{
-  method:"DELETE",
-  headers:{Authorization:"Bearer "+token}
- });
+  const res=await fetch(`${UBICACIONES_URL}${id}`,{
+    method:"DELETE",
+    headers:{Authorization:"Bearer "+token}
+  });
 
- const data=await res.json();
+  const data=await res.json();
 
- if(!res.ok){
-  alert("Error: "+JSON.stringify(data));
-  return;
- }
+  if(!res.ok){
+    alert("Error: "+JSON.stringify(data));
+    return;
+  }
 
- alert("Ubicación eliminada");
- cargarUbicaciones();
+  alert("Ubicación eliminada");
+  await cargarUbicaciones();
+}
+
+async function cargarProductos(){
+  if(!token) return;
+
+  const res=await fetch(PRODUCTOS_URL,{
+    headers:{Authorization:"Bearer "+token}
+  });
+
+  const data=await res.json();
+
+  if(!res.ok){
+    productoStatus.innerText=JSON.stringify(data);
+    productoStatus.className="error";
+    return;
+  }
+
+  const lista=Array.isArray(data)?data:(data.items||data.data||[]);
+
+  listaProductos.innerHTML="";
+
+  lista.forEach(p=>{
+    listaProductos.innerHTML+=`
+      <div class="item">
+        📦 <strong>${p.nombre}</strong><br>
+        ID: ${p.id}<br>
+        Código: ${p.codigo || "Sin código"}<br>
+        Tipo: ${p.tipo || "N/A"}<br>
+        Stock: ${p.cantidad ?? 0}
+      </div>
+    `;
+  });
+
+  productoStatus.innerText="✔ Productos cargados: "+lista.length;
+  productoStatus.className="ok";
+}
+
+async function crearProducto(event){
+  const btn=event.target;
+  btn.disabled=true;
+
+  const nombre=document.getElementById("producto_nombre").value.trim();
+  const codigo=document.getElementById("producto_codigo").value.trim();
+  const tipo=document.getElementById("producto_tipo").value;
+
+  if(!nombre || !codigo || !tipo){
+    alert("Completa nombre, código y tipo");
+    btn.disabled=false;
+    return;
+  }
+
+  const res=await fetch(PRODUCTOS_URL,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body:JSON.stringify({
+      nombre,
+      codigo,
+      tipo
+    })
+  });
+
+  const data=await res.json();
+
+  if(!res.ok){
+    productoStatus.innerText=JSON.stringify(data);
+    productoStatus.className="error";
+    btn.disabled=false;
+    return;
+  }
+
+  producto_nombre.value="";
+  producto_codigo.value="";
+  producto_tipo.value="";
+
+  productoStatus.innerText="✔ Producto creado";
+  productoStatus.className="ok";
+
+  btn.disabled=false;
+  await cargarProductos();
 }
 
 window.onload=()=>{
- mostrarSesion();
- if(token) cargarUbicaciones();
+  mostrarSesion();
+  if(token) cargarTodo();
 };
-
 </script>
 
 </body>
