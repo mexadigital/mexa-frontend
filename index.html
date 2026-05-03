@@ -1,81 +1,73 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mexa Digital</title>
+<meta charset="UTF-8">
+<title>Mexa Digital</title>
 
-  <style>
-    body {
-      margin:0;
-      font-family:Arial;
-      background:#0f172a;
-      color:white;
-    }
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
 
-    header {
-      padding:16px;
-      background:#020617;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-    }
+header {
+  padding:16px;
+  background:#020617;
+  display:flex;
+  justify-content:space-between;
+}
 
-    button {
-      padding:6px 10px;
-      border:none;
-      border-radius:6px;
-      background:#2563eb;
-      color:white;
-      cursor:pointer;
-      font-size:14px;
-    }
+button {
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  background:#2563eb;
+  color:white;
+  cursor:pointer;
+  font-size:14px;
+}
 
-    .danger { background:red; }
+.danger { background:red; }
 
-    /* 🔥 FIX IMPORTANTE */
-    .container {
-      max-width:600px;
-      margin:auto;
-      padding:16px;
-    }
+.container {
+  max-width:600px;
+  margin:auto;
+  padding:16px;
+}
 
-    .card {
-      background:#111827;
-      padding:10px;
-      border-radius:10px;
-      margin-bottom:8px;
-    }
+.card {
+  background:#111827;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:8px;
+}
 
-    .grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-      gap:8px;
-    }
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:8px;
+}
 
-    input, select {
-      width:100%;
-      max-width:100%;
-      padding:6px;
-      margin:4px 0;
-      background:#020617;
-      color:white;
-      border:1px solid #374151;
-      border-radius:6px;
-      font-size:14px;
-    }
+input, select {
+  width:100%;
+  padding:6px;
+  margin:4px 0;
+  background:#020617;
+  color:white;
+  border:1px solid #374151;
+  border-radius:6px;
+  font-size:14px;
+}
 
-    .hidden { display:none; }
+.hidden { display:none; }
 
-    h2, h3 {
-      margin:8px 0;
-    }
-
-    /* 🔥 Login centrado */
-    #login {
-      max-width:400px;
-      margin:80px auto;
-    }
-  </style>
+#login {
+  max-width:400px;
+  margin:80px auto;
+}
+</style>
 </head>
 
 <body>
@@ -113,6 +105,9 @@
   <select id="pUbicacion"></select>
   <button onclick="crearProducto()">Guardar</button>
 
+  <h3>Productos</h3>
+  <div id="productos"></div>
+
 </div>
 
 <script>
@@ -128,6 +123,8 @@ function headers(){
 async function login(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
+
+  document.getElementById("msg").innerText="Entrando...";
 
   const rutas=[
     "/auth/login",
@@ -163,8 +160,12 @@ function cerrarSesion(){
 }
 
 async function cargarTodo(){
-  let res=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
-  let data=await res.json();
+
+  let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
+  let ubicaciones=await resU.json();
+
+  let resP=await fetch(API+"/productos/",{headers:headers()});
+  let productos=await resP.json();
 
   let grid=document.getElementById("grid");
   let select=document.getElementById("pUbicacion");
@@ -172,16 +173,26 @@ async function cargarTodo(){
   grid.innerHTML="";
   select.innerHTML="";
 
-  data.forEach(u=>{
+  ubicaciones.forEach(u=>{
     grid.innerHTML+=`
       <div class="card">
         <b>${u.nombre}</b><br>
         ${u.tipo}
       </div>
     `;
-
     select.innerHTML+=`<option>${u.nombre}</option>`;
   });
+
+  let div=document.getElementById("productos");
+
+  div.innerHTML=productos.map(p=>`
+    <div class="card">
+      <b>${p.nombre}</b><br>
+      Código: ${p.codigo}<br>
+      Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
+      Stock: ${p.cantidad}
+    </div>
+  `).join("");
 }
 
 async function crearUbicacion(){
