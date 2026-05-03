@@ -101,7 +101,7 @@ input, select {
   <h3>Crear producto</h3>
   <input id="pNombre" placeholder="Nombre">
   <input id="pCodigo" placeholder="Código">
-  <input id="pCant" type="number">
+  <input id="pCant" type="number" value="1">
   <select id="pUbicacion"></select>
   <button onclick="crearProducto()">Guardar</button>
 
@@ -121,8 +121,8 @@ function headers(){
 }
 
 async function login(){
-  const email=document.getElementById("email").value;
-  const password=document.getElementById("password").value;
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value.trim();
 
   document.getElementById("msg").innerText="Entrando...";
 
@@ -138,7 +138,7 @@ async function login(){
 
       let data=await res.json();
 
-      if(res.ok){
+      if(res.ok && data.access_token){
         localStorage.setItem("token",data.access_token);
         document.getElementById("login").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
@@ -163,22 +163,12 @@ async function cargarTodo(){
 
   try{
     let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
-    ubicaciones=await resU.json();
+    if(resU.ok) ubicaciones=await resU.json();
   }catch{}
 
   try{
     let resP=await fetch(API+"/productos/",{headers:headers()});
-    let data=await resP.json();
-
-    // 🔥 FIX IMPORTANTE
-    if(Array.isArray(data)){
-      productos=data;
-    } else if(data.items){
-      productos=data.items;
-    } else {
-      productos=[];
-    }
-
+    if(resP.ok) productos=await resP.json();
   }catch{}
 
   // 🔹 Render ubicaciones
@@ -195,7 +185,7 @@ async function cargarTodo(){
         ${u.tipo}
       </div>
     `;
-    select.innerHTML+=`<option>${u.nombre}</option>`;
+    select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
   });
 
   // 🔹 Render productos
@@ -219,6 +209,11 @@ async function cargarTodo(){
 async function crearUbicacion(){
   let nombre=document.getElementById("uNombre").value;
 
+  if(!nombre){
+    alert("Pon nombre");
+    return;
+  }
+
   await fetch(API+"/ubicaciones/ubicaciones/",{
     method:"POST",
     headers:headers(),
@@ -234,8 +229,14 @@ async function crearProducto(){
     nombre:document.getElementById("pNombre").value,
     codigo:document.getElementById("pCodigo").value,
     cantidad:Number(document.getElementById("pCant").value),
-    ubicacion:document.getElementById("pUbicacion").value
+    ubicacion:document.getElementById("pUbicacion").value,
+    tipo:"consumible"
   };
+
+  if(!body.nombre || !body.codigo){
+    alert("Falta info");
+    return;
+  }
 
   let res=await fetch(API+"/productos/",{
     method:"POST",
