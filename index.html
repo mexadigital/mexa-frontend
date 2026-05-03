@@ -47,8 +47,8 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
   <button onclick="crearUbicacion()">Guardar</button>
 
   <h3>Crear producto</h3>
-  <input id="pNombre">
-  <input id="pCodigo">
+  <input id="pNombre" placeholder="Nombre">
+  <input id="pCodigo" placeholder="Código">
   <input id="pCant" type="number" value="1">
   <select id="pUbicacion"></select>
   <button onclick="crearProducto()">Guardar</button>
@@ -69,29 +69,31 @@ function headers(){
 }
 
 async function login(){
-  const email=document.getElementById("email").value;
-  const password=document.getElementById("password").value;
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value.trim();
 
   document.getElementById("msg").innerText="Entrando...";
 
   const rutas=["/auth/login","/auth/auth/login"];
 
   for(let r of rutas){
-    let res=await fetch(API+r,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({email,password})
-    });
+    try{
+      let res=await fetch(API+r,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email,password})
+      });
 
-    let data=await res.json();
+      let data=await res.json();
 
-    if(res.ok){
-      localStorage.setItem("token",data.access_token);
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("app").classList.remove("hidden");
-      cargarTodo();
-      return;
-    }
+      if(res.ok && data.access_token){
+        localStorage.setItem("token",data.access_token);
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        cargarTodo();
+        return;
+      }
+    }catch{}
   }
 
   document.getElementById("msg").innerText="Error login";
@@ -107,12 +109,17 @@ async function cargarTodo(){
   let ubicaciones=[];
   let productos=[];
 
-  let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
-  if(resU.ok) ubicaciones=await resU.json();
+  try{
+    let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
+    if(resU.ok) ubicaciones=await resU.json();
+  }catch{}
 
-  let resP=await fetch(API+"/productos",{headers:headers()});
-  if(resP.ok) productos=await resP.json();
+  try{
+    let resP=await fetch(API+"/productos/productos/",{headers:headers()});
+    if(resP.ok) productos=await resP.json();
+  }catch{}
 
+  // Render ubicaciones
   let grid=document.getElementById("grid");
   let select=document.getElementById("pUbicacion");
 
@@ -126,9 +133,10 @@ async function cargarTodo(){
         ${u.tipo}
       </div>
     `;
-    select.innerHTML+=`<option>${u.nombre}</option>`;
+    select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
   });
 
+  // Render productos
   let div=document.getElementById("productos");
 
   if(productos.length===0){
@@ -138,7 +146,7 @@ async function cargarTodo(){
       <div class="card">
         <b>${p.nombre}</b><br>
         Código: ${p.codigo}<br>
-        Ubicación: ${p.ubicacion}<br>
+        Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
         Stock: ${p.cantidad}
       </div>
     `).join("");
@@ -147,6 +155,11 @@ async function cargarTodo(){
 
 async function crearUbicacion(){
   let nombre=document.getElementById("uNombre").value;
+
+  if(!nombre){
+    alert("Pon nombre");
+    return;
+  }
 
   await fetch(API+"/ubicaciones/ubicaciones/",{
     method:"POST",
@@ -167,7 +180,7 @@ async function crearProducto(){
     tipo:"consumible"
   };
 
-  let res=await fetch(API+"/productos",{
+  let res=await fetch(API+"/productos/productos/",{
     method:"POST",
     headers:headers(),
     body:JSON.stringify(body)
@@ -176,7 +189,7 @@ async function crearProducto(){
   let txt=await res.text();
 
   if(!res.ok){
-    alert(txt);
+    alert("Error:\n"+txt);
   }else{
     alert("Producto creado");
     cargarTodo();
