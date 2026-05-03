@@ -1,571 +1,210 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Mexa Digital</title>
 
   <style>
-    :root {
-      --bg:#0f172a;
-      --header:#020617;
-      --card:#111827;
-      --card2:#1f2937;
-      --text:#f9fafb;
-      --muted:#9ca3af;
-      --blue:#2563eb;
-      --green:#16a34a;
-      --red:#dc2626;
-      --border:#374151;
-    }
-
-    * { box-sizing:border-box; }
-
     body {
       margin:0;
-      font-family:Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
+      font-family:Arial;
+      background:#0f172a;
+      color:white;
     }
 
     header {
       padding:20px;
-      background:var(--header);
-      border-bottom:1px solid var(--border);
+      background:#020617;
       display:flex;
       justify-content:space-between;
-      align-items:center;
-    }
-
-    header h2 {
-      margin:0;
-      font-size:22px;
     }
 
     button {
+      padding:10px;
       border:none;
-      border-radius:10px;
-      padding:10px 14px;
-      background:var(--blue);
+      border-radius:8px;
+      background:#2563eb;
       color:white;
       cursor:pointer;
-      font-weight:bold;
     }
 
-    .danger { background:var(--red); }
-    .success { background:var(--green); }
+    .danger { background:red; }
 
-    .container {
-      max-width:1200px;
-      margin:auto;
-      padding:24px;
-    }
+    .container { padding:20px; }
 
-    .hidden { display:none; }
-
-    .login-box {
-      max-width:420px;
-      margin:90px auto;
-      background:var(--card);
-      padding:28px;
-      border-radius:18px;
-      border:1px solid var(--border);
-    }
-
-    input, select, textarea {
-      width:100%;
-      margin:8px 0 14px;
-      padding:12px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:#020617;
-      color:white;
-    }
-
-    label {
-      color:var(--muted);
-      font-size:13px;
+    .card {
+      background:#111827;
+      padding:15px;
+      border-radius:12px;
+      margin-bottom:10px;
     }
 
     .grid {
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-      gap:16px;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:10px;
     }
 
-    .row {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:18px;
-      margin-top:24px;
-    }
-
-    .card {
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
-    }
-
-    .location-card {
-      cursor:pointer;
-      transition:.2s;
-    }
-
-    .location-card:hover {
-      transform:translateY(-3px);
-      border-color:var(--blue);
-    }
-
-    .muted {
-      color:var(--muted);
-    }
-
-    .pill {
-      display:inline-block;
-      background:var(--card2);
-      padding:6px 10px;
-      border-radius:999px;
-      margin:4px 4px 0 0;
-      font-size:13px;
-    }
-
-    table {
+    input, select {
       width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-    }
-
-    th, td {
-      border-bottom:1px solid var(--border);
       padding:10px;
-      text-align:left;
-    }
-
-    th {
-      color:var(--muted);
+      margin:5px 0;
       background:#020617;
+      color:white;
+      border:1px solid #374151;
+      border-radius:8px;
     }
 
-    @media(max-width:700px) {
-      header { flex-direction:column; align-items:flex-start; gap:12px; }
-      .row { grid-template-columns:1fr; }
-    }
+    .hidden { display:none; }
   </style>
 </head>
 
 <body>
 
 <header>
-  <div>
-    <h2>Mexa Digital</h2>
-    <div class="muted">Control de ubicaciones, productos y stock</div>
-  </div>
-
+  <h2>Mexa Digital</h2>
   <div>
     <button onclick="cargarTodo()">Actualizar</button>
-    <button class="danger" onclick="cerrarSesion()">Cerrar sesión</button>
+    <button class="danger" onclick="cerrarSesion()">Salir</button>
   </div>
 </header>
 
-<div id="login" class="login-box">
-  <h2>Iniciar sesión</h2>
-
-  <label>Correo</label>
-  <input id="email" value="admin.ica@mexa.com" />
-
-  <label>Contraseña</label>
-  <input id="password" type="password" value="123456" />
-
+<div id="login" class="container">
+  <h2>Login</h2>
+  <input id="email" value="admin.ica@mexa.com">
+  <input id="password" type="password" value="123456">
   <button onclick="login()">Entrar</button>
-  <p id="loginMsg" class="muted"></p>
+  <p id="msg"></p>
 </div>
 
 <div id="app" class="container hidden">
 
-  <h2>Dashboard de ubicaciones</h2>
-  <p class="muted">Aquí se ve qué hay, dónde está y quién es responsable.</p>
+  <h3>Ubicaciones</h3>
+  <div id="grid" class="grid"></div>
 
-  <div id="ubicacionesGrid" class="grid"></div>
+  <h3>Crear ubicación</h3>
+  <input id="uNombre" placeholder="Nombre">
+  <input id="uResp" placeholder="Responsable">
+  <button onclick="crearUbicacion()">Guardar</button>
 
-  <div class="row">
-    <div class="card">
-      <h3>Crear ubicación</h3>
-
-      <label>Nombre</label>
-      <input id="ubicacionNombre" placeholder="Ej: M-06, C-01, Nave 12" />
-
-      <label>Tipo</label>
-      <select id="ubicacionTipo">
-        <option value="contenedor">Contenedor</option>
-        <option value="nave">Nave</option>
-        <option value="almacen">Almacén cerrado</option>
-        <option value="almacen_abierto">Almacén a cielo abierto</option>
-      </select>
-
-      <label>Responsable</label>
-      <input id="ubicacionResponsable" placeholder="Ej: Alfredo, Cristóforo" />
-
-      <button onclick="crearUbicacion()">Guardar ubicación</button>
-    </div>
-
-    <div class="card">
-      <h3>Crear producto</h3>
-
-      <label>Nombre</label>
-      <input id="productoNombre" placeholder="Ej: Disco corte concreto 7" />
-
-      <label>Código</label>
-      <input id="productoCodigo" placeholder="Ej: DC-CON-7-001" />
-
-      <label>Tipo</label>
-      <select id="productoTipo">
-        <option value="consumible">Consumible</option>
-        <option value="herramienta">Herramienta</option>
-        <option value="epp">EPP</option>
-        <option value="material">Material</option>
-      </select>
-
-      <label>Cantidad inicial</label>
-      <input id="productoCantidad" type="number" value="0" />
-
-      <label>Ubicación</label>
-      <select id="productoUbicacion"></select>
-
-      <button onclick="crearProducto()">Guardar producto</button>
-    </div>
-  </div>
-
-  <h2>Detalle de ubicación</h2>
-  <div id="detalleUbicacion" class="card">
-    <p class="muted">Selecciona una ubicación para ver sus productos.</p>
-  </div>
-
-  <h2>Productos generales</h2>
-  <div id="tablaProductos" class="card"></div>
+  <h3>Crear producto</h3>
+  <input id="pNombre" placeholder="Nombre">
+  <input id="pCodigo" placeholder="Código">
+  <input id="pCant" type="number">
+  <select id="pUbicacion"></select>
+  <button onclick="crearProducto()">Guardar</button>
 
 </div>
 
 <script>
-const API = "https://mexa-core-1.onrender.com";
+const API="https://mexa-core-1.onrender.com";
 
-let ubicaciones = [];
-let productos = [];
-
-function token() {
-  return localStorage.getItem("mexa_token");
-}
-
-function headers() {
+function headers(){
   return {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + token()
+    "Content-Type":"application/json",
+    "Authorization":"Bearer "+localStorage.getItem("token")
   };
 }
 
-function guardarResponsable(nombre, responsable) {
-  const data = JSON.parse(localStorage.getItem("responsables_ubicacion") || "{}");
-  data[nombre] = responsable || "Sin responsable";
-  localStorage.setItem("responsables_ubicacion", JSON.stringify(data));
-}
+async function login(){
+  const email=document.getElementById("email").value;
+  const password=document.getElementById("password").value;
 
-function obtenerResponsable(nombre) {
-  const data = JSON.parse(localStorage.getItem("responsables_ubicacion") || "{}");
-  return data[nombre] || "Sin responsable";
-}
-
-async function login() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const msg = document.getElementById("loginMsg");
-
-  msg.textContent = "Entrando...";
-
-  const urls = [
-    `${API}/auth/login`,
-    `${API}/auth/auth/login`
+  const rutas=[
+    "/auth/login",
+    "/auth/auth/login"
   ];
 
-  for (let url of urls) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+  for(let r of rutas){
+    try{
+      let res=await fetch(API+r,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email,password})
       });
 
-      const data = await res.json();
+      let data=await res.json();
 
-      if (res.ok && data.access_token) {
-        localStorage.setItem("mexa_token", data.access_token);
-        mostrarApp();
-        await cargarTodo();
-        msg.textContent = "Login correcto";
+      if(res.ok){
+        localStorage.setItem("token",data.access_token);
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        cargarTodo();
         return;
       }
-    } catch (error) {
-      console.log("Falló intento:", url, error);
-    }
+    }catch{}
   }
 
-  msg.textContent = "Login incorrecto.";
+  document.getElementById("msg").innerText="Error login";
 }
 
-function mostrarApp() {
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-}
-
-function cerrarSesion() {
-  localStorage.removeItem("mexa_token");
+function cerrarSesion(){
+  localStorage.removeItem("token");
   location.reload();
 }
 
-async function cargarTodo() {
-  await cargarUbicaciones();
-  await cargarProductos();
-  renderDashboard();
-  renderSelectUbicaciones();
-  renderProductos();
-}
+async function cargarTodo(){
+  let res=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
+  let data=await res.json();
 
-async function cargarUbicaciones() {
-  try {
-    const res = await fetch(`${API}/ubicaciones/ubicaciones/`, {
-      headers: headers()
-    });
+  let grid=document.getElementById("grid");
+  let select=document.getElementById("pUbicacion");
 
-    if (res.ok) {
-      ubicaciones = await res.json();
-    } else {
-      ubicaciones = [];
-    }
-  } catch {
-    ubicaciones = [];
-  }
-}
+  grid.innerHTML="";
+  select.innerHTML="";
 
-async function cargarProductos() {
-  try {
-    const res = await fetch(`${API}/productos/`, {
-      headers: headers()
-    });
-
-    if (res.ok) {
-      productos = await res.json();
-    } else {
-      productos = [];
-    }
-  } catch {
-    productos = [];
-  }
-}
-
-async function crearUbicacion() {
-  const nombre = document.getElementById("ubicacionNombre").value.trim();
-  const tipo = document.getElementById("ubicacionTipo").value;
-  const responsable = document.getElementById("ubicacionResponsable").value.trim();
-
-  if (!nombre) {
-    alert("Pon el nombre de la ubicación.");
-    return;
-  }
-
-  guardarResponsable(nombre, responsable);
-
-  let res = await fetch(`${API}/ubicaciones/ubicaciones/`, {
-    method: "POST",
-    headers: headers(),
-    body: JSON.stringify({ nombre, tipo, responsable })
-  });
-
-  if (!res.ok) {
-    res = await fetch(`${API}/ubicaciones/ubicaciones/`, {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify({ nombre, tipo })
-    });
-  }
-
-  if (res.ok) {
-    document.getElementById("ubicacionNombre").value = "";
-    document.getElementById("ubicacionResponsable").value = "";
-    await cargarTodo();
-    alert("Ubicación creada.");
-  } else {
-    const error = await res.text();
-    alert("No se pudo crear ubicación:\n\n" + error);
-  }
-}
-
-async function crearProducto() {
-  const nombre = document.getElementById("productoNombre").value.trim();
-  const codigo = document.getElementById("productoCodigo").value.trim();
-  const tipo = document.getElementById("productoTipo").value;
-  const cantidad = Number(document.getElementById("productoCantidad").value);
-  const ubicacion = document.getElementById("productoUbicacion").value;
-
-  if (!nombre || !codigo || !ubicacion) {
-    alert("Falta nombre, código o ubicación.");
-    return;
-  }
-
-  const bodyCompleto = {
-    nombre: nombre,
-    codigo: codigo,
-    tipo: tipo,
-    cantidad: cantidad,
-    ubicacion: ubicacion,
-    precio: null
-  };
-
-  let res = await fetch(`${API}/productos/`, {
-    method: "POST",
-    headers: headers(),
-    body: JSON.stringify(bodyCompleto)
-  });
-
-  if (!res.ok) {
-    const bodySinPrecio = {
-      nombre: nombre,
-      codigo: codigo,
-      tipo: tipo,
-      cantidad: cantidad,
-      ubicacion: ubicacion
-    };
-
-    res = await fetch(`${API}/productos/`, {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify(bodySinPrecio)
-    });
-  }
-
-  if (res.ok) {
-    document.getElementById("productoNombre").value = "";
-    document.getElementById("productoCodigo").value = "";
-    document.getElementById("productoCantidad").value = 0;
-    await cargarTodo();
-    alert("Producto creado.");
-  } else {
-    const error = await res.text();
-    alert("No se pudo crear producto:\n\n" + error);
-  }
-}
-
-function renderDashboard() {
-  const grid = document.getElementById("ubicacionesGrid");
-  grid.innerHTML = "";
-
-  if (ubicaciones.length === 0) {
-    grid.innerHTML = `<p class="muted">No hay ubicaciones todavía.</p>`;
-    return;
-  }
-
-  ubicaciones.forEach(u => {
-    const productosEnUbicacion = productos.filter(p => p.ubicacion === u.nombre);
-    const totalStock = productosEnUbicacion.reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
-    const responsable = u.responsable || obtenerResponsable(u.nombre);
-
-    grid.innerHTML += `
-      <div class="card location-card" onclick="seleccionarUbicacion('${u.nombre}')">
-        <h3>${u.nombre}</h3>
-        <p class="muted">${u.tipo || "Sin tipo"}</p>
-        <p><b>Responsable:</b> ${responsable}</p>
-        <span class="pill">Productos: ${productosEnUbicacion.length}</span>
-        <span class="pill">Stock: ${totalStock}</span>
+  data.forEach(u=>{
+    grid.innerHTML+=`
+      <div class="card">
+        <b>${u.nombre}</b><br>
+        ${u.tipo}
       </div>
     `;
+
+    select.innerHTML+=`<option>${u.nombre}</option>`;
   });
 }
 
-function seleccionarUbicacion(nombre) {
-  const detalle = document.getElementById("detalleUbicacion");
-  const productosFiltrados = productos.filter(p => p.ubicacion === nombre);
-  const ubicacion = ubicaciones.find(u => u.nombre === nombre);
-  const responsable = ubicacion?.responsable || obtenerResponsable(nombre);
+async function crearUbicacion(){
+  let nombre=document.getElementById("uNombre").value;
 
-  let rows = productosFiltrados.map(p => `
-    <tr>
-      <td>${p.nombre}</td>
-      <td>${p.codigo || "-"}</td>
-      <td>${p.tipo || "-"}</td>
-      <td>${p.cantidad || 0}</td>
-    </tr>
-  `).join("");
-
-  if (!rows) {
-    rows = `<tr><td colspan="4">No hay productos en esta ubicación.</td></tr>`;
-  }
-
-  detalle.innerHTML = `
-    <h3>${nombre}</h3>
-    <p><b>Responsable:</b> ${responsable}</p>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Código</th>
-          <th>Tipo</th>
-          <th>Cantidad</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-}
-
-function renderSelectUbicaciones() {
-  const select = document.getElementById("productoUbicacion");
-  select.innerHTML = "";
-
-  if (ubicaciones.length === 0) {
-    select.innerHTML = `<option value="">Primero crea una ubicación</option>`;
-    return;
-  }
-
-  ubicaciones.forEach(u => {
-    select.innerHTML += `<option value="${u.nombre}">${u.nombre}</option>`;
+  await fetch(API+"/ubicaciones/ubicaciones/",{
+    method:"POST",
+    headers:headers(),
+    body:JSON.stringify({nombre,tipo:"contenedor"})
   });
+
+  cargarTodo();
 }
 
-function renderProductos() {
-  const div = document.getElementById("tablaProductos");
+async function crearProducto(){
 
-  if (productos.length === 0) {
-    div.innerHTML = `<p class="muted">No hay productos todavía.</p>`;
-    return;
+  let body={
+    nombre:document.getElementById("pNombre").value,
+    codigo:document.getElementById("pCodigo").value,
+    cantidad:Number(document.getElementById("pCant").value),
+    ubicacion:document.getElementById("pUbicacion").value
+  };
+
+  let res=await fetch(API+"/productos/productos/",{
+    method:"POST",
+    headers:headers(),
+    body:JSON.stringify(body)
+  });
+
+  let txt=await res.text();
+
+  if(!res.ok){
+    alert("Error:\n"+txt);
+  }else{
+    alert("Producto creado");
+    cargarTodo();
   }
-
-  const rows = productos.map(p => `
-    <tr>
-      <td>${p.nombre}</td>
-      <td>${p.codigo || "-"}</td>
-      <td>${p.tipo || "-"}</td>
-      <td>${p.ubicacion || "Sin ubicación"}</td>
-      <td>${p.cantidad || 0}</td>
-    </tr>
-  `).join("");
-
-  div.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Código</th>
-          <th>Tipo</th>
-          <th>Ubicación</th>
-          <th>Stock</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
 }
 
-if (token()) {
-  mostrarApp();
+if(localStorage.getItem("token")){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
   cargarTodo();
 }
 </script>
