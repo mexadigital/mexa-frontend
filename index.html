@@ -213,10 +213,10 @@
       <h3>Crear producto</h3>
 
       <label>Nombre</label>
-      <input id="productoNombre" placeholder="Ej: Disco corte 4.5" />
+      <input id="productoNombre" placeholder="Ej: Disco corte concreto 7" />
 
       <label>Código</label>
-      <input id="productoCodigo" placeholder="Ej: DC-01" />
+      <input id="productoCodigo" placeholder="Ej: DC-CON-7-001" />
 
       <label>Tipo</label>
       <select id="productoTipo">
@@ -304,7 +304,7 @@ async function login() {
         return;
       }
     } catch (error) {
-      console.log("Falló intento:", url);
+      console.log("Falló intento:", url, error);
     }
   }
 
@@ -393,7 +393,8 @@ async function crearUbicacion() {
     await cargarTodo();
     alert("Ubicación creada.");
   } else {
-    alert("No se pudo crear ubicación.");
+    const error = await res.text();
+    alert("No se pudo crear ubicación:\n\n" + error);
   }
 }
 
@@ -409,17 +410,36 @@ async function crearProducto() {
     return;
   }
 
-  const res = await fetch(`${API}/productos/`, {
+  const bodyCompleto = {
+    nombre: nombre,
+    codigo: codigo,
+    tipo: tipo,
+    cantidad: cantidad,
+    ubicacion: ubicacion,
+    precio: null
+  };
+
+  let res = await fetch(`${API}/productos/`, {
     method: "POST",
     headers: headers(),
-    body: JSON.stringify({
-      nombre,
-      codigo,
-      tipo,
-      cantidad,
-      ubicacion
-    })
+    body: JSON.stringify(bodyCompleto)
   });
+
+  if (!res.ok) {
+    const bodySinPrecio = {
+      nombre: nombre,
+      codigo: codigo,
+      tipo: tipo,
+      cantidad: cantidad,
+      ubicacion: ubicacion
+    };
+
+    res = await fetch(`${API}/productos/`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(bodySinPrecio)
+    });
+  }
 
   if (res.ok) {
     document.getElementById("productoNombre").value = "";
@@ -428,7 +448,8 @@ async function crearProducto() {
     await cargarTodo();
     alert("Producto creado.");
   } else {
-    alert("No se pudo crear producto.");
+    const error = await res.text();
+    alert("No se pudo crear producto:\n\n" + error);
   }
 }
 
@@ -498,6 +519,11 @@ function seleccionarUbicacion(nombre) {
 function renderSelectUbicaciones() {
   const select = document.getElementById("productoUbicacion");
   select.innerHTML = "";
+
+  if (ubicaciones.length === 0) {
+    select.innerHTML = `<option value="">Primero crea una ubicación</option>`;
+    return;
+  }
 
   ubicaciones.forEach(u => {
     select.innerHTML += `<option value="${u.nombre}">${u.nombre}</option>`;
