@@ -7,61 +7,161 @@
 
   <style>
     :root {
-      --bg:#0f172a; --card:#111827; --card2:#1f2937;
-      --text:#f9fafb; --muted:#9ca3af;
-      --blue:#2563eb; --green:#16a34a; --red:#dc2626;
+      --bg:#0f172a;
+      --header:#020617;
+      --card:#111827;
+      --card2:#1f2937;
+      --text:#f9fafb;
+      --muted:#9ca3af;
+      --blue:#2563eb;
+      --green:#16a34a;
+      --red:#dc2626;
       --border:#374151;
     }
 
-    *{box-sizing:border-box;}
-    body{margin:0;font-family:Arial;background:var(--bg);color:var(--text);}
+    * { box-sizing:border-box; }
 
-    header{
-      padding:20px;background:#020617;border-bottom:1px solid var(--border);
-      display:flex;justify-content:space-between;align-items:center;
+    body {
+      margin:0;
+      font-family:Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
 
-    button{
-      border:none;border-radius:10px;padding:10px 14px;
-      background:var(--blue);color:white;cursor:pointer;font-weight:bold;
+    header {
+      padding:20px;
+      background:var(--header);
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
 
-    .danger{background:var(--red);}
-    .success{background:var(--green);}
-
-    .container{max-width:1200px;margin:auto;padding:20px;}
-
-    .login-box{
-      max-width:420px;margin:80px auto;background:var(--card);
-      padding:25px;border-radius:18px;border:1px solid var(--border);
+    header h2 {
+      margin:0;
+      font-size:22px;
     }
 
-    input,select,textarea{
-      width:100%;margin:8px 0 14px;padding:12px;
-      border-radius:10px;border:1px solid var(--border);
-      background:#020617;color:white;
+    button {
+      border:none;
+      border-radius:10px;
+      padding:10px 14px;
+      background:var(--blue);
+      color:white;
+      cursor:pointer;
+      font-weight:bold;
     }
 
-    .grid{
-      display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;
+    .danger { background:var(--red); }
+    .success { background:var(--green); }
+
+    .container {
+      max-width:1200px;
+      margin:auto;
+      padding:24px;
     }
 
-    .card{
-      background:var(--card);border:1px solid var(--border);
-      border-radius:18px;padding:18px;
+    .hidden { display:none; }
+
+    .login-box {
+      max-width:420px;
+      margin:90px auto;
+      background:var(--card);
+      padding:28px;
+      border-radius:18px;
+      border:1px solid var(--border);
     }
 
-    .location-card{cursor:pointer;}
-    .location-card:hover{border-color:var(--blue);}
+    input, select, textarea {
+      width:100%;
+      margin:8px 0 14px;
+      padding:12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#020617;
+      color:white;
+    }
 
-    .hidden{display:none;}
+    label {
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:16px;
+    }
+
+    .row {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+      margin-top:24px;
+    }
+
+    .card {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:18px;
+    }
+
+    .location-card {
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    .location-card:hover {
+      transform:translateY(-3px);
+      border-color:var(--blue);
+    }
+
+    .muted {
+      color:var(--muted);
+    }
+
+    .pill {
+      display:inline-block;
+      background:var(--card2);
+      padding:6px 10px;
+      border-radius:999px;
+      margin:4px 4px 0 0;
+      font-size:13px;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+
+    th, td {
+      border-bottom:1px solid var(--border);
+      padding:10px;
+      text-align:left;
+    }
+
+    th {
+      color:var(--muted);
+      background:#020617;
+    }
+
+    @media(max-width:700px) {
+      header { flex-direction:column; align-items:flex-start; gap:12px; }
+      .row { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 
 <body>
 
 <header>
-  <h2>Mexa Digital</h2>
+  <div>
+    <h2>Mexa Digital</h2>
+    <div class="muted">Control de ubicaciones, productos y stock</div>
+  </div>
+
   <div>
     <button onclick="cargarTodo()">Actualizar</button>
     <button class="danger" onclick="cerrarSesion()">Cerrar sesión</button>
@@ -71,141 +171,374 @@
 <div id="login" class="login-box">
   <h2>Iniciar sesión</h2>
 
-  <input id="email" placeholder="Correo" />
-  <input id="password" type="password" placeholder="Contraseña" />
+  <label>Correo</label>
+  <input id="email" value="admin.ica@mexa.com" />
+
+  <label>Contraseña</label>
+  <input id="password" type="password" value="123456" />
 
   <button onclick="login()">Entrar</button>
-  <p id="loginMsg"></p>
+  <p id="loginMsg" class="muted"></p>
 </div>
 
 <div id="app" class="container hidden">
 
-  <h2>Ubicaciones</h2>
+  <h2>Dashboard de ubicaciones</h2>
+  <p class="muted">Aquí se ve qué hay, dónde está y quién es responsable.</p>
+
   <div id="ubicacionesGrid" class="grid"></div>
 
-  <h3>Crear ubicación</h3>
-  <input id="ubicacionNombre" placeholder="Nombre"/>
-  <input id="ubicacionResponsable" placeholder="Responsable"/>
-  <button onclick="crearUbicacion()">Guardar</button>
+  <div class="row">
+    <div class="card">
+      <h3>Crear ubicación</h3>
 
-  <h3>Crear producto</h3>
-  <input id="productoNombre" placeholder="Nombre"/>
-  <input id="productoCodigo" placeholder="Código"/>
-  <input id="productoCantidad" type="number"/>
-  <select id="productoUbicacion"></select>
-  <button onclick="crearProducto()">Guardar</button>
+      <label>Nombre</label>
+      <input id="ubicacionNombre" placeholder="Ej: M-06, C-01, Nave 12" />
+
+      <label>Tipo</label>
+      <select id="ubicacionTipo">
+        <option value="contenedor">Contenedor</option>
+        <option value="nave">Nave</option>
+        <option value="almacen">Almacén cerrado</option>
+        <option value="almacen_abierto">Almacén a cielo abierto</option>
+      </select>
+
+      <label>Responsable</label>
+      <input id="ubicacionResponsable" placeholder="Ej: Alfredo, Cristóforo" />
+
+      <button onclick="crearUbicacion()">Guardar ubicación</button>
+    </div>
+
+    <div class="card">
+      <h3>Crear producto</h3>
+
+      <label>Nombre</label>
+      <input id="productoNombre" placeholder="Ej: Disco corte 4.5" />
+
+      <label>Código</label>
+      <input id="productoCodigo" placeholder="Ej: DC-01" />
+
+      <label>Tipo</label>
+      <select id="productoTipo">
+        <option value="consumible">Consumible</option>
+        <option value="herramienta">Herramienta</option>
+        <option value="epp">EPP</option>
+        <option value="material">Material</option>
+      </select>
+
+      <label>Cantidad inicial</label>
+      <input id="productoCantidad" type="number" value="0" />
+
+      <label>Ubicación</label>
+      <select id="productoUbicacion"></select>
+
+      <button onclick="crearProducto()">Guardar producto</button>
+    </div>
+  </div>
+
+  <h2>Detalle de ubicación</h2>
+  <div id="detalleUbicacion" class="card">
+    <p class="muted">Selecciona una ubicación para ver sus productos.</p>
+  </div>
+
+  <h2>Productos generales</h2>
+  <div id="tablaProductos" class="card"></div>
 
 </div>
 
 <script>
 const API = "https://mexa-core-1.onrender.com";
 
-function token(){return localStorage.getItem("mexa_token");}
+let ubicaciones = [];
+let productos = [];
 
-function headers(){
+function token() {
+  return localStorage.getItem("mexa_token");
+}
+
+function headers() {
   return {
-    "Content-Type":"application/json",
-    "Authorization":"Bearer "+token()
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + token()
   };
 }
 
-async function login(){
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value.trim();
-  const msg=document.getElementById("loginMsg");
+function guardarResponsable(nombre, responsable) {
+  const data = JSON.parse(localStorage.getItem("responsables_ubicacion") || "{}");
+  data[nombre] = responsable || "Sin responsable";
+  localStorage.setItem("responsables_ubicacion", JSON.stringify(data));
+}
 
-  msg.textContent="Entrando...";
+function obtenerResponsable(nombre) {
+  const data = JSON.parse(localStorage.getItem("responsables_ubicacion") || "{}");
+  return data[nombre] || "Sin responsable";
+}
 
-  const urls=[
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const msg = document.getElementById("loginMsg");
+
+  msg.textContent = "Entrando...";
+
+  const urls = [
     `${API}/auth/login`,
     `${API}/auth/auth/login`
   ];
 
-  for(let url of urls){
-    try{
-      const res=await fetch(url,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({email,password})
+  for (let url of urls) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
       });
 
-      const data=await res.json();
+      const data = await res.json();
 
-      if(res.ok && data.access_token){
-        localStorage.setItem("mexa_token",data.access_token);
+      if (res.ok && data.access_token) {
+        localStorage.setItem("mexa_token", data.access_token);
         mostrarApp();
-        cargarTodo();
-        msg.textContent="Login correcto";
+        await cargarTodo();
+        msg.textContent = "Login correcto";
         return;
       }
-
-    }catch(e){}
+    } catch (error) {
+      console.log("Falló intento:", url);
+    }
   }
 
-  msg.textContent="Login incorrecto";
+  msg.textContent = "Login incorrecto.";
 }
 
-function mostrarApp(){
+function mostrarApp() {
   document.getElementById("login").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
 }
 
-function cerrarSesion(){
+function cerrarSesion() {
   localStorage.removeItem("mexa_token");
   location.reload();
 }
 
-async function cargarTodo(){
-  const res=await fetch(`${API}/ubicaciones/ubicaciones/`,{headers:headers()});
-  const data=await res.json();
+async function cargarTodo() {
+  await cargarUbicaciones();
+  await cargarProductos();
+  renderDashboard();
+  renderSelectUbicaciones();
+  renderProductos();
+}
 
-  const grid=document.getElementById("ubicacionesGrid");
-  const select=document.getElementById("productoUbicacion");
+async function cargarUbicaciones() {
+  try {
+    const res = await fetch(`${API}/ubicaciones/ubicaciones/`, {
+      headers: headers()
+    });
 
-  grid.innerHTML="";
-  select.innerHTML="";
+    if (res.ok) {
+      ubicaciones = await res.json();
+    } else {
+      ubicaciones = [];
+    }
+  } catch {
+    ubicaciones = [];
+  }
+}
 
-  data.forEach(u=>{
-    grid.innerHTML+=`
-      <div class="card location-card">
+async function cargarProductos() {
+  try {
+    const res = await fetch(`${API}/productos/`, {
+      headers: headers()
+    });
+
+    if (res.ok) {
+      productos = await res.json();
+    } else {
+      productos = [];
+    }
+  } catch {
+    productos = [];
+  }
+}
+
+async function crearUbicacion() {
+  const nombre = document.getElementById("ubicacionNombre").value.trim();
+  const tipo = document.getElementById("ubicacionTipo").value;
+  const responsable = document.getElementById("ubicacionResponsable").value.trim();
+
+  if (!nombre) {
+    alert("Pon el nombre de la ubicación.");
+    return;
+  }
+
+  guardarResponsable(nombre, responsable);
+
+  let res = await fetch(`${API}/ubicaciones/ubicaciones/`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ nombre, tipo, responsable })
+  });
+
+  if (!res.ok) {
+    res = await fetch(`${API}/ubicaciones/ubicaciones/`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ nombre, tipo })
+    });
+  }
+
+  if (res.ok) {
+    document.getElementById("ubicacionNombre").value = "";
+    document.getElementById("ubicacionResponsable").value = "";
+    await cargarTodo();
+    alert("Ubicación creada.");
+  } else {
+    alert("No se pudo crear ubicación.");
+  }
+}
+
+async function crearProducto() {
+  const nombre = document.getElementById("productoNombre").value.trim();
+  const codigo = document.getElementById("productoCodigo").value.trim();
+  const tipo = document.getElementById("productoTipo").value;
+  const cantidad = Number(document.getElementById("productoCantidad").value);
+  const ubicacion = document.getElementById("productoUbicacion").value;
+
+  if (!nombre || !codigo || !ubicacion) {
+    alert("Falta nombre, código o ubicación.");
+    return;
+  }
+
+  const res = await fetch(`${API}/productos/`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      nombre,
+      codigo,
+      tipo,
+      cantidad,
+      ubicacion
+    })
+  });
+
+  if (res.ok) {
+    document.getElementById("productoNombre").value = "";
+    document.getElementById("productoCodigo").value = "";
+    document.getElementById("productoCantidad").value = 0;
+    await cargarTodo();
+    alert("Producto creado.");
+  } else {
+    alert("No se pudo crear producto.");
+  }
+}
+
+function renderDashboard() {
+  const grid = document.getElementById("ubicacionesGrid");
+  grid.innerHTML = "";
+
+  if (ubicaciones.length === 0) {
+    grid.innerHTML = `<p class="muted">No hay ubicaciones todavía.</p>`;
+    return;
+  }
+
+  ubicaciones.forEach(u => {
+    const productosEnUbicacion = productos.filter(p => p.ubicacion === u.nombre);
+    const totalStock = productosEnUbicacion.reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
+    const responsable = u.responsable || obtenerResponsable(u.nombre);
+
+    grid.innerHTML += `
+      <div class="card location-card" onclick="seleccionarUbicacion('${u.nombre}')">
         <h3>${u.nombre}</h3>
-        <p>${u.tipo}</p>
+        <p class="muted">${u.tipo || "Sin tipo"}</p>
+        <p><b>Responsable:</b> ${responsable}</p>
+        <span class="pill">Productos: ${productosEnUbicacion.length}</span>
+        <span class="pill">Stock: ${totalStock}</span>
       </div>
     `;
-
-    select.innerHTML+=`<option>${u.nombre}</option>`;
   });
 }
 
-async function crearUbicacion(){
-  const nombre=document.getElementById("ubicacionNombre").value;
-  const responsable=document.getElementById("ubicacionResponsable").value;
+function seleccionarUbicacion(nombre) {
+  const detalle = document.getElementById("detalleUbicacion");
+  const productosFiltrados = productos.filter(p => p.ubicacion === nombre);
+  const ubicacion = ubicaciones.find(u => u.nombre === nombre);
+  const responsable = ubicacion?.responsable || obtenerResponsable(nombre);
 
-  await fetch(`${API}/ubicaciones/ubicaciones/`,{
-    method:"POST",
-    headers:headers(),
-    body:JSON.stringify({nombre,tipo:"contenedor",responsable})
-  });
+  let rows = productosFiltrados.map(p => `
+    <tr>
+      <td>${p.nombre}</td>
+      <td>${p.codigo || "-"}</td>
+      <td>${p.tipo || "-"}</td>
+      <td>${p.cantidad || 0}</td>
+    </tr>
+  `).join("");
 
-  cargarTodo();
+  if (!rows) {
+    rows = `<tr><td colspan="4">No hay productos en esta ubicación.</td></tr>`;
+  }
+
+  detalle.innerHTML = `
+    <h3>${nombre}</h3>
+    <p><b>Responsable:</b> ${responsable}</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Código</th>
+          <th>Tipo</th>
+          <th>Cantidad</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
-async function crearProducto(){
-  const nombre=document.getElementById("productoNombre").value;
-  const codigo=document.getElementById("productoCodigo").value;
-  const cantidad=Number(document.getElementById("productoCantidad").value);
-  const ubicacion=document.getElementById("productoUbicacion").value;
+function renderSelectUbicaciones() {
+  const select = document.getElementById("productoUbicacion");
+  select.innerHTML = "";
 
-  await fetch(`${API}/productos/`,{
-    method:"POST",
-    headers:headers(),
-    body:JSON.stringify({nombre,codigo,cantidad,ubicacion})
+  ubicaciones.forEach(u => {
+    select.innerHTML += `<option value="${u.nombre}">${u.nombre}</option>`;
   });
-
-  cargarTodo();
 }
 
-if(token()){
+function renderProductos() {
+  const div = document.getElementById("tablaProductos");
+
+  if (productos.length === 0) {
+    div.innerHTML = `<p class="muted">No hay productos todavía.</p>`;
+    return;
+  }
+
+  const rows = productos.map(p => `
+    <tr>
+      <td>${p.nombre}</td>
+      <td>${p.codigo || "-"}</td>
+      <td>${p.tipo || "-"}</td>
+      <td>${p.ubicacion || "Sin ubicación"}</td>
+      <td>${p.cantidad || 0}</td>
+    </tr>
+  `).join("");
+
+  div.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Código</th>
+          <th>Tipo</th>
+          <th>Ubicación</th>
+          <th>Stock</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+if (token()) {
   mostrarApp();
   cargarTodo();
 }
