@@ -126,10 +126,7 @@ async function login(){
 
   document.getElementById("msg").innerText="Entrando...";
 
-  const rutas=[
-    "/auth/login",
-    "/auth/auth/login"
-  ];
+  const rutas=["/auth/login","/auth/auth/login"];
 
   for(let r of rutas){
     try{
@@ -161,12 +158,30 @@ function cerrarSesion(){
 
 async function cargarTodo(){
 
-  let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
-  let ubicaciones=await resU.json();
+  let ubicaciones=[];
+  let productos=[];
 
-  let resP=await fetch(API+"/productos/",{headers:headers()});
-  let productos=await resP.json();
+  try{
+    let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
+    ubicaciones=await resU.json();
+  }catch{}
 
+  try{
+    let resP=await fetch(API+"/productos/",{headers:headers()});
+    let data=await resP.json();
+
+    // 🔥 FIX IMPORTANTE
+    if(Array.isArray(data)){
+      productos=data;
+    } else if(data.items){
+      productos=data.items;
+    } else {
+      productos=[];
+    }
+
+  }catch{}
+
+  // 🔹 Render ubicaciones
   let grid=document.getElementById("grid");
   let select=document.getElementById("pUbicacion");
 
@@ -183,7 +198,13 @@ async function cargarTodo(){
     select.innerHTML+=`<option>${u.nombre}</option>`;
   });
 
+  // 🔹 Render productos
   let div=document.getElementById("productos");
+
+  if(productos.length===0){
+    div.innerHTML="<p>No hay productos aún</p>";
+    return;
+  }
 
   div.innerHTML=productos.map(p=>`
     <div class="card">
