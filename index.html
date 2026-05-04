@@ -15,6 +15,7 @@ button{padding:6px 10px;border:none;border-radius:6px;background:#2563eb;color:w
 input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;border:1px solid #374151;border-radius:6px}
 .hidden{display:none}
 #login{max-width:400px;margin:80px auto}
+.status{color:#93c5fd;font-size:13px}
 </style>
 </head>
 
@@ -37,6 +38,8 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
 </div>
 
 <div id="app" class="container hidden">
+
+  <p id="estado" class="status"></p>
 
   <h3>Ubicaciones</h3>
   <div id="grid" class="grid"></div>
@@ -87,6 +90,10 @@ function headers(){
   };
 }
 
+function setEstado(txt){
+  document.getElementById("estado").innerText=txt;
+}
+
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value.trim();
@@ -112,7 +119,7 @@ async function login(){
         await cargarTodo();
         return;
       }
-    }catch{}
+    }catch(e){}
   }
 
   document.getElementById("msg").innerText="Error login";
@@ -124,20 +131,61 @@ function cerrarSesion(){
 }
 
 async function cargarTodo(){
+  setEstado("Cargando datos...");
+
   let ubicaciones=[];
   let productos=[];
 
-  let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
-  if(resU.ok) ubicaciones=await resU.json();
+  const cache="?t="+Date.now();
 
-  let resP=await fetch(API+"/productos/productos/",{headers:headers()});
-  if(resP.ok) productos=await resP.json();
+  try{
+    let resU=await fetch(API+"/ubicaciones/ubicaciones/"+cache,{
+      headers:headers(),
+      cache:"no-store"
+    });
 
+    if(resU.ok){
+      ubicaciones=await resU.json();
+    }else{
+      setEstado("Error cargando ubicaciones");
+    }
+  }catch(e){
+    setEstado("Error de conexión en ubicaciones");
+  }
+
+  try{
+    let resP=await fetch(API+"/productos/productos/"+cache,{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(resP.ok){
+      productos=await resP.json();
+    }else{
+      setEstado("Error cargando productos");
+    }
+  }catch(e){
+    setEstado("Error de conexión en productos");
+  }
+
+  renderUbicaciones(ubicaciones);
+  renderProductos(productos);
+
+  setEstado("Datos actualizados");
+}
+
+function renderUbicaciones(ubicaciones){
   let grid=document.getElementById("grid");
   let select=document.getElementById("pUbicacion");
 
   grid.innerHTML="";
   select.innerHTML="";
+
+  if(ubicaciones.length===0){
+    grid.innerHTML="<p>No hay ubicaciones aún</p>";
+    select.innerHTML="<option value=''>Primero crea ubicación</option>";
+    return;
+  }
 
   ubicaciones.forEach(u=>{
     grid.innerHTML+=`
@@ -150,22 +198,25 @@ async function cargarTodo(){
 
     select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
   });
+}
 
+function renderProductos(productos){
   let div=document.getElementById("productos");
 
   if(productos.length===0){
     div.innerHTML="<p>No hay productos aún</p>";
-  }else{
-    div.innerHTML=productos.map(p=>`
-      <div class="card">
-        <b>${p.nombre}</b><br>
-        Código: ${p.codigo}<br>
-        Tipo: ${p.tipo}<br>
-        Ubicación: ${p.ubicacion}<br>
-        Stock: ${p.cantidad}
-      </div>
-    `).join("");
+    return;
   }
+
+  div.innerHTML=productos.map(p=>`
+    <div class="card">
+      <b>${p.nombre}</b><br>
+      Código / Nº Serie: ${p.codigo || "-"}<br>
+      Tipo: ${p.tipo || "-"}<br>
+      Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
+      Stock: ${p.cantidad ?? 0}
+    </div>
+  `).join("");
 }
 
 async function crearUbicacion(){
@@ -191,16 +242,15 @@ async function crearUbicacion(){
 
   if(!res.ok){
     const txt=await res.text();
-    alert("Error:\n"+txt);
+    alert("Error creando ubicación:\n"+txt);
     return;
   }
-
-  alert("Ubicación creada");
 
   document.getElementById("uNombre").value="";
   document.getElementById("uResp").value="";
 
   await cargarTodo();
+  alert("Ubicación creada y actualizada");
 }
 
 async function crearProducto(){
@@ -224,19 +274,18 @@ async function crearProducto(){
     body:JSON.stringify(body)
   });
 
-  let txt=await res.text();
-
   if(!res.ok){
-    alert("Error:\n"+txt);
-  }else{
-    alert("Producto creado");
-
-    document.getElementById("pNombre").value="";
-    document.getElementById("pCodigo").value="";
-    document.getElementById("pCant").value=1;
-
-    await cargarTodo();
+    const txt=await res.text();
+    alert("Error creando producto:\n"+txt);
+    return;
   }
+
+  document.getElementById("pNombre").value="";
+  document.getElementById("pCodigo").value="";
+  document.getElementById("pCant").value=1;
+
+  await cargarTodo();
+  alert("Producto creado y actualizado");
 }
 
 if(localStorage.getItem("token")){
