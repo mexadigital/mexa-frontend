@@ -87,17 +87,6 @@ function headers(){
   };
 }
 
-function guardarResponsable(nombre,responsable){
-  const data=JSON.parse(localStorage.getItem("responsables_ubicacion")||"{}");
-  data[nombre]=responsable||"Sin responsable";
-  localStorage.setItem("responsables_ubicacion",JSON.stringify(data));
-}
-
-function obtenerResponsable(nombre){
-  const data=JSON.parse(localStorage.getItem("responsables_ubicacion")||"{}");
-  return data[nombre]||"Sin responsable";
-}
-
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value.trim();
@@ -138,15 +127,11 @@ async function cargarTodo(){
   let ubicaciones=[];
   let productos=[];
 
-  try{
-    let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
-    if(resU.ok) ubicaciones=await resU.json();
-  }catch{}
+  let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
+  if(resU.ok) ubicaciones=await resU.json();
 
-  try{
-    let resP=await fetch(API+"/productos/productos/",{headers:headers()});
-    if(resP.ok) productos=await resP.json();
-  }catch{}
+  let resP=await fetch(API+"/productos/productos/",{headers:headers()});
+  if(resP.ok) productos=await resP.json();
 
   let grid=document.getElementById("grid");
   let select=document.getElementById("pUbicacion");
@@ -155,13 +140,11 @@ async function cargarTodo(){
   select.innerHTML="";
 
   ubicaciones.forEach(u=>{
-    const responsable = u.responsable || obtenerResponsable(u.nombre);
-
     grid.innerHTML+=`
       <div class="card">
         <b>${u.nombre}</b><br>
-        Tipo: ${u.tipo || "Sin tipo"}<br>
-        Responsable: ${responsable}
+        Tipo: ${u.tipo || ""}<br>
+        Responsable: ${u.responsable || "Sin responsable"}
       </div>
     `;
 
@@ -176,10 +159,10 @@ async function cargarTodo(){
     div.innerHTML=productos.map(p=>`
       <div class="card">
         <b>${p.nombre}</b><br>
-        Código / Nº Serie: ${p.codigo || "-"}<br>
-        Tipo: ${p.tipo || "-"}<br>
-        Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
-        Stock: ${p.cantidad ?? 0}
+        Código: ${p.codigo}<br>
+        Tipo: ${p.tipo}<br>
+        Ubicación: ${p.ubicacion}<br>
+        Stock: ${p.cantidad}
       </div>
     `).join("");
   }
@@ -195,32 +178,29 @@ async function crearUbicacion(){
     return;
   }
 
-  guardarResponsable(nombre,responsable);
-
   let res=await fetch(API+"/ubicaciones/ubicaciones/",{
     method:"POST",
     headers:headers(),
-    body:JSON.stringify({nombre,tipo,responsable})
+    body:JSON.stringify({
+      nombre:nombre,
+      tipo:tipo,
+      responsable:responsable,
+      organizacion_id:1
+    })
   });
 
   if(!res.ok){
-    res=await fetch(API+"/ubicaciones/ubicaciones/",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify({nombre,tipo})
-    });
-  }
-
-  if(!res.ok){
     const txt=await res.text();
-    alert("Error al crear ubicación:\n"+txt);
+    alert("Error:\n"+txt);
     return;
   }
 
+  alert("Ubicación creada");
+
   document.getElementById("uNombre").value="";
   document.getElementById("uResp").value="";
+
   await cargarTodo();
-  alert("Ubicación creada");
 }
 
 async function crearProducto(){
@@ -234,7 +214,7 @@ async function crearProducto(){
   };
 
   if(!body.nombre || !body.codigo || !body.ubicacion){
-    alert("Falta nombre, código/serie o ubicación");
+    alert("Falta info");
     return;
   }
 
@@ -250,9 +230,11 @@ async function crearProducto(){
     alert("Error:\n"+txt);
   }else{
     alert("Producto creado");
+
     document.getElementById("pNombre").value="";
     document.getElementById("pCodigo").value="";
     document.getElementById("pCant").value=1;
+
     await cargarTodo();
   }
 }
