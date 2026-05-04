@@ -43,8 +43,18 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
 
   <h3>Crear ubicación</h3>
   <input id="uNombre" placeholder="Nombre">
+
+  <select id="uTipo">
+    <option value="contenedor">Contenedor</option>
+    <option value="almacen_satelite">Almacén satélite</option>
+    <option value="nave">Nave</option>
+    <option value="almacen_cerrado">Almacén cerrado</option>
+    <option value="almacen_abierto">Almacén a cielo abierto</option>
+    <option value="patio">Patio</option>
+  </select>
+
   <input id="uResp" placeholder="Responsable">
-  <button onclick="crearUbicacion()">Guardar</button>
+  <button onclick="crearUbicacion()">Guardar ubicación</button>
 
   <h3>Crear producto</h3>
   <input id="pNombre" placeholder="Nombre">
@@ -60,7 +70,7 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
 
   <select id="pUbicacion"></select>
 
-  <button onclick="crearProducto()">Guardar</button>
+  <button onclick="crearProducto()">Guardar producto</button>
 
   <h3>Productos</h3>
   <div id="productos"></div>
@@ -75,6 +85,17 @@ function headers(){
     "Content-Type":"application/json",
     "Authorization":"Bearer "+localStorage.getItem("token")
   };
+}
+
+function guardarResponsable(nombre,responsable){
+  const data=JSON.parse(localStorage.getItem("responsables_ubicacion")||"{}");
+  data[nombre]=responsable||"Sin responsable";
+  localStorage.setItem("responsables_ubicacion",JSON.stringify(data));
+}
+
+function obtenerResponsable(nombre){
+  const data=JSON.parse(localStorage.getItem("responsables_ubicacion")||"{}");
+  return data[nombre]||"Sin responsable";
 }
 
 async function login(){
@@ -134,10 +155,13 @@ async function cargarTodo(){
   select.innerHTML="";
 
   ubicaciones.forEach(u=>{
+    const responsable = u.responsable || obtenerResponsable(u.nombre);
+
     grid.innerHTML+=`
       <div class="card">
         <b>${u.nombre}</b><br>
-        ${u.tipo || ""}
+        Tipo: ${u.tipo || "Sin tipo"}<br>
+        Responsable: ${responsable}
       </div>
     `;
 
@@ -163,20 +187,40 @@ async function cargarTodo(){
 
 async function crearUbicacion(){
   let nombre=document.getElementById("uNombre").value.trim();
+  let tipo=document.getElementById("uTipo").value;
+  let responsable=document.getElementById("uResp").value.trim();
 
   if(!nombre){
     alert("Pon nombre");
     return;
   }
 
-  await fetch(API+"/ubicaciones/ubicaciones/",{
+  guardarResponsable(nombre,responsable);
+
+  let res=await fetch(API+"/ubicaciones/ubicaciones/",{
     method:"POST",
     headers:headers(),
-    body:JSON.stringify({nombre,tipo:"contenedor"})
+    body:JSON.stringify({nombre,tipo,responsable})
   });
 
+  if(!res.ok){
+    res=await fetch(API+"/ubicaciones/ubicaciones/",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({nombre,tipo})
+    });
+  }
+
+  if(!res.ok){
+    const txt=await res.text();
+    alert("Error al crear ubicación:\n"+txt);
+    return;
+  }
+
   document.getElementById("uNombre").value="";
+  document.getElementById("uResp").value="";
   await cargarTodo();
+  alert("Ubicación creada");
 }
 
 async function crearProducto(){
@@ -206,11 +250,9 @@ async function crearProducto(){
     alert("Error:\n"+txt);
   }else{
     alert("Producto creado");
-
     document.getElementById("pNombre").value="";
     document.getElementById("pCodigo").value="";
     document.getElementById("pCant").value=1;
-
     await cargarTodo();
   }
 }
