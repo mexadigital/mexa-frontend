@@ -6,16 +6,17 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#0f172a;color:white}
-header{padding:16px;background:#020617;display:flex;justify-content:space-between}
+header{padding:16px;background:#020617;display:flex;justify-content:space-between;align-items:center}
 button{padding:6px 10px;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer}
-.danger{background:red}
-.container{max-width:600px;margin:auto;padding:16px}
+.danger{background:#dc2626}
+.container{max-width:760px;margin:auto;padding:16px}
 .card{background:#111827;padding:10px;border-radius:10px;margin-bottom:8px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;border:1px solid #374151;border-radius:6px}
 .hidden{display:none}
 #login{max-width:400px;margin:80px auto}
 .status{color:#93c5fd;font-size:13px}
+h3{margin-top:24px}
 </style>
 </head>
 
@@ -44,6 +45,21 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
   <h3>Ubicaciones</h3>
   <div id="grid" class="grid"></div>
 
+  <h3>Crear ubicación</h3>
+  <input id="uNombre" placeholder="Nombre de ubicación">
+
+  <select id="uTipo">
+    <option value="contenedor">Contenedor</option>
+    <option value="almacen_satelite">Almacén satélite</option>
+    <option value="nave">Nave</option>
+    <option value="almacen_cerrado">Almacén cerrado</option>
+    <option value="almacen_abierto">Almacén a cielo abierto</option>
+    <option value="patio">Patio</option>
+  </select>
+
+  <input id="uResp" placeholder="Responsable">
+  <button onclick="crearUbicacion()">Guardar ubicación</button>
+
   <h3>Crear producto</h3>
   <input id="pNombre" placeholder="Nombre">
   <input id="pCodigo" placeholder="Código / Nº Serie">
@@ -68,6 +84,7 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
 <script>
 const API="https://mexa-core-1.onrender.com";
 
+let ubicacionesPantalla=[];
 let productosPantalla=[];
 
 function headers(){
@@ -79,6 +96,38 @@ function headers(){
 
 function setEstado(txt){
   document.getElementById("estado").innerText=txt;
+}
+
+function getLocalUbicaciones(){
+  return JSON.parse(localStorage.getItem("mexa_ubicaciones_demo") || "[]");
+}
+
+function setLocalUbicaciones(data){
+  localStorage.setItem("mexa_ubicaciones_demo", JSON.stringify(data));
+}
+
+function getLocalProductos(){
+  return JSON.parse(localStorage.getItem("mexa_productos_demo") || "[]");
+}
+
+function setLocalProductos(data){
+  localStorage.setItem("mexa_productos_demo", JSON.stringify(data));
+}
+
+function unirPorNombre(base, extras){
+  const mapa={};
+  [...base,...extras].forEach(x=>{
+    if(x && x.nombre) mapa[x.nombre]=x;
+  });
+  return Object.values(mapa);
+}
+
+function unirPorCodigo(base, extras){
+  const mapa={};
+  [...base,...extras].forEach(x=>{
+    if(x && x.codigo) mapa[x.codigo]=x;
+  });
+  return Object.values(mapa);
 }
 
 async function login(){
@@ -120,16 +169,15 @@ function cerrarSesion(){
 async function cargarTodo(){
   setEstado("Cargando datos...");
 
-  let ubicaciones=[];
-  let productos=[];
+  let ubicacionesBackend=[];
+  let productosBackend=[];
 
   try{
     let resU=await fetch(API+"/ubicaciones/ubicaciones/?t="+Date.now(),{
       headers:headers(),
       cache:"no-store"
     });
-
-    if(resU.ok) ubicaciones=await resU.json();
+    if(resU.ok) ubicacionesBackend=await resU.json();
   }catch(e){}
 
   try{
@@ -137,38 +185,37 @@ async function cargarTodo(){
       headers:headers(),
       cache:"no-store"
     });
-
-    if(resP.ok) productos=await resP.json();
+    if(resP.ok) productosBackend=await resP.json();
   }catch(e){}
 
-  renderUbicaciones(ubicaciones);
+  ubicacionesPantalla=unirPorNombre(ubicacionesBackend,getLocalUbicaciones());
+  productosPantalla=unirPorCodigo(productosBackend,getLocalProductos());
 
-  if(productos.length>0){
-    productosPantalla=productos;
-  }
+  renderUbicaciones();
+  renderProductos();
 
-  renderProductos(productosPantalla);
   setEstado("Datos actualizados");
 }
 
-function renderUbicaciones(ubicaciones){
+function renderUbicaciones(){
   let grid=document.getElementById("grid");
   let select=document.getElementById("pUbicacion");
 
   grid.innerHTML="";
   select.innerHTML="";
 
-  if(ubicaciones.length===0){
+  if(ubicacionesPantalla.length===0){
     grid.innerHTML="<p>No hay ubicaciones cargadas</p>";
     select.innerHTML="<option value=''>Sin ubicaciones</option>";
     return;
   }
 
-  ubicaciones.forEach(u=>{
+  ubicacionesPantalla.forEach(u=>{
     grid.innerHTML+=`
       <div class="card">
         <b>${u.nombre}</b><br>
-        Tipo: ${u.tipo || ""}
+        Tipo: ${u.tipo || "-"}<br>
+        Responsable: ${u.responsable || "Sin responsable"}
       </div>
     `;
 
@@ -176,15 +223,15 @@ function renderUbicaciones(ubicaciones){
   });
 }
 
-function renderProductos(productos){
+function renderProductos(){
   let div=document.getElementById("productos");
 
-  if(productos.length===0){
+  if(productosPantalla.length===0){
     div.innerHTML="<p>No hay productos dados de alta todavía</p>";
     return;
   }
 
-  div.innerHTML=productos.map(p=>`
+  div.innerHTML=productosPantalla.map(p=>`
     <div class="card">
       <b>${p.nombre}</b><br>
       Código / Nº Serie: ${p.codigo || "-"}<br>
@@ -193,6 +240,42 @@ function renderProductos(productos){
       Stock: ${p.cantidad ?? 0}
     </div>
   `).join("");
+}
+
+async function crearUbicacion(){
+  let nombre=document.getElementById("uNombre").value.trim();
+  let tipo=document.getElementById("uTipo").value;
+  let responsable=document.getElementById("uResp").value.trim();
+
+  if(!nombre){
+    alert("Pon nombre de ubicación");
+    return;
+  }
+
+  let nueva={
+    nombre:nombre,
+    tipo:tipo,
+    responsable:responsable || "Sin responsable",
+    organizacion_id:1
+  };
+
+  try{
+    await fetch(API+"/ubicaciones/ubicaciones/",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify(nueva)
+    });
+  }catch(e){}
+
+  let locales=getLocalUbicaciones();
+  locales=unirPorNombre(locales,[nueva]);
+  setLocalUbicaciones(locales);
+
+  document.getElementById("uNombre").value="";
+  document.getElementById("uResp").value="";
+
+  await cargarTodo();
+  alert("Ubicación creada y mostrada");
 }
 
 async function crearProducto(){
@@ -210,29 +293,36 @@ async function crearProducto(){
     return;
   }
 
-  let res=await fetch(API+"/productos/productos/",{
-    method:"POST",
-    headers:headers(),
-    body:JSON.stringify(body)
-  });
+  let creado=body;
 
-  if(!res.ok){
-    const txt=await res.text();
-    alert("Error creando producto:\n"+txt);
-    return;
-  }
+  try{
+    let res=await fetch(API+"/productos/productos/",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify(body)
+    });
 
-  let creado=await res.json();
+    if(res.ok){
+      creado=await res.json();
+    }else{
+      let txt=await res.text();
+      if(txt.includes("Ya existe")){
+        alert("Ya existe ese código/serie. Cambia el número de serie.");
+        return;
+      }
+    }
+  }catch(e){}
 
-  productosPantalla.unshift(creado);
-  renderProductos(productosPantalla);
+  let locales=getLocalProductos();
+  locales=unirPorCodigo(locales,[creado]);
+  setLocalProductos(locales);
 
   document.getElementById("pNombre").value="";
   document.getElementById("pCodigo").value="";
   document.getElementById("pCant").value=1;
 
-  setEstado("Producto creado y mostrado abajo");
-  alert("Producto creado");
+  await cargarTodo();
+  alert("Producto creado y mostrado abajo");
 }
 
 if(localStorage.getItem("token")){
