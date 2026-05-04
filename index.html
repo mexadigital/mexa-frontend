@@ -48,9 +48,18 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
 
   <h3>Crear producto</h3>
   <input id="pNombre" placeholder="Nombre">
-  <input id="pCodigo" placeholder="Código">
+  <input id="pCodigo" placeholder="Código / Nº Serie">
   <input id="pCant" type="number" value="1">
+
+  <select id="pTipo">
+    <option value="herramienta">Herramienta</option>
+    <option value="consumible">Consumible</option>
+    <option value="epp">EPP</option>
+    <option value="material">Material</option>
+  </select>
+
   <select id="pUbicacion"></select>
+
   <button onclick="crearProducto()">Guardar</button>
 
   <h3>Productos</h3>
@@ -90,7 +99,7 @@ async function login(){
         localStorage.setItem("token",data.access_token);
         document.getElementById("login").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
-        cargarTodo();
+        await cargarTodo();
         return;
       }
     }catch{}
@@ -105,7 +114,6 @@ function cerrarSesion(){
 }
 
 async function cargarTodo(){
-
   let ubicaciones=[];
   let productos=[];
 
@@ -119,7 +127,6 @@ async function cargarTodo(){
     if(resP.ok) productos=await resP.json();
   }catch{}
 
-  // Render ubicaciones
   let grid=document.getElementById("grid");
   let select=document.getElementById("pUbicacion");
 
@@ -130,13 +137,13 @@ async function cargarTodo(){
     grid.innerHTML+=`
       <div class="card">
         <b>${u.nombre}</b><br>
-        ${u.tipo}
+        ${u.tipo || ""}
       </div>
     `;
+
     select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
   });
 
-  // Render productos
   let div=document.getElementById("productos");
 
   if(productos.length===0){
@@ -145,16 +152,17 @@ async function cargarTodo(){
     div.innerHTML=productos.map(p=>`
       <div class="card">
         <b>${p.nombre}</b><br>
-        Código: ${p.codigo}<br>
+        Código / Nº Serie: ${p.codigo || "-"}<br>
+        Tipo: ${p.tipo || "-"}<br>
         Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
-        Stock: ${p.cantidad}
+        Stock: ${p.cantidad ?? 0}
       </div>
     `).join("");
   }
 }
 
 async function crearUbicacion(){
-  let nombre=document.getElementById("uNombre").value;
+  let nombre=document.getElementById("uNombre").value.trim();
 
   if(!nombre){
     alert("Pon nombre");
@@ -167,18 +175,24 @@ async function crearUbicacion(){
     body:JSON.stringify({nombre,tipo:"contenedor"})
   });
 
-  cargarTodo();
+  document.getElementById("uNombre").value="";
+  await cargarTodo();
 }
 
 async function crearProducto(){
-
   let body={
-    nombre:document.getElementById("pNombre").value,
-    codigo:document.getElementById("pCodigo").value,
+    nombre:document.getElementById("pNombre").value.trim(),
+    codigo:document.getElementById("pCodigo").value.trim(),
     cantidad:Number(document.getElementById("pCant").value),
     ubicacion:document.getElementById("pUbicacion").value,
-    tipo:"consumible"
+    tipo:document.getElementById("pTipo").value,
+    precio:0
   };
+
+  if(!body.nombre || !body.codigo || !body.ubicacion){
+    alert("Falta nombre, código/serie o ubicación");
+    return;
+  }
 
   let res=await fetch(API+"/productos/productos/",{
     method:"POST",
@@ -192,7 +206,12 @@ async function crearProducto(){
     alert("Error:\n"+txt);
   }else{
     alert("Producto creado");
-    cargarTodo();
+
+    document.getElementById("pNombre").value="";
+    document.getElementById("pCodigo").value="";
+    document.getElementById("pCant").value=1;
+
+    await cargarTodo();
   }
 }
 
