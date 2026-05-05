@@ -6,22 +6,29 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#0f172a;color:white}
-header{padding:16px;background:#020617;display:flex;justify-content:space-between;align-items:center}
-button{padding:6px 10px;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer}
+header{padding:16px;background:#020617;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+header h2{margin:0}
+button{padding:8px 12px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer;font-weight:bold}
+button:hover{opacity:.9}
 .danger{background:#dc2626}
-.container{max-width:760px;margin:auto;padding:16px}
-.card{background:#111827;padding:10px;border-radius:10px;margin-bottom:8px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
-input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;border:1px solid #374151;border-radius:6px}
+.green{background:#16a34a}
+.container{max-width:860px;margin:auto;padding:18px}
+.card{background:#111827;padding:12px;border-radius:12px;margin-bottom:10px;border:1px solid #1f2937}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+input,select{width:100%;padding:9px;margin:5px 0;background:#020617;color:white;border:1px solid #374151;border-radius:8px;box-sizing:border-box}
 .hidden{display:none}
 #login{max-width:400px;margin:80px auto}
 .status{color:#93c5fd;font-size:13px}
-h3{margin-top:24px}
+h3{margin-top:28px;margin-bottom:10px}
 .mov{border-left:4px solid #dc2626}
+.entrada{border-left:4px solid #16a34a}
+.traspaso{border-left:4px solid #f59e0b}
 .card:hover{outline:1px solid #2563eb}
 .ubicacionActiva{outline:2px solid #22c55e}
-.resumenUbicacion{background:#020617;padding:10px;border-radius:10px;margin-bottom:12px}
+.resumenUbicacion{background:#020617;padding:12px;border-radius:12px;margin-bottom:14px;border:1px solid #1f2937}
 .small{font-size:13px;color:#cbd5e1}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.badge{display:inline-block;background:#020617;border:1px solid #334155;padding:3px 8px;border-radius:999px;font-size:12px;color:#cbd5e1;margin-top:4px}
 </style>
 </head>
 
@@ -79,7 +86,6 @@ h3{margin-top:24px}
   </select>
 
   <select id="pUbicacion"></select>
-
   <button onclick="crearProducto()">Guardar producto</button>
 
   <h3>Registrar salida</h3>
@@ -89,6 +95,17 @@ h3{margin-top:24px}
   <input id="sRecibe" placeholder="Quién recibe">
   <input id="sNota" placeholder="Nota / frente de trabajo">
   <button onclick="registrarSalida()">Registrar salida</button>
+
+  <h3>Traspaso entre ubicaciones</h3>
+  <select id="tProducto"></select>
+  <div class="row">
+    <select id="tOrigen"></select>
+    <select id="tDestino"></select>
+  </div>
+  <input id="tCantidad" type="number" value="1" placeholder="Cantidad">
+  <input id="tResponsable" placeholder="Quién autoriza / mueve">
+  <input id="tNota" placeholder="Nota del traspaso">
+  <button class="green" onclick="registrarTraspaso()">Registrar traspaso</button>
 
   <h3>Productos dados de alta</h3>
   <div id="productos"></div>
@@ -152,29 +169,37 @@ function unirPorCodigo(base, extras){
   return Object.values(mapa);
 }
 
-/* NUEVO: elimina duplicados visuales del historial */
+function nombreProductoMovimiento(m){
+  if(m.producto_nombre) return m.producto_nombre;
+  if(m.nombre) return m.nombre;
+
+  let producto=productosPantalla.find(p=>String(p.id)===String(m.producto_id));
+  if(producto) return producto.nombre;
+
+  if(m.codigo) return m.codigo;
+  return "-";
+}
+
 function unirMovimientosSinDuplicados(locales, backend){
   const mapa={};
 
   [...backend, ...locales].forEach(m=>{
+    const nombre=nombreProductoMovimiento(m);
     const clave=[
-      m.producto_id || m.codigo || "",
+      m.tipo || "",
+      nombre || "",
       m.cantidad || "",
       m.recibe || "",
-      m.nota || ""
+      m.nota || "",
+      m.ubicacion || m.ubicacion_salida || ""
     ].join("|");
 
-    const actual=mapa[clave];
-
-    if(!actual){
+    if(!mapa[clave]){
       mapa[clave]=m;
     }else{
-      const actualTieneNombre=actual.producto_nombre || actual.nombre || actual.codigo;
-      const nuevoTieneNombre=m.producto_nombre || m.nombre || m.codigo;
-      const actualTieneUbicacion=actual.ubicacion || actual.ubicacion_salida;
-      const nuevoTieneUbicacion=m.ubicacion || m.ubicacion_salida;
-
-      if((nuevoTieneNombre && !actualTieneNombre) || (nuevoTieneUbicacion && !actualTieneUbicacion)){
+      const actual=mapa[clave];
+      const actualNombre=nombreProductoMovimiento(actual);
+      if(actualNombre==="-" && nombre!=="-"){
         mapa[clave]=m;
       }
     }
@@ -257,6 +282,7 @@ async function cargarTodo(){
   renderUbicaciones();
   renderProductos();
   renderSelectSalida();
+  renderSelectTraspaso();
   renderMovimientos();
 
   setEstado("Datos actualizados");
@@ -279,9 +305,9 @@ function renderUbicaciones(){
     grid.innerHTML+=`
       <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva" : ""}" onclick="mostrarProductosUbicacion('${u.nombre}')">
         <b>${u.nombre}</b><br>
-        Tipo: ${u.tipo || "-"}<br>
-        Responsable: ${u.responsable || "Sin responsable"}<br>
-        <span class="small">Clic para ver productos</span>
+        <span class="small">Tipo: ${u.tipo || "-"}</span><br>
+        <span class="small">Responsable: ${u.responsable || "Sin responsable"}</span><br>
+        <span class="badge">Clic para ver productos</span>
       </div>
     `;
     select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
@@ -305,7 +331,7 @@ function mostrarProductosUbicacion(nombre){
     div.innerHTML=`
       <b>${nombre}</b><br><br>
       ${productos.map(p=>`
-        ${p.nombre} (${p.cantidad ?? 0})<br>
+        <div class="small">• ${p.nombre} — Stock: <b>${p.cantidad ?? 0}</b></div>
       `).join("")}
     `;
   }
@@ -324,10 +350,10 @@ function renderProductos(){
   div.innerHTML=productosPantalla.map(p=>`
     <div class="card">
       <b>${p.nombre}</b><br>
-      Código / Nº Serie: ${p.codigo || "-"}<br>
-      Tipo: ${p.tipo || "-"}<br>
-      Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
-      Stock: ${p.cantidad ?? 0}
+      <span class="small">Código / Nº Serie: ${p.codigo || "-"}</span><br>
+      <span class="small">Tipo: ${p.tipo || "-"}</span><br>
+      <span class="small">Ubicación: ${p.ubicacion || "Sin ubicación"}</span><br>
+      <span class="badge">Stock: ${p.cantidad ?? 0}</span>
     </div>
   `).join("");
 }
@@ -364,15 +390,31 @@ function renderSelectSalida(){
   }
 }
 
-function nombreProductoMovimiento(m){
-  if(m.producto_nombre) return m.producto_nombre;
-  if(m.nombre) return m.nombre;
+function renderSelectTraspaso(){
+  let producto=document.getElementById("tProducto");
+  let origen=document.getElementById("tOrigen");
+  let destino=document.getElementById("tDestino");
 
-  let producto=productosPantalla.find(p=>String(p.id)===String(m.producto_id));
-  if(producto) return producto.nombre;
+  producto.innerHTML="";
+  origen.innerHTML="";
+  destino.innerHTML="";
 
-  if(m.codigo) return m.codigo;
-  return "-";
+  if(productosPantalla.length===0){
+    producto.innerHTML="<option value=''>Sin productos</option>";
+  }else{
+    productosPantalla.forEach(p=>{
+      producto.innerHTML+=`
+        <option value="${p.codigo}">
+          ${p.nombre} | ${p.codigo} | Actual: ${p.ubicacion || "-"} | Stock: ${p.cantidad ?? 0}
+        </option>
+      `;
+    });
+  }
+
+  ubicacionesPantalla.forEach(u=>{
+    origen.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
+    destino.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
+  });
 }
 
 function renderMovimientos(){
@@ -386,17 +428,21 @@ function renderMovimientos(){
   div.innerHTML=movimientosPantalla
     .slice()
     .sort((a,b)=> new Date(b.created_at || b.fecha || 0) - new Date(a.created_at || a.fecha || 0))
-    .map(m=>`
-      <div class="card mov">
-        <b>${m.recibe || "Sin nombre"}</b> → sacó ${m.cantidad || 0} de 
-        <b>${nombreProductoMovimiento(m)}</b><br>
-        Ubicación: ${m.ubicacion || m.ubicacion_salida || "-"}<br>
-        <span class="small">
-          Nota: ${m.nota || "-"}<br>
-          Fecha: ${m.created_at || m.fecha || "Ahora"}
-        </span>
-      </div>
-    `).join("");
+    .map(m=>{
+      let clase="mov";
+      if(m.tipo==="entrada") clase="entrada";
+      if(m.tipo==="traspaso") clase="traspaso";
+
+      return `
+        <div class="card ${clase}">
+          <b>${m.recibe || "Sin nombre"}</b> → ${m.tipo || "salida"} ${m.cantidad || 0} de 
+          <b>${nombreProductoMovimiento(m)}</b><br>
+          <span class="small">Ubicación: ${m.ubicacion || m.ubicacion_salida || "-"}</span><br>
+          <span class="small">Nota: ${m.nota || "-"}</span><br>
+          <span class="small">Fecha: ${m.created_at || m.fecha || "Ahora"}</span>
+        </div>
+      `;
+    }).join("");
 }
 
 async function crearUbicacion(){
@@ -559,7 +605,67 @@ async function registrarSalida(){
   document.getElementById("sNota").value="";
 
   await cargarTodo();
-  alert("Salida registrada y mostrada en historial");
+  alert("Salida registrada");
+}
+
+function registrarTraspaso(){
+  let codigo=document.getElementById("tProducto").value;
+  let origen=document.getElementById("tOrigen").value;
+  let destino=document.getElementById("tDestino").value;
+  let cantidad=Number(document.getElementById("tCantidad").value);
+  let responsable=document.getElementById("tResponsable").value.trim();
+  let nota=document.getElementById("tNota").value.trim();
+
+  let producto=productosPantalla.find(p=>p.codigo===codigo);
+
+  if(!producto){
+    alert("Selecciona producto");
+    return;
+  }
+
+  if(!cantidad || cantidad<=0){
+    alert("Cantidad inválida");
+    return;
+  }
+
+  if(cantidad > Number(producto.cantidad || 0)){
+    alert("No hay suficiente stock para traspasar");
+    return;
+  }
+
+  if(origen===destino){
+    alert("Origen y destino no pueden ser iguales");
+    return;
+  }
+
+  let movimientosLocales=getLocalMovimientos();
+
+  movimientosLocales.push({
+    tipo:"traspaso",
+    producto_id:producto.id || null,
+    producto_nombre:producto.nombre,
+    codigo:producto.codigo,
+    cantidad:cantidad,
+    recibe:responsable || "Movimiento interno",
+    nota:nota || `Traspaso de ${origen} a ${destino}`,
+    ubicacion:`${origen} → ${destino}`,
+    fecha:new Date().toLocaleString()
+  });
+
+  producto.ubicacion=destino;
+
+  let productosLocales=getLocalProductos();
+  productosLocales=unirPorCodigo(productosLocales,[producto]);
+  setLocalProductos(productosLocales);
+
+  setLocalMovimientos(movimientosLocales);
+
+  document.getElementById("tCantidad").value=1;
+  document.getElementById("tResponsable").value="";
+  document.getElementById("tNota").value="";
+
+  cargarTodo();
+  alert("Traspaso registrado");
 }
 
 if(localStorage.getItem("token")){
