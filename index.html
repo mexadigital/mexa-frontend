@@ -19,7 +19,6 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
 h3{margin-top:24px}
 .mov{border-left:4px solid #dc2626}
 
-/* AGREGADO DÍA 7 */
 .card:hover{outline:1px solid #2563eb}
 .ubicacionActiva{outline:2px solid #22c55e}
 .resumenUbicacion{background:#020617;padding:10px;border-radius:10px;margin-bottom:12px}
@@ -52,49 +51,18 @@ h3{margin-top:24px}
   <h3>Ubicaciones</h3>
   <div id="grid" class="grid"></div>
 
-  <!-- AGREGADO DÍA 7 -->
   <div id="productosUbicacion" class="resumenUbicacion hidden"></div>
-
-  <h3>Crear ubicación</h3>
-  <input id="uNombre" placeholder="Nombre de ubicación">
-
-  <select id="uTipo">
-    <option value="contenedor">Contenedor</option>
-    <option value="almacen_satelite">Almacén satélite</option>
-    <option value="nave">Nave</option>
-    <option value="almacen_cerrado">Almacén cerrado</option>
-    <option value="almacen_abierto">Almacén a cielo abierto</option>
-    <option value="patio">Patio</option>
-  </select>
-
-  <input id="uResp" placeholder="Responsable">
-  <button onclick="crearUbicacion()">Guardar ubicación</button>
-
-  <h3>Crear producto</h3>
-  <input id="pNombre" placeholder="Nombre">
-  <input id="pCodigo" placeholder="Código / Nº Serie">
-  <input id="pCant" type="number" value="1">
-
-  <select id="pTipo">
-    <option value="herramienta">Herramienta</option>
-    <option value="consumible">Consumible</option>
-    <option value="epp">EPP</option>
-    <option value="material">Material</option>
-  </select>
-
-  <select id="pUbicacion"></select>
-
-  <button onclick="crearProducto()">Guardar producto</button>
 
   <h3>Registrar salida</h3>
   <select id="sProducto"></select>
+
+  <!-- NUEVO -->
+  <select id="sUbicacion"></select>
+
   <input id="sCantidad" type="number" value="1" placeholder="Cantidad">
   <input id="sRecibe" placeholder="Quién recibe">
   <input id="sNota" placeholder="Nota / frente de trabajo">
   <button onclick="registrarSalida()">Registrar salida</button>
-
-  <h3>Productos dados de alta</h3>
-  <div id="productos"></div>
 
   <h3>Historial de movimientos</h3>
   <div id="movimientos"></div>
@@ -107,8 +75,6 @@ const API="https://mexa-core-1.onrender.com";
 let ubicacionesPantalla=[];
 let productosPantalla=[];
 let movimientosPantalla=[];
-
-/* AGREGADO DÍA 7 */
 let ubicacionSeleccionada="";
 
 function headers(){
@@ -118,151 +84,38 @@ function headers(){
   };
 }
 
-function setEstado(txt){
-  document.getElementById("estado").innerText=txt;
-}
-
-function getLocalUbicaciones(){
-  return JSON.parse(localStorage.getItem("mexa_ubicaciones_demo") || "[]");
-}
-function setLocalUbicaciones(data){
-  localStorage.setItem("mexa_ubicaciones_demo", JSON.stringify(data));
-}
-function getLocalProductos(){
-  return JSON.parse(localStorage.getItem("mexa_productos_demo") || "[]");
-}
-function setLocalProductos(data){
-  localStorage.setItem("mexa_productos_demo", JSON.stringify(data));
-}
-function getLocalMovimientos(){
-  return JSON.parse(localStorage.getItem("mexa_movimientos_demo") || "[]");
-}
-function setLocalMovimientos(data){
-  localStorage.setItem("mexa_movimientos_demo", JSON.stringify(data));
-}
-
-function unirPorNombre(base, extras){
-  const mapa={};
-  [...base,...extras].forEach(x=>{
-    if(x && x.nombre) mapa[x.nombre]=x;
-  });
-  return Object.values(mapa);
-}
-
-function unirPorCodigo(base, extras){
-  const mapa={};
-  [...base,...extras].forEach(x=>{
-    if(x && x.codigo) mapa[x.codigo]=x;
-  });
-  return Object.values(mapa);
-}
-
-async function login(){
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value.trim();
-
-  document.getElementById("msg").innerText="Entrando...";
-
-  const rutas=["/auth/login","/auth/auth/login"];
-
-  for(let r of rutas){
-    try{
-      let res=await fetch(API+r,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({email,password})
-      });
-
-      let data=await res.json();
-
-      if(res.ok && data.access_token){
-        localStorage.setItem("token",data.access_token);
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        await cargarTodo();
-        return;
-      }
-    }catch(e){}
-  }
-
-  document.getElementById("msg").innerText="Error login";
-}
-
-function cerrarSesion(){
-  localStorage.removeItem("token");
-  location.reload();
-}
-
 async function cargarTodo(){
-  setEstado("Cargando datos...");
 
-  let ubicacionesBackend=[];
-  let productosBackend=[];
-  let movimientosBackend=[];
+  let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
+  if(resU.ok) ubicacionesPantalla=await resU.json();
 
-  try{
-    let resU=await fetch(API+"/ubicaciones/ubicaciones/?t="+Date.now(),{
-      headers:headers(),
-      cache:"no-store"
-    });
-    if(resU.ok) ubicacionesBackend=await resU.json();
-  }catch(e){}
+  let resP=await fetch(API+"/productos/productos/",{headers:headers()});
+  if(resP.ok) productosPantalla=await resP.json();
 
-  try{
-    let resP=await fetch(API+"/productos/productos/?t="+Date.now(),{
-      headers:headers(),
-      cache:"no-store"
-    });
-    if(resP.ok) productosBackend=await resP.json();
-  }catch(e){}
-
-  try{
-    let resM=await fetch(API+"/movimientos/movimientos/?t="+Date.now(),{
-      headers:headers(),
-      cache:"no-store"
-    });
-    if(resM.ok) movimientosBackend=await resM.json();
-  }catch(e){}
-
-  ubicacionesPantalla=unirPorNombre(ubicacionesBackend,getLocalUbicaciones());
-  productosPantalla=unirPorCodigo(productosBackend,getLocalProductos());
-  movimientosPantalla=[...getLocalMovimientos(),...movimientosBackend];
+  let resM=await fetch(API+"/movimientos/movimientos/",{headers:headers()});
+  if(resM.ok) movimientosPantalla=await resM.json();
 
   renderUbicaciones();
-  renderProductos();
   renderSelectSalida();
   renderMovimientos();
-
-  setEstado("Datos actualizados");
 }
 
 function renderUbicaciones(){
   let grid=document.getElementById("grid");
-  let select=document.getElementById("pUbicacion");
-
   grid.innerHTML="";
-  select.innerHTML="";
-
-  if(ubicacionesPantalla.length===0){
-    grid.innerHTML="<p>No hay ubicaciones cargadas</p>";
-    select.innerHTML="<option value=''>Sin ubicaciones</option>";
-    return;
-  }
 
   ubicacionesPantalla.forEach(u=>{
     grid.innerHTML+=`
-      <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva" : ""}" onclick="mostrarProductosUbicacion('${u.nombre}')">
+      <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva":""}"
+        onclick="mostrarProductosUbicacion('${u.nombre}')">
         <b>${u.nombre}</b><br>
         Tipo: ${u.tipo || "-"}<br>
-        Responsable: ${u.responsable || "Sin responsable"}<br>
-        <span class="small">Clic para ver productos</span>
+        Responsable: ${u.responsable || "-"}
       </div>
     `;
-    select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
   });
 }
 
-/* AGREGADO DÍA 7 */
 function mostrarProductosUbicacion(nombre){
   ubicacionSeleccionada=nombre;
 
@@ -271,235 +124,92 @@ function mostrarProductosUbicacion(nombre){
 
   div.classList.remove("hidden");
 
-  if(productos.length===0){
-    div.innerHTML=`
-      <b>${nombre}</b><br>
-      <span class="small">No hay productos en esta ubicación</span>
-    `;
-  }else{
-    div.innerHTML=`
-      <b>${nombre}</b><br><br>
-      ${productos.map(p=>`
-        ${p.nombre} (${p.cantidad ?? 0})<br>
-      `).join("")}
-    `;
-  }
+  div.innerHTML=`
+    <b>${nombre}</b><br><br>
+    ${productos.map(p=>`${p.nombre} (${p.cantidad})`).join("<br>")}
+  `;
 
   renderUbicaciones();
 }
 
-function renderProductos(){
-  let div=document.getElementById("productos");
-
-  if(productosPantalla.length===0){
-    div.innerHTML="<p>No hay productos dados de alta todavía</p>";
-    return;
-  }
-
-  div.innerHTML=productosPantalla.map(p=>`
-    <div class="card">
-      <b>${p.nombre}</b><br>
-      Código / Nº Serie: ${p.codigo || "-"}<br>
-      Tipo: ${p.tipo || "-"}<br>
-      Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
-      Stock: ${p.cantidad ?? 0}
-    </div>
-  `).join("");
-}
-
+/* 🔹 ACTUALIZADO */
 function renderSelectSalida(){
-  let select=document.getElementById("sProducto");
-  select.innerHTML="";
+  let selectP=document.getElementById("sProducto");
+  let selectU=document.getElementById("sUbicacion");
 
-  if(productosPantalla.length===0){
-    select.innerHTML="<option value=''>Sin productos</option>";
-    return;
-  }
+  selectP.innerHTML="";
+  selectU.innerHTML="";
 
   productosPantalla.forEach(p=>{
-    select.innerHTML+=`
+    selectP.innerHTML+=`
       <option value="${p.codigo}">
-        ${p.nombre} | ${p.codigo} | Stock: ${p.cantidad ?? 0}
+        ${p.nombre} | Stock: ${p.cantidad}
+      </option>
+    `;
+  });
+
+  ubicacionesPantalla.forEach(u=>{
+    selectU.innerHTML+=`
+      <option value="${u.nombre}">
+        ${u.nombre}
       </option>
     `;
   });
 }
 
-function renderMovimientos(){
-  let div=document.getElementById("movimientos");
-
-  if(movimientosPantalla.length===0){
-    div.innerHTML="<p>No hay movimientos registrados todavía</p>";
-    return;
-  }
-
-  div.innerHTML=movimientosPantalla
-    .slice()
-    .sort((a,b)=> new Date(b.created_at || b.fecha || 0) - new Date(a.created_at || a.fecha || 0))
-    .map(m=>`
-      <div class="card mov">
-        <b>${m.recibe || "Sin nombre"}</b> → sacó ${m.cantidad || 0} de 
-        <b>${m.producto_nombre || m.nombre || m.codigo || "-"}</b><br>
-        <span class="small">
-          Nota: ${m.nota || "-"}<br>
-          Fecha: ${m.created_at || m.fecha || "Ahora"}
-        </span>
-      </div>
-    `).join("");
-}
-
-async function crearUbicacion(){
-  let nombre=document.getElementById("uNombre").value.trim();
-  let tipo=document.getElementById("uTipo").value;
-  let responsable=document.getElementById("uResp").value.trim();
-
-  if(!nombre){
-    alert("Pon nombre de ubicación");
-    return;
-  }
-
-  let nueva={
-    nombre:nombre,
-    tipo:tipo,
-    responsable:responsable || "Sin responsable",
-    organizacion_id:1
-  };
-
-  try{
-    await fetch(API+"/ubicaciones/ubicaciones/",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify(nueva)
-    });
-  }catch(e){}
-
-  let locales=getLocalUbicaciones();
-  locales=unirPorNombre(locales,[nueva]);
-  setLocalUbicaciones(locales);
-
-  document.getElementById("uNombre").value="";
-  document.getElementById("uResp").value="";
-
-  await cargarTodo();
-  alert("Ubicación creada y mostrada");
-}
-
-async function crearProducto(){
-  let body={
-    nombre:document.getElementById("pNombre").value.trim(),
-    codigo:document.getElementById("pCodigo").value.trim(),
-    cantidad:Number(document.getElementById("pCant").value),
-    ubicacion:document.getElementById("pUbicacion").value,
-    tipo:document.getElementById("pTipo").value,
-    precio:0
-  };
-
-  if(!body.nombre || !body.codigo || !body.ubicacion){
-    alert("Falta nombre, código/serie o ubicación");
-    return;
-  }
-
-  let creado=body;
-
-  try{
-    let res=await fetch(API+"/productos/productos/",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify(body)
-    });
-
-    if(res.ok){
-      creado=await res.json();
-    }else{
-      let txt=await res.text();
-      if(txt.includes("Ya existe")){
-        alert("Ya existe ese código/serie. Cambia el número de serie.");
-        return;
-      }
-    }
-  }catch(e){}
-
-  let locales=getLocalProductos();
-  locales=unirPorCodigo(locales,[creado]);
-  setLocalProductos(locales);
-
-  document.getElementById("pNombre").value="";
-  document.getElementById("pCodigo").value="";
-  document.getElementById("pCant").value=1;
-
-  await cargarTodo();
-  alert("Producto creado y mostrado abajo");
-}
-
 async function registrarSalida(){
+
   let codigo=document.getElementById("sProducto").value;
   let cantidad=Number(document.getElementById("sCantidad").value);
-  let recibe=document.getElementById("sRecibe").value.trim();
-  let nota=document.getElementById("sNota").value.trim();
+  let recibe=document.getElementById("sRecibe").value;
+  let nota=document.getElementById("sNota").value;
+  let ubicacion=document.getElementById("sUbicacion").value;
 
   let producto=productosPantalla.find(p=>p.codigo===codigo);
 
-  if(!producto){
-    alert("Selecciona producto");
-    return;
-  }
-
-  if(!cantidad || cantidad<=0){
-    alert("Cantidad inválida");
-    return;
-  }
-
-  /* AGREGADO DÍA 7 */
-  if(cantidad > Number(producto.cantidad || 0)){
+  if(cantidad > producto.cantidad){
     alert("No hay suficiente stock");
     return;
   }
 
   let movimiento={
     tipo:"salida",
-    producto_id:producto.id || null,
-    producto_nombre:producto.nombre,
-    codigo:producto.codigo,
+    producto_id:producto.id,
     cantidad:cantidad,
-    recibe:recibe || "Sin nombre",
-    nota:nota || "-",
-    fecha:new Date().toLocaleString()
+    recibe:recibe,
+    nota:nota,
+    ubicacion:ubicacion
   };
 
-  try{
-    if(producto.id){
-      await fetch(API+"/movimientos/movimientos/",{
-        method:"POST",
-        headers:headers(),
-        body:JSON.stringify({
-          producto_id:producto.id,
-          tipo:"salida",
-          cantidad:cantidad,
-          recibe:movimiento.recibe,
-          nota:movimiento.nota,
-          usuario:"demo"
-        })
-      });
-    }
-  }catch(e){}
-
-  producto.cantidad=Number(producto.cantidad || 0)-cantidad;
-  if(producto.cantidad<0) producto.cantidad=0;
-
-  let productosLocales=getLocalProductos();
-  productosLocales=unirPorCodigo(productosLocales,[producto]);
-  setLocalProductos(productosLocales);
-
-  let movimientosLocales=getLocalMovimientos();
-  movimientosLocales.push(movimiento);
-  setLocalMovimientos(movimientosLocales);
-
-  document.getElementById("sCantidad").value=1;
-  document.getElementById("sRecibe").value="";
-  document.getElementById("sNota").value="";
+  await fetch(API+"/movimientos/movimientos/",{
+    method:"POST",
+    headers:headers(),
+    body:JSON.stringify(movimiento)
+  });
 
   await cargarTodo();
-  alert("Salida registrada y mostrada en historial");
+}
+
+/* 🔹 ACTUALIZADO HISTORIAL */
+function renderMovimientos(){
+
+  let div=document.getElementById("movimientos");
+
+  div.innerHTML=movimientosPantalla
+  .slice()
+  .reverse()
+  .map(m=>`
+    <div class="card mov">
+      <b>${m.recibe}</b> → sacó ${m.cantidad} de ${m.producto_nombre || m.codigo}<br>
+      Ubicación: ${m.ubicacion || "-"}<br>
+      <span class="small">
+        Nota: ${m.nota || "-"}
+      </span><br>
+      <span class="small">
+        ${m.created_at || ""}
+      </span>
+    </div>
+  `).join("");
 }
 
 if(localStorage.getItem("token")){
