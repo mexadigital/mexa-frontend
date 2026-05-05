@@ -84,9 +84,7 @@ h3{margin-top:24px}
 
   <h3>Registrar salida</h3>
   <select id="sProducto"></select>
-
   <select id="sUbicacion"></select>
-
   <input id="sCantidad" type="number" value="1" placeholder="Cantidad">
   <input id="sRecibe" placeholder="Quién recibe">
   <input id="sNota" placeholder="Nota / frente de trabajo">
@@ -335,6 +333,17 @@ function renderSelectSalida(){
   }
 }
 
+function nombreProductoMovimiento(m){
+  if(m.producto_nombre) return m.producto_nombre;
+  if(m.nombre) return m.nombre;
+
+  let producto=productosPantalla.find(p=>String(p.id)===String(m.producto_id));
+  if(producto) return producto.nombre;
+
+  if(m.codigo) return m.codigo;
+  return "-";
+}
+
 function renderMovimientos(){
   let div=document.getElementById("movimientos");
 
@@ -349,7 +358,7 @@ function renderMovimientos(){
     .map(m=>`
       <div class="card mov">
         <b>${m.recibe || "Sin nombre"}</b> → sacó ${m.cantidad || 0} de 
-        <b>${m.producto_nombre || m.nombre || m.codigo || "-"}</b><br>
+        <b>${nombreProductoMovimiento(m)}</b><br>
         Ubicación: ${m.ubicacion || m.ubicacion_salida || "-"}<br>
         <span class="small">
           Nota: ${m.nota || "-"}<br>
@@ -478,9 +487,11 @@ async function registrarSalida(){
     fecha:new Date().toLocaleString()
   };
 
+  let guardadoBackend=false;
+
   try{
     if(producto.id){
-      await fetch(API+"/movimientos/movimientos/",{
+      let res=await fetch(API+"/movimientos/movimientos/",{
         method:"POST",
         headers:headers(),
         body:JSON.stringify({
@@ -492,6 +503,10 @@ async function registrarSalida(){
           usuario:"demo"
         })
       });
+
+      if(res.ok){
+        guardadoBackend=true;
+      }
     }
   }catch(e){}
 
@@ -502,9 +517,11 @@ async function registrarSalida(){
   productosLocales=unirPorCodigo(productosLocales,[producto]);
   setLocalProductos(productosLocales);
 
-  let movimientosLocales=getLocalMovimientos();
-  movimientosLocales.push(movimiento);
-  setLocalMovimientos(movimientosLocales);
+  if(!guardadoBackend){
+    let movimientosLocales=getLocalMovimientos();
+    movimientosLocales.push(movimiento);
+    setLocalMovimientos(movimientosLocales);
+  }
 
   document.getElementById("sCantidad").value=1;
   document.getElementById("sRecibe").value="";
