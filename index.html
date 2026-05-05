@@ -152,6 +152,37 @@ function unirPorCodigo(base, extras){
   return Object.values(mapa);
 }
 
+/* NUEVO: elimina duplicados visuales del historial */
+function unirMovimientosSinDuplicados(locales, backend){
+  const mapa={};
+
+  [...backend, ...locales].forEach(m=>{
+    const clave=[
+      m.producto_id || m.codigo || "",
+      m.cantidad || "",
+      m.recibe || "",
+      m.nota || ""
+    ].join("|");
+
+    const actual=mapa[clave];
+
+    if(!actual){
+      mapa[clave]=m;
+    }else{
+      const actualTieneNombre=actual.producto_nombre || actual.nombre || actual.codigo;
+      const nuevoTieneNombre=m.producto_nombre || m.nombre || m.codigo;
+      const actualTieneUbicacion=actual.ubicacion || actual.ubicacion_salida;
+      const nuevoTieneUbicacion=m.ubicacion || m.ubicacion_salida;
+
+      if((nuevoTieneNombre && !actualTieneNombre) || (nuevoTieneUbicacion && !actualTieneUbicacion)){
+        mapa[clave]=m;
+      }
+    }
+  });
+
+  return Object.values(mapa);
+}
+
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value.trim();
@@ -221,7 +252,7 @@ async function cargarTodo(){
 
   ubicacionesPantalla=unirPorNombre(ubicacionesBackend,getLocalUbicaciones());
   productosPantalla=unirPorCodigo(productosBackend,getLocalProductos());
-  movimientosPantalla=[...getLocalMovimientos(),...movimientosBackend];
+  movimientosPantalla=unirMovimientosSinDuplicados(getLocalMovimientos(),movimientosBackend);
 
   renderUbicaciones();
   renderProductos();
