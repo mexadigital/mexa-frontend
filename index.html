@@ -17,6 +17,7 @@ input,select{width:100%;padding:6px;margin:4px 0;background:#020617;color:white;
 #login{max-width:400px;margin:80px auto}
 .status{color:#93c5fd;font-size:13px}
 h3{margin-top:24px}
+.mov{border-left:4px solid #dc2626}
 </style>
 </head>
 
@@ -76,8 +77,18 @@ h3{margin-top:24px}
 
   <button onclick="crearProducto()">Guardar producto</button>
 
+  <h3>Registrar salida</h3>
+  <select id="sProducto"></select>
+  <input id="sCantidad" type="number" value="1" placeholder="Cantidad">
+  <input id="sRecibe" placeholder="Quién recibe">
+  <input id="sNota" placeholder="Nota / frente de trabajo">
+  <button onclick="registrarSalida()">Registrar salida</button>
+
   <h3>Productos dados de alta</h3>
   <div id="productos"></div>
+
+  <h3>Historial de movimientos</h3>
+  <div id="movimientos"></div>
 
 </div>
 
@@ -86,6 +97,7 @@ const API="https://mexa-core-1.onrender.com";
 
 let ubicacionesPantalla=[];
 let productosPantalla=[];
+let movimientosPantalla=[];
 
 function headers(){
   return {
@@ -101,17 +113,20 @@ function setEstado(txt){
 function getLocalUbicaciones(){
   return JSON.parse(localStorage.getItem("mexa_ubicaciones_demo") || "[]");
 }
-
 function setLocalUbicaciones(data){
   localStorage.setItem("mexa_ubicaciones_demo", JSON.stringify(data));
 }
-
 function getLocalProductos(){
   return JSON.parse(localStorage.getItem("mexa_productos_demo") || "[]");
 }
-
 function setLocalProductos(data){
   localStorage.setItem("mexa_productos_demo", JSON.stringify(data));
+}
+function getLocalMovimientos(){
+  return JSON.parse(localStorage.getItem("mexa_movimientos_demo") || "[]");
+}
+function setLocalMovimientos(data){
+  localStorage.setItem("mexa_movimientos_demo", JSON.stringify(data));
 }
 
 function unirPorNombre(base, extras){
@@ -171,6 +186,7 @@ async function cargarTodo(){
 
   let ubicacionesBackend=[];
   let productosBackend=[];
+  let movimientosBackend=[];
 
   try{
     let resU=await fetch(API+"/ubicaciones/ubicaciones/?t="+Date.now(),{
@@ -188,11 +204,22 @@ async function cargarTodo(){
     if(resP.ok) productosBackend=await resP.json();
   }catch(e){}
 
+  try{
+    let resM=await fetch(API+"/movimientos/movimientos/?t="+Date.now(),{
+      headers:headers(),
+      cache:"no-store"
+    });
+    if(resM.ok) movimientosBackend=await resM.json();
+  }catch(e){}
+
   ubicacionesPantalla=unirPorNombre(ubicacionesBackend,getLocalUbicaciones());
   productosPantalla=unirPorCodigo(productosBackend,getLocalProductos());
+  movimientosPantalla=[...getLocalMovimientos(),...movimientosBackend];
 
   renderUbicaciones();
   renderProductos();
+  renderSelectSalida();
+  renderMovimientos();
 
   setEstado("Datos actualizados");
 }
@@ -218,7 +245,6 @@ function renderUbicaciones(){
         Responsable: ${u.responsable || "Sin responsable"}
       </div>
     `;
-
     select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
   });
 }
@@ -238,6 +264,44 @@ function renderProductos(){
       Tipo: ${p.tipo || "-"}<br>
       Ubicación: ${p.ubicacion || "Sin ubicación"}<br>
       Stock: ${p.cantidad ?? 0}
+    </div>
+  `).join("");
+}
+
+function renderSelectSalida(){
+  let select=document.getElementById("sProducto");
+  select.innerHTML="";
+
+  if(productosPantalla.length===0){
+    select.innerHTML="<option value=''>Sin productos</option>";
+    return;
+  }
+
+  productosPantalla.forEach(p=>{
+    select.innerHTML+=`
+      <option value="${p.codigo}">
+        ${p.nombre} | ${p.codigo} | Stock: ${p.cantidad ?? 0}
+      </option>
+    `;
+  });
+}
+
+function renderMovimientos(){
+  let div=document.getElementById("movimientos");
+
+  if(movimientosPantalla.length===0){
+    div.innerHTML="<p>No hay movimientos registrados todavía</p>";
+    return;
+  }
+
+  div.innerHTML=movimientosPantalla.slice().reverse().map(m=>`
+    <div class="card mov">
+      <b>${m.tipo || "salida"}</b><br>
+      Producto: ${m.producto_nombre || m.nombre || m.codigo || "-"}<br>
+      Cantidad: ${m.cantidad || 0}<br>
+      Recibe: ${m.recibe || "-"}<br>
+      Nota: ${m.nota || "-"}<br>
+      Fecha: ${m.created_at || m.fecha || "Ahora"}
     </div>
   `).join("");
 }
@@ -323,6 +387,71 @@ async function crearProducto(){
 
   await cargarTodo();
   alert("Producto creado y mostrado abajo");
+}
+
+async function registrarSalida(){
+  let codigo=document.getElementById("sProducto").value;
+  let cantidad=Number(document.getElementById("sCantidad").value);
+  let recibe=document.getElementById("sRecibe").value.trim();
+  let nota=document.getElementById("sNota").value.trim();
+
+  let producto=productosPantalla.find(p=>p.codigo===codigo);
+
+  if(!producto){
+    alert("Selecciona producto");
+    return;
+  }
+
+  if(!cantidad || cantidad<=0){
+    alert("Cantidad inválida");
+    return;
+  }
+
+  let movimiento={
+    tipo:"salida",
+    producto_id:producto.id || null,
+    producto_nombre:producto.nombre,
+    codigo:producto.codigo,
+    cantidad:cantidad,
+    recibe:recibe || "Sin nombre",
+    nota:nota || "-",
+    fecha:new Date().toLocaleString()
+  };
+
+  try{
+    if(producto.id){
+      await fetch(API+"/movimientos/movimientos/",{
+        method:"POST",
+        headers:headers(),
+        body:JSON.stringify({
+          producto_id:producto.id,
+          tipo:"salida",
+          cantidad:cantidad,
+          recibe:movimiento.recibe,
+          nota:movimiento.nota,
+          usuario:"demo"
+        })
+      });
+    }
+  }catch(e){}
+
+  producto.cantidad=Number(producto.cantidad || 0)-cantidad;
+  if(producto.cantidad<0) producto.cantidad=0;
+
+  let productosLocales=getLocalProductos();
+  productosLocales=unirPorCodigo(productosLocales,[producto]);
+  setLocalProductos(productosLocales);
+
+  let movimientosLocales=getLocalMovimientos();
+  movimientosLocales.push(movimiento);
+  setLocalMovimientos(movimientosLocales);
+
+  document.getElementById("sCantidad").value=1;
+  document.getElementById("sRecibe").value="";
+  document.getElementById("sNota").value="";
+
+  await cargarTodo();
+  alert("Salida registrada y mostrada en historial");
 }
 
 if(localStorage.getItem("token")){
