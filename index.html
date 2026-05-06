@@ -12,7 +12,7 @@ button{padding:8px 12px;border:none;border-radius:8px;background:#2563eb;color:w
 button:hover{opacity:.9}
 .danger{background:#dc2626}
 .green{background:#16a34a}
-.container{max-width:860px;margin:auto;padding:18px}
+.container{max-width:980px;margin:auto;padding:18px}
 .card{background:#111827;padding:12px;border-radius:12px;margin-bottom:10px;border:1px solid #1f2937}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 input,select{width:100%;padding:9px;margin:5px 0;background:#020617;color:white;border:1px solid #374151;border-radius:8px;box-sizing:border-box}
@@ -29,6 +29,12 @@ h3{margin-top:28px;margin-bottom:10px}
 .small{font-size:13px;color:#cbd5e1}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .badge{display:inline-block;background:#020617;border:1px solid #334155;padding:3px 8px;border-radius:999px;font-size:12px;color:#cbd5e1;margin-top:4px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:15px}
+.kpi{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:12px}
+.kpi b{font-size:24px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid #1f2937;padding:8px;text-align:left;font-size:13px}
+.table th{color:#93c5fd}
 </style>
 </head>
 
@@ -54,9 +60,19 @@ h3{margin-top:28px;margin-bottom:10px}
 
   <p id="estado" class="status"></p>
 
+  <div class="kpis">
+    <div class="kpi"><span class="small">Ubicaciones</span><br><b id="kUbicaciones">0</b></div>
+    <div class="kpi"><span class="small">Productos</span><br><b id="kProductos">0</b></div>
+    <div class="kpi"><span class="small">Stock total</span><br><b id="kStock">0</b></div>
+    <div class="kpi"><span class="small">Movimientos</span><br><b id="kMovimientos">0</b></div>
+  </div>
+
   <h3>Ubicaciones</h3>
   <div id="grid" class="grid"></div>
   <div id="productosUbicacion" class="resumenUbicacion hidden"></div>
+
+  <h3>Inventario por ubicación</h3>
+  <div id="inventarioUbicacion"></div>
 
   <h3>Crear ubicación</h3>
   <input id="uNombre" placeholder="Nombre de ubicación">
@@ -93,7 +109,7 @@ h3{margin-top:28px;margin-bottom:10px}
   <input id="sCantidad" type="number" value="1" placeholder="Cantidad">
   <input id="sRecibe" placeholder="Quién recibe">
   <input id="sNota" placeholder="Nota / frente de trabajo">
-  <button onclick="registrarSalida()">Registrar salida</button>
+  <button class="danger" onclick="registrarSalida()">Registrar salida</button>
 
   <h3>Traspaso entre ubicaciones</h3>
   <select id="tProducto"></select>
@@ -122,10 +138,19 @@ let productosPantalla=[];
 let movimientosPantalla=[];
 let ubicacionSeleccionada="";
 
+function tokenActual(){
+  return localStorage.getItem("token") || localStorage.getItem("mexa_token") || "";
+}
+
+function guardarToken(token){
+  localStorage.setItem("token", token);
+  localStorage.setItem("mexa_token", token);
+}
+
 function headers(){
   return {
     "Content-Type":"application/json",
-    "Authorization":"Bearer "+localStorage.getItem("token")
+    "Authorization":"Bearer "+tokenActual()
   };
 }
 
@@ -190,17 +215,12 @@ function unirMovimientosSinDuplicados(locales, backend){
       m.cantidad || "",
       m.recibe || "",
       m.nota || "",
-      m.ubicacion || m.ubicacion_salida || ""
+      m.ubicacion || m.ubicacion_salida || "",
+      m.fecha || m.created_at || ""
     ].join("|");
 
     if(!mapa[clave]){
       mapa[clave]=m;
-    }else{
-      const actual=mapa[clave];
-      const actualNombre=nombreProductoMovimiento(actual);
-      if(actualNombre==="-" && nombre!=="-"){
-        mapa[clave]=m;
-      }
     }
   });
 
@@ -226,7 +246,7 @@ async function login(){
       let data=await res.json();
 
       if(res.ok && data.access_token){
-        localStorage.setItem("token",data.access_token);
+        guardarToken(data.access_token);
         document.getElementById("login").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
         await cargarTodo();
@@ -236,10 +256,12 @@ async function login(){
   }
 
   document.getElementById("msg").innerText="Error login";
+  alert("Error login");
 }
 
 function cerrarSesion(){
   localStorage.removeItem("token");
+  localStorage.removeItem("mexa_token");
   location.reload();
 }
 
@@ -278,13 +300,22 @@ async function cargarTodo(){
   productosPantalla=unirPorCodigo(productosBackend,getLocalProductos());
   movimientosPantalla=unirMovimientosSinDuplicados(getLocalMovimientos(),movimientosBackend);
 
+  renderKpis();
   renderUbicaciones();
+  renderInventarioPorUbicacion();
   renderProductos();
   renderSelectSalida();
   renderSelectTraspaso();
   renderMovimientos();
 
   setEstado("Datos actualizados");
+}
+
+function renderKpis(){
+  document.getElementById("kUbicaciones").innerText=ubicacionesPantalla.length;
+  document.getElementById("kProductos").innerText=productosPantalla.length;
+  document.getElementById("kStock").innerText=productosPantalla.reduce((s,p)=>s+Number(p.cantidad || 0),0);
+  document.getElementById("kMovimientos").innerText=movimientosPantalla.length;
 }
 
 function renderUbicaciones(){
@@ -301,11 +332,16 @@ function renderUbicaciones(){
   }
 
   ubicacionesPantalla.forEach(u=>{
+    let total=productosPantalla
+      .filter(p=>p.ubicacion===u.nombre)
+      .reduce((s,p)=>s+Number(p.cantidad || 0),0);
+
     grid.innerHTML+=`
       <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva" : ""}" onclick="mostrarProductosUbicacion('${u.nombre}')">
         <b>${u.nombre}</b><br>
         <span class="small">Tipo: ${u.tipo || "-"}</span><br>
         <span class="small">Responsable: ${u.responsable || "Sin responsable"}</span><br>
+        <span class="badge">Stock total: ${total}</span>
         <span class="badge">Clic para ver productos</span>
       </div>
     `;
@@ -318,24 +354,83 @@ function mostrarProductosUbicacion(nombre){
 
   let div=document.getElementById("productosUbicacion");
   let productos=productosPantalla.filter(p=>p.ubicacion===nombre);
+  let ubicacion=ubicacionesPantalla.find(u=>u.nombre===nombre);
 
   div.classList.remove("hidden");
 
   if(productos.length===0){
     div.innerHTML=`
       <b>${nombre}</b><br>
+      <span class="small">Responsable: ${ubicacion?.responsable || "Sin responsable"}</span><br>
       <span class="small">No hay productos en esta ubicación</span>
     `;
   }else{
     div.innerHTML=`
-      <b>${nombre}</b><br><br>
+      <b>${nombre}</b><br>
+      <span class="small">Responsable: ${ubicacion?.responsable || "Sin responsable"}</span><br><br>
       ${productos.map(p=>`
-        <div class="small">• ${p.nombre} — Stock: <b>${p.cantidad ?? 0}</b></div>
+        <div class="small">• ${p.nombre} — ${p.codigo || "-"} — Stock: <b>${p.cantidad ?? 0}</b></div>
       `).join("")}
     `;
   }
 
   renderUbicaciones();
+}
+
+function renderInventarioPorUbicacion(){
+  let div=document.getElementById("inventarioUbicacion");
+
+  if(ubicacionesPantalla.length===0){
+    div.innerHTML="<p>No hay ubicaciones para mostrar inventario</p>";
+    return;
+  }
+
+  let filas=[];
+
+  ubicacionesPantalla.forEach(u=>{
+    let productos=productosPantalla.filter(p=>p.ubicacion===u.nombre);
+
+    if(productos.length===0){
+      filas.push(`
+        <tr>
+          <td>${u.nombre}</td>
+          <td>${u.responsable || "Sin responsable"}</td>
+          <td>-</td>
+          <td>-</td>
+          <td>0</td>
+        </tr>
+      `);
+    }else{
+      productos.forEach(p=>{
+        filas.push(`
+          <tr>
+            <td>${u.nombre}</td>
+            <td>${u.responsable || "Sin responsable"}</td>
+            <td>${p.nombre}</td>
+            <td>${p.codigo || "-"}</td>
+            <td><b>${p.cantidad ?? 0}</b></td>
+          </tr>
+        `);
+      });
+    }
+  });
+
+  div.innerHTML=`
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ubicación</th>
+            <th>Responsable</th>
+            <th>Producto</th>
+            <th>Código</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>${filas.join("")}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderProductos(){
@@ -370,7 +465,7 @@ function renderSelectSalida(){
     productosPantalla.forEach(p=>{
       selectProducto.innerHTML+=`
         <option value="${p.codigo}">
-          ${p.nombre} | ${p.codigo} | Stock: ${p.cantidad ?? 0}
+          ${p.nombre} | ${p.codigo} | ${p.ubicacion || "-"} | Stock: ${p.cantidad ?? 0}
         </option>
       `;
     });
@@ -410,6 +505,12 @@ function renderSelectTraspaso(){
     });
   }
 
+  if(ubicacionesPantalla.length===0){
+    origen.innerHTML="<option value=''>Sin ubicaciones</option>";
+    destino.innerHTML="<option value=''>Sin ubicaciones</option>";
+    return;
+  }
+
   ubicacionesPantalla.forEach(u=>{
     origen.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
     destino.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
@@ -434,8 +535,9 @@ function renderMovimientos(){
 
       return `
         <div class="card ${clase}">
-          <b>${m.recibe || "Sin nombre"}</b> → ${m.tipo || "salida"} ${m.cantidad || 0} de 
+          <b>${m.tipo || "salida"}</b> — ${m.cantidad || 0} de 
           <b>${nombreProductoMovimiento(m)}</b><br>
+          <span class="small">Responsable / recibe: ${m.recibe || m.usuario || "Sin nombre"}</span><br>
           <span class="small">Ubicación: ${m.ubicacion || m.ubicacion_salida || "-"}</span><br>
           <span class="small">Nota: ${m.nota || "-"}</span><br>
           <span class="small">Fecha: ${m.created_at || m.fecha || "Ahora"}</span>
@@ -519,6 +621,20 @@ async function crearProducto(){
   locales=unirPorCodigo(locales,[creado]);
   setLocalProductos(locales);
 
+  let movs=getLocalMovimientos();
+  movs.push({
+    tipo:"entrada",
+    producto_id:creado.id || null,
+    producto_nombre:creado.nombre,
+    codigo:creado.codigo,
+    cantidad:creado.cantidad,
+    recibe:"Alta de producto",
+    nota:"Producto creado en inventario",
+    ubicacion:creado.ubicacion,
+    fecha:new Date().toLocaleString()
+  });
+  setLocalMovimientos(movs);
+
   document.getElementById("pNombre").value="";
   document.getElementById("pCodigo").value="";
   document.getElementById("pCant").value=1;
@@ -576,7 +692,7 @@ async function registrarSalida(){
           cantidad:cantidad,
           recibe:movimiento.recibe,
           nota:movimiento.nota,
-          usuario:"demo"
+          usuario:"frontend"
         })
       });
 
@@ -593,21 +709,24 @@ async function registrarSalida(){
   productosLocales=unirPorCodigo(productosLocales,[producto]);
   setLocalProductos(productosLocales);
 
-  if(!guardadoBackend){
-    let movimientosLocales=getLocalMovimientos();
-    movimientosLocales.push(movimiento);
-    setLocalMovimientos(movimientosLocales);
-  }
+  let movimientosLocales=getLocalMovimientos();
+  movimientosLocales.push(movimiento);
+  setLocalMovimientos(movimientosLocales);
 
   document.getElementById("sCantidad").value=1;
   document.getElementById("sRecibe").value="";
   document.getElementById("sNota").value="";
 
   await cargarTodo();
-  alert("Salida registrada");
+
+  if(guardadoBackend){
+    alert("Salida registrada");
+  }else{
+    alert("Salida registrada en demo local");
+  }
 }
 
-function registrarTraspaso(){
+async function registrarTraspaso(){
   let codigo=document.getElementById("tProducto").value;
   let origen=document.getElementById("tOrigen").value;
   let destino=document.getElementById("tDestino").value;
@@ -637,9 +756,7 @@ function registrarTraspaso(){
     return;
   }
 
-  let movimientosLocales=getLocalMovimientos();
-
-  movimientosLocales.push({
+  let movimiento={
     tipo:"traspaso",
     producto_id:producto.id || null,
     producto_nombre:producto.nombre,
@@ -649,7 +766,7 @@ function registrarTraspaso(){
     nota:nota || `Traspaso de ${origen} a ${destino}`,
     ubicacion:`${origen} → ${destino}`,
     fecha:new Date().toLocaleString()
-  });
+  };
 
   producto.ubicacion=destino;
 
@@ -657,17 +774,19 @@ function registrarTraspaso(){
   productosLocales=unirPorCodigo(productosLocales,[producto]);
   setLocalProductos(productosLocales);
 
+  let movimientosLocales=getLocalMovimientos();
+  movimientosLocales.push(movimiento);
   setLocalMovimientos(movimientosLocales);
 
   document.getElementById("tCantidad").value=1;
   document.getElementById("tResponsable").value="";
   document.getElementById("tNota").value="";
 
-  cargarTodo();
+  await cargarTodo();
   alert("Traspaso registrado");
 }
 
-if(localStorage.getItem("token")){
+if(tokenActual()){
   document.getElementById("login").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   cargarTodo();
