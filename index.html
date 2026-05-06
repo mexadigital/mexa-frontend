@@ -1,183 +1,57 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Mexa Digital</title>
-
-<style>
-body{margin:0;font-family:Arial;background:#0f172a;color:white}
-header{padding:16px;background:#020617;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-header h2{margin:0}
-button{padding:8px 12px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer;font-weight:bold}
-button:hover{opacity:.9}
-.danger{background:#dc2626}
-.green{background:#16a34a}
-.container{max-width:860px;margin:auto;padding:18px}
-.card{background:#111827;padding:12px;border-radius:12px;margin-bottom:10px;border:1px solid #1f2937}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
-input,select{width:100%;padding:9px;margin:5px 0;background:#020617;color:white;border:1px solid #374151;border-radius:8px;box-sizing:border-box}
-.hidden{display:none}
-#login{max-width:400px;margin:80px auto}
-.status{color:#93c5fd;font-size:13px}
-h3{margin-top:28px;margin-bottom:10px}
-.mov{border-left:4px solid #dc2626}
-.entrada{border-left:4px solid #16a34a}
-.traspaso{border-left:4px solid #f59e0b}
-.card:hover{outline:1px solid #2563eb}
-.ubicacionActiva{outline:2px solid #22c55e}
-.resumenUbicacion{background:#020617;padding:12px;border-radius:12px;margin-bottom:14px;border:1px solid #1f2937}
-.small{font-size:13px;color:#cbd5e1}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.badge{display:inline-block;background:#020617;border:1px solid #334155;padding:3px 8px;border-radius:999px;font-size:12px;color:#cbd5e1;margin-top:4px}
-</style>
-</head>
-
-<body>
-
-<header>
-  <h2>Mexa Digital</h2>
-  <div>
-    <button onclick="cargarTodo()">Actualizar</button>
-    <button class="danger" onclick="cerrarSesion()">Salir</button>
-  </div>
-</header>
-
-<div id="login" class="container">
-  <h2>Login</h2>
-  <input id="email" value="admin.ica@mexa.com">
-  <input id="password" type="password" value="123456">
-  <button onclick="login()">Entrar</button>
-  <p id="msg"></p>
-</div>
-
-<div id="app" class="container hidden">
-
-  <p id="estado" class="status"></p>
-
-  <h3>Ubicaciones</h3>
-  <div id="grid" class="grid"></div>
-  <div id="productosUbicacion" class="resumenUbicacion hidden"></div>
-
-  <h3>Crear ubicación</h3>
-  <input id="uNombre" placeholder="Nombre de ubicación">
-
-  <select id="uTipo">
-    <option value="contenedor">Contenedor</option>
-    <option value="almacen_satelite">Almacén satélite</option>
-    <option value="nave">Nave</option>
-    <option value="almacen_abierto">Almacén a cielo abierto</option>
-    <option value="patio">Patio</option>
-  </select>
-
-  <input id="uResp" placeholder="Responsable">
-  <button onclick="crearUbicacion()">Guardar ubicación</button>
-
-  <h3>Crear producto</h3>
-  <input id="pNombre" placeholder="Nombre">
-  <input id="pCodigo" placeholder="Código / Nº Serie">
-  <input id="pCant" type="number" value="1">
-
-  <select id="pTipo">
-    <option value="herramienta">Herramienta</option>
-    <option value="consumible">Consumible</option>
-    <option value="epp">EPP</option>
-    <option value="material">Material</option>
-  </select>
-
-  <select id="pUbicacion"></select>
-  <button onclick="crearProducto()">Guardar producto</button>
-
-  <h3>Registrar salida</h3>
-  <select id="sProducto"></select>
-  <select id="sUbicacion"></select>
-  <input id="sCantidad" type="number" value="1">
-  <input id="sRecibe" placeholder="Quién recibe">
-  <input id="sNota" placeholder="Nota">
-  <button onclick="registrarSalida()">Registrar salida</button>
-
-  <h3>Traspaso</h3>
-  <select id="tProducto"></select>
-  <select id="tOrigen"></select>
-  <select id="tDestino"></select>
-  <input id="tCantidad" type="number" value="1">
-  <input id="tResponsable">
-  <input id="tNota">
-  <button onclick="registrarTraspaso()">Traspasar</button>
-
-  <h3>Productos</h3>
-  <div id="productos"></div>
-
-  <h3>Movimientos</h3>
-  <div id="movimientos"></div>
-
-</div>
-
 <script>
 const API="https://mexa-core-1.onrender.com";
+
+function tokenActual(){
+  return localStorage.getItem("token") || localStorage.getItem("mexa_token") || "";
+}
+
+function guardarToken(token){
+  localStorage.setItem("token", token);
+  localStorage.setItem("mexa_token", token);
+}
 
 function headers(){
   return {
     "Content-Type":"application/json",
-    "Authorization":"Bearer "+localStorage.getItem("token")
+    "Authorization":"Bearer "+tokenActual()
   };
 }
 
 async function login(){
-  let email=document.getElementById("email").value;
-  let password=document.getElementById("password").value;
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value.trim();
 
-  let res=await fetch(API+"/auth/login",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({email,password})
-  });
+  document.getElementById("msg").innerText="Entrando...";
 
-  let data=await res.json();
+  const rutas=["/auth/login","/auth/auth/login"];
 
-  if(data.access_token){
-    localStorage.setItem("token",data.access_token);
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
-    cargarTodo();
-  }else{
-    alert("Error login");
+  for(let r of rutas){
+    try{
+      let res=await fetch(API+r,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email,password})
+      });
+
+      let data=await res.json();
+
+      if(res.ok && data.access_token){
+        guardarToken(data.access_token);
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        await cargarTodo();
+        return;
+      }
+    }catch(e){}
   }
+
+  document.getElementById("msg").innerText="Error login";
+  alert("Error login");
 }
 
 function cerrarSesion(){
   localStorage.removeItem("token");
+  localStorage.removeItem("mexa_token");
   location.reload();
 }
-
-async function cargarTodo(){
-  let resU=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
-  let ubicaciones=await resU.json();
-
-  let resP=await fetch(API+"/productos/productos/",{headers:headers()});
-  let productos=await resP.json();
-
-  document.getElementById("grid").innerHTML=ubicaciones.map(u=>`
-    <div class="card">
-      ${u.nombre}<br>
-      <span class="small">${u.tipo}</span><br>
-      <span class="small">${u.responsable || ""}</span>
-    </div>
-  `).join("");
-
-  document.getElementById("productos").innerHTML=productos.map(p=>`
-    <div class="card">
-      ${p.nombre} (${p.codigo})<br>
-      Stock: ${p.cantidad}
-    </div>
-  `).join("");
-}
-
-if(localStorage.getItem("token")){
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  cargarTodo();
-}
 </script>
-
-</body>
-</html>
