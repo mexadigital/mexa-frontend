@@ -1,84 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mexa Digital</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:white}
+header{padding:16px;background:#020617;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0}
+button{padding:8px 12px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer}
+.danger{background:#dc2626}
+.green{background:#16a34a}
+.container{max-width:980px;margin:auto;padding:18px}
+.card{background:#111827;padding:12px;border-radius:12px;margin-bottom:10px;border:1px solid #1f2937}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+input,select{width:100%;padding:9px;margin:5px 0;background:#020617;color:white;border:1px solid #374151;border-radius:8px}
+.hidden{display:none}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid #1f2937;padding:8px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>Mexa Digital</h2>
+  <div>
+    <button onclick="cargarTodo()">Actualizar</button>
+    <button class="danger" onclick="cerrarSesion()">Salir</button>
+  </div>
+</header>
+
+<div id="login" class="container">
+  <h2>Login</h2>
+  <input id="email" value="admin.ica@mexa.com">
+  <input id="password" type="password" value="123456">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div id="app" class="container hidden">
+
+<h3>Inventario real por ubicación</h3>
+<div id="inventario"></div>
+
+<h3>Crear producto</h3>
+<input id="pNombre" placeholder="Nombre">
+<input id="pCodigo" placeholder="Código">
+<input id="pCant" type="number" value="1">
+<select id="pUbicacion"></select>
+<button onclick="crearProducto()">Guardar producto</button>
+
+</div>
+
+<script>
+const API="https://mexa-core-1.onrender.com";
+
+function headers(){
+  return {
+    "Content-Type":"application/json",
+    "Authorization":"Bearer "+localStorage.getItem("token")
+  };
+}
+
+async function login(){
+  let res=await fetch(API+"/auth/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      email:document.getElementById("email").value,
+      password:document.getElementById("password").value
+    })
+  });
+
+  let data=await res.json();
+  localStorage.setItem("token",data.access_token);
+
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+
+  cargarTodo();
+}
+
+function cerrarSesion(){
+  localStorage.removeItem("token");
+  location.reload();
+}
+
+async function cargarTodo(){
+
+  let inv=await fetch(API+"/inventario-ubicaciones/resumen",{headers:headers()});
+  let data=await inv.json();
+
+  let ubicaciones=await fetch(API+"/ubicaciones/ubicaciones/",{headers:headers()});
+  let u=await ubicaciones.json();
+
+  let select=document.getElementById("pUbicacion");
+  select.innerHTML="";
+  u.forEach(x=>{
+    select.innerHTML+=`<option value="${x.id}">${x.nombre}</option>`;
+  });
+
+  let div=document.getElementById("inventario");
+
+  div.innerHTML=`
+  <table class="table">
+  <tr><th>Ubicación</th><th>Producto</th><th>Cantidad</th></tr>
+  ${data.map(x=>`
+    <tr>
+      <td>${x.ubicacion}</td>
+      <td>${x.producto}</td>
+      <td>${x.cantidad}</td>
+    </tr>
+  `).join("")}
+  </table>
+  `;
+}
+
 async function crearProducto(){
 
-  let ubicacionSelect=document.getElementById("pUbicacion");
-  let ubicacionId=ubicacionSelect.value;
-  let ubicacionNombre=ubicacionSelect.options[ubicacionSelect.selectedIndex]?.dataset?.nombre || "";
-  let cantidadInicial=Number(document.getElementById("pCant").value);
+  let ubicacionId=document.getElementById("pUbicacion").value;
+  let cantidad=Number(document.getElementById("pCant").value);
 
-  let body={
-    nombre:document.getElementById("pNombre").value.trim(),
-    codigo:document.getElementById("pCodigo").value.trim(),
-    cantidad:0,
-    ubicacion:ubicacionNombre,
-    tipo:document.getElementById("pTipo").value,
-    precio:0
-  };
+  let res=await fetch(API+"/productos/productos/",{
+    method:"POST",
+    headers:headers(),
+    body:JSON.stringify({
+      nombre:document.getElementById("pNombre").value,
+      codigo:document.getElementById("pCodigo").value,
+      cantidad:0,
+      ubicacion:"",
+      tipo:"consumible",
+      precio:0
+    })
+  });
 
-  if(!body.nombre || !body.codigo || !ubicacionId){
-    alert("Falta nombre, código o ubicación");
+  let producto=await res.json();
+
+  let entrada=await fetch(API+"/movimientos/movimientos/",{
+    method:"POST",
+    headers:headers(),
+    body:JSON.stringify({
+      producto_id:producto.id,
+      ubicacion_id:Number(ubicacionId),
+      tipo:"entrada",
+      cantidad:cantidad,
+      usuario:"frontend",
+      recibe:"Alta producto",
+      empleado:"",
+      nota:"Stock inicial"
+    })
+  });
+
+  if(!entrada.ok){
+    alert("Producto creado PERO sin stock real");
     return;
   }
 
-  if(!cantidadInicial || cantidadInicial<=0){
-    alert("Cantidad inválida");
-    return;
-  }
-
-  let creado=null;
-
-  try{
-    let res=await fetch(API+"/productos/productos/",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify(body)
-    });
-
-    if(!res.ok){
-      let txt=await res.text();
-      alert("Error creando producto: "+txt);
-      return;
-    }
-
-    creado=await res.json();
-
-  }catch(e){
-    alert("Error de conexión creando producto");
-    return;
-  }
-
-  // 🔥 AHORA VALIDAMOS LA ENTRADA
-  try{
-    let resEntrada=await fetch(API+"/movimientos/movimientos/",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify({
-        producto_id:creado.id,
-        ubicacion_id:Number(ubicacionId),
-        tipo:"entrada",
-        cantidad:cantidadInicial,
-        usuario:"frontend",
-        recibe:"Alta de producto",
-        empleado:"",
-        nota:"Producto creado con stock inicial"
-      })
-    });
-
-    if(!resEntrada.ok){
-      let error=await resEntrada.json();
-      alert("Producto creado PERO FALLÓ la entrada: "+error.detail);
-      return;
-    }
-
-  }catch(e){
-    alert("Producto creado PERO error en entrada");
-    return;
-  }
-
-  document.getElementById("pNombre").value="";
-  document.getElementById("pCodigo").value="";
-  document.getElementById("pCant").value=1;
-
-  await cargarTodo();
-
-  alert("Producto creado correctamente con stock real");
+  alert("Producto creado con stock real");
+  cargarTodo();
 }
+
+if(localStorage.getItem("token")){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  cargarTodo();
+}
+</script>
+
+</body>
+</html>
