@@ -63,7 +63,7 @@ h3{margin-top:28px;margin-bottom:10px}
   <div class="kpis">
     <div class="kpi"><span class="small">Ubicaciones</span><br><b id="kUbicaciones">0</b></div>
     <div class="kpi"><span class="small">Productos</span><br><b id="kProductos">0</b></div>
-    <div class="kpi"><span class="small">Stock total</span><br><b id="kStock">0</b></div>
+    <div class="kpi"><span class="small">Stock total real</span><br><b id="kStock">0</b></div>
     <div class="kpi"><span class="small">Movimientos</span><br><b id="kMovimientos">0</b></div>
   </div>
 
@@ -71,7 +71,7 @@ h3{margin-top:28px;margin-bottom:10px}
   <div id="grid" class="grid"></div>
   <div id="productosUbicacion" class="resumenUbicacion hidden"></div>
 
-  <h3>Inventario por ubicación</h3>
+  <h3>Inventario real por ubicación</h3>
   <div id="inventarioUbicacion"></div>
 
   <h3>Crear ubicación</h3>
@@ -92,20 +92,17 @@ h3{margin-top:28px;margin-bottom:10px}
   <input id="pNombre" placeholder="Nombre">
   <input id="pCodigo" placeholder="Código / Nº Serie">
   <input id="pCant" type="number" value="1">
-
   <select id="pTipo">
     <option value="herramienta">Herramienta</option>
     <option value="consumible">Consumible</option>
     <option value="epp">EPP</option>
     <option value="material">Material</option>
   </select>
-
   <select id="pUbicacion"></select>
   <button onclick="crearProducto()">Guardar producto</button>
 
   <h3>Registrar salida</h3>
-  <select id="sProducto"></select>
-  <select id="sUbicacion"></select>
+  <select id="sInventario"></select>
   <input id="sCantidad" type="number" value="1" placeholder="Cantidad">
   <input id="sRecibe" placeholder="Quién recibe">
   <input id="sNota" placeholder="Nota / frente de trabajo">
@@ -136,6 +133,7 @@ const API="https://mexa-core-1.onrender.com";
 let ubicacionesPantalla=[];
 let productosPantalla=[];
 let movimientosPantalla=[];
+let inventarioResumen=[];
 let ubicacionSeleccionada="";
 
 function tokenActual(){
@@ -195,6 +193,7 @@ function unirPorCodigo(base, extras){
 
 function nombreProductoMovimiento(m){
   if(m.producto_nombre) return m.producto_nombre;
+  if(m.producto) return m.producto;
   if(m.nombre) return m.nombre;
 
   let producto=productosPantalla.find(p=>String(p.id)===String(m.producto_id));
@@ -204,18 +203,29 @@ function nombreProductoMovimiento(m){
   return "-";
 }
 
+function nombreUbicacionPorId(id){
+  let inv=inventarioResumen.find(x=>String(x.ubicacion_id)===String(id));
+  if(inv) return inv.ubicacion;
+
+  let u=ubicacionesPantalla.find(x=>String(x.id)===String(id));
+  if(u) return u.nombre;
+
+  return "-";
+}
+
 function unirMovimientosSinDuplicados(locales, backend){
   const mapa={};
 
   [...backend, ...locales].forEach(m=>{
     const nombre=nombreProductoMovimiento(m);
     const clave=[
+      m.id || "",
       m.tipo || "",
       nombre || "",
       m.cantidad || "",
       m.recibe || "",
       m.nota || "",
-      m.ubicacion || m.ubicacion_salida || "",
+      m.ubicacion_id || m.ubicacion || m.ubicacion_salida || "",
       m.fecha || m.created_at || ""
     ].join("|");
 
@@ -271,6 +281,7 @@ async function cargarTodo(){
   let ubicacionesBackend=[];
   let productosBackend=[];
   let movimientosBackend=[];
+  let inventarioBackend=[];
 
   try{
     let resU=await fetch(API+"/ubicaciones/ubicaciones/?t="+Date.now(),{
@@ -289,6 +300,14 @@ async function cargarTodo(){
   }catch(e){}
 
   try{
+    let resI=await fetch(API+"/inventario-ubicaciones/resumen?t="+Date.now(),{
+      headers:headers(),
+      cache:"no-store"
+    });
+    if(resI.ok) inventarioBackend=await resI.json();
+  }catch(e){}
+
+  try{
     let resM=await fetch(API+"/movimientos/movimientos/?t="+Date.now(),{
       headers:headers(),
       cache:"no-store"
@@ -298,6 +317,7 @@ async function cargarTodo(){
 
   ubicacionesPantalla=unirPorNombre(ubicacionesBackend,getLocalUbicaciones());
   productosPantalla=unirPorCodigo(productosBackend,getLocalProductos());
+  inventarioResumen=inventarioBackend || [];
   movimientosPantalla=unirMovimientosSinDuplicados(getLocalMovimientos(),movimientosBackend);
 
   renderKpis();
@@ -312,9 +332,13 @@ async function cargarTodo(){
 }
 
 function renderKpis(){
+  const stockReal=inventarioResumen.length
+    ? inventarioResumen.reduce((s,p)=>s+Number(p.cantidad || 0),0)
+    : productosPantalla.reduce((s,p)=>s+Number(p.cantidad || 0),0);
+
   document.getElementById("kUbicaciones").innerText=ubicacionesPantalla.length;
   document.getElementById("kProductos").innerText=productosPantalla.length;
-  document.getElementById("kStock").innerText=productosPantalla.reduce((s,p)=>s+Number(p.cantidad || 0),0);
+  document.getElementById("kStock").innerText=stockReal;
   document.getElementById("kMovimientos").innerText=movimientosPantalla.length;
 }
 
@@ -332,20 +356,29 @@ function renderUbicaciones(){
   }
 
   ubicacionesPantalla.forEach(u=>{
-    let total=productosPantalla
-      .filter(p=>p.ubicacion===u.nombre)
-      .reduce((s,p)=>s+Number(p.cantidad || 0),0);
+    let total=0;
+
+    if(inventarioResumen.length){
+      total=inventarioResumen
+        .filter(x=>String(x.ubicacion_id)===String(u.id) || x.ubicacion===u.nombre)
+        .reduce((s,x)=>s+Number(x.cantidad || 0),0);
+    }else{
+      total=productosPantalla
+        .filter(p=>p.ubicacion===u.nombre)
+        .reduce((s,p)=>s+Number(p.cantidad || 0),0);
+    }
 
     grid.innerHTML+=`
       <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva" : ""}" onclick="mostrarProductosUbicacion('${u.nombre}')">
         <b>${u.nombre}</b><br>
         <span class="small">Tipo: ${u.tipo || "-"}</span><br>
         <span class="small">Responsable: ${u.responsable || "Sin responsable"}</span><br>
-        <span class="badge">Stock total: ${total}</span>
+        <span class="badge">Stock real: ${total}</span>
         <span class="badge">Clic para ver productos</span>
       </div>
     `;
-    select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
+
+    select.innerHTML+=`<option value="${u.id}" data-nombre="${u.nombre}">${u.nombre}</option>`;
   });
 }
 
@@ -353,8 +386,15 @@ function mostrarProductosUbicacion(nombre){
   ubicacionSeleccionada=nombre;
 
   let div=document.getElementById("productosUbicacion");
-  let productos=productosPantalla.filter(p=>p.ubicacion===nombre);
   let ubicacion=ubicacionesPantalla.find(u=>u.nombre===nombre);
+
+  let productos=[];
+
+  if(inventarioResumen.length){
+    productos=inventarioResumen.filter(x=>x.ubicacion===nombre);
+  }else{
+    productos=productosPantalla.filter(p=>p.ubicacion===nombre);
+  }
 
   div.classList.remove("hidden");
 
@@ -369,7 +409,7 @@ function mostrarProductosUbicacion(nombre){
       <b>${nombre}</b><br>
       <span class="small">Responsable: ${ubicacion?.responsable || "Sin responsable"}</span><br><br>
       ${productos.map(p=>`
-        <div class="small">• ${p.nombre} — ${p.codigo || "-"} — Stock: <b>${p.cantidad ?? 0}</b></div>
+        <div class="small">• ${p.producto || p.nombre} — ${p.codigo || "-"} — Stock real: <b>${p.cantidad ?? 0}</b></div>
       `).join("")}
     `;
   }
@@ -380,40 +420,25 @@ function mostrarProductosUbicacion(nombre){
 function renderInventarioPorUbicacion(){
   let div=document.getElementById("inventarioUbicacion");
 
-  if(ubicacionesPantalla.length===0){
-    div.innerHTML="<p>No hay ubicaciones para mostrar inventario</p>";
+  if(inventarioResumen.length===0){
+    div.innerHTML=`
+      <div class="card">
+        <p>No hay inventario real por ubicación todavía.</p>
+        <p class="small">Crea una entrada o registra un producto con stock para llenar esta tabla.</p>
+      </div>
+    `;
     return;
   }
 
-  let filas=[];
-
-  ubicacionesPantalla.forEach(u=>{
-    let productos=productosPantalla.filter(p=>p.ubicacion===u.nombre);
-
-    if(productos.length===0){
-      filas.push(`
-        <tr>
-          <td>${u.nombre}</td>
-          <td>${u.responsable || "Sin responsable"}</td>
-          <td>-</td>
-          <td>-</td>
-          <td>0</td>
-        </tr>
-      `);
-    }else{
-      productos.forEach(p=>{
-        filas.push(`
-          <tr>
-            <td>${u.nombre}</td>
-            <td>${u.responsable || "Sin responsable"}</td>
-            <td>${p.nombre}</td>
-            <td>${p.codigo || "-"}</td>
-            <td><b>${p.cantidad ?? 0}</b></td>
-          </tr>
-        `);
-      });
-    }
-  });
+  let filas=inventarioResumen.map(x=>`
+    <tr>
+      <td>${x.ubicacion || "-"}</td>
+      <td>${x.tipo_ubicacion || "-"}</td>
+      <td>${x.producto || "-"}</td>
+      <td>${x.codigo || "-"}</td>
+      <td><b>${x.cantidad ?? 0}</b></td>
+    </tr>
+  `);
 
   div.innerHTML=`
     <div class="card">
@@ -421,10 +446,10 @@ function renderInventarioPorUbicacion(){
         <thead>
           <tr>
             <th>Ubicación</th>
-            <th>Responsable</th>
+            <th>Tipo ubicación</th>
             <th>Producto</th>
             <th>Código</th>
-            <th>Cantidad</th>
+            <th>Cantidad real</th>
           </tr>
         </thead>
         <tbody>${filas.join("")}</tbody>
@@ -441,47 +466,39 @@ function renderProductos(){
     return;
   }
 
-  div.innerHTML=productosPantalla.map(p=>`
-    <div class="card">
-      <b>${p.nombre}</b><br>
-      <span class="small">Código / Nº Serie: ${p.codigo || "-"}</span><br>
-      <span class="small">Tipo: ${p.tipo || "-"}</span><br>
-      <span class="small">Ubicación: ${p.ubicacion || "Sin ubicación"}</span><br>
-      <span class="badge">Stock: ${p.cantidad ?? 0}</span>
-    </div>
-  `).join("");
+  div.innerHTML=productosPantalla.map(p=>{
+    let stockReal=inventarioResumen
+      .filter(x=>String(x.producto_id)===String(p.id))
+      .reduce((s,x)=>s+Number(x.cantidad || 0),0);
+
+    return `
+      <div class="card">
+        <b>${p.nombre}</b><br>
+        <span class="small">Código / Nº Serie: ${p.codigo || "-"}</span><br>
+        <span class="small">Tipo: ${p.tipo || "-"}</span><br>
+        <span class="small">Ubicación original: ${p.ubicacion || "Sin ubicación"}</span><br>
+        <span class="badge">Stock real: ${inventarioResumen.length ? stockReal : (p.cantidad ?? 0)}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderSelectSalida(){
-  let selectProducto=document.getElementById("sProducto");
-  let selectUbicacion=document.getElementById("sUbicacion");
+  let select=document.getElementById("sInventario");
+  select.innerHTML="";
 
-  selectProducto.innerHTML="";
-  selectUbicacion.innerHTML="";
-
-  if(productosPantalla.length===0){
-    selectProducto.innerHTML="<option value=''>Sin productos</option>";
-  }else{
-    productosPantalla.forEach(p=>{
-      selectProducto.innerHTML+=`
-        <option value="${p.codigo}">
-          ${p.nombre} | ${p.codigo} | ${p.ubicacion || "-"} | Stock: ${p.cantidad ?? 0}
-        </option>
-      `;
-    });
+  if(inventarioResumen.length===0){
+    select.innerHTML="<option value=''>Sin inventario real</option>";
+    return;
   }
 
-  if(ubicacionesPantalla.length===0){
-    selectUbicacion.innerHTML="<option value=''>Sin ubicaciones</option>";
-  }else{
-    ubicacionesPantalla.forEach(u=>{
-      selectUbicacion.innerHTML+=`
-        <option value="${u.nombre}">
-          ${u.nombre}
-        </option>
-      `;
-    });
-  }
+  inventarioResumen.forEach(x=>{
+    select.innerHTML+=`
+      <option value="${x.producto_id}|${x.ubicacion_id}">
+        ${x.producto} | ${x.codigo} | ${x.ubicacion} | Stock: ${x.cantidad}
+      </option>
+    `;
+  });
 }
 
 function renderSelectTraspaso(){
@@ -498,8 +515,8 @@ function renderSelectTraspaso(){
   }else{
     productosPantalla.forEach(p=>{
       producto.innerHTML+=`
-        <option value="${p.codigo}">
-          ${p.nombre} | ${p.codigo} | Actual: ${p.ubicacion || "-"} | Stock: ${p.cantidad ?? 0}
+        <option value="${p.id}">
+          ${p.nombre} | ${p.codigo || "-"}
         </option>
       `;
     });
@@ -512,8 +529,8 @@ function renderSelectTraspaso(){
   }
 
   ubicacionesPantalla.forEach(u=>{
-    origen.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
-    destino.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
+    origen.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;
+    destino.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;
   });
 }
 
@@ -533,12 +550,14 @@ function renderMovimientos(){
       if(m.tipo==="entrada") clase="entrada";
       if(m.tipo==="traspaso") clase="traspaso";
 
+      let ubicacionTexto=m.ubicacion || m.ubicacion_salida || nombreUbicacionPorId(m.ubicacion_id);
+
       return `
         <div class="card ${clase}">
           <b>${m.tipo || "salida"}</b> — ${m.cantidad || 0} de 
           <b>${nombreProductoMovimiento(m)}</b><br>
           <span class="small">Responsable / recibe: ${m.recibe || m.usuario || "Sin nombre"}</span><br>
-          <span class="small">Ubicación: ${m.ubicacion || m.ubicacion_salida || "-"}</span><br>
+          <span class="small">Ubicación: ${ubicacionTexto}</span><br>
           <span class="small">Nota: ${m.nota || "-"}</span><br>
           <span class="small">Fecha: ${m.created_at || m.fecha || "Ahora"}</span>
         </div>
@@ -583,21 +602,31 @@ async function crearUbicacion(){
 }
 
 async function crearProducto(){
+  let ubicacionSelect=document.getElementById("pUbicacion");
+  let ubicacionId=ubicacionSelect.value;
+  let ubicacionNombre=ubicacionSelect.options[ubicacionSelect.selectedIndex]?.dataset?.nombre || "";
+  let cantidadInicial=Number(document.getElementById("pCant").value);
+
   let body={
     nombre:document.getElementById("pNombre").value.trim(),
     codigo:document.getElementById("pCodigo").value.trim(),
-    cantidad:Number(document.getElementById("pCant").value),
-    ubicacion:document.getElementById("pUbicacion").value,
+    cantidad:0,
+    ubicacion:ubicacionNombre,
     tipo:document.getElementById("pTipo").value,
     precio:0
   };
 
-  if(!body.nombre || !body.codigo || !body.ubicacion){
+  if(!body.nombre || !body.codigo || !ubicacionId){
     alert("Falta nombre, código/serie o ubicación");
     return;
   }
 
-  let creado=body;
+  if(!cantidadInicial || cantidadInicial<=0){
+    alert("Cantidad inválida");
+    return;
+  }
+
+  let creado=null;
 
   try{
     let res=await fetch(API+"/productos/productos/",{
@@ -614,46 +643,61 @@ async function crearProducto(){
         alert("Ya existe ese código/serie. Cambia el número de serie.");
         return;
       }
+      alert("No se pudo crear producto");
+      return;
     }
+  }catch(e){
+    alert("Error de conexión creando producto");
+    return;
+  }
+
+  try{
+    await fetch(API+"/movimientos/movimientos/",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        producto_id:creado.id,
+        ubicacion_id:Number(ubicacionId),
+        tipo:"entrada",
+        cantidad:cantidadInicial,
+        usuario:"frontend",
+        recibe:"Alta de producto",
+        empleado:"",
+        nota:"Producto creado con stock inicial"
+      })
+    });
   }catch(e){}
-
-  let locales=getLocalProductos();
-  locales=unirPorCodigo(locales,[creado]);
-  setLocalProductos(locales);
-
-  let movs=getLocalMovimientos();
-  movs.push({
-    tipo:"entrada",
-    producto_id:creado.id || null,
-    producto_nombre:creado.nombre,
-    codigo:creado.codigo,
-    cantidad:creado.cantidad,
-    recibe:"Alta de producto",
-    nota:"Producto creado en inventario",
-    ubicacion:creado.ubicacion,
-    fecha:new Date().toLocaleString()
-  });
-  setLocalMovimientos(movs);
 
   document.getElementById("pNombre").value="";
   document.getElementById("pCodigo").value="";
   document.getElementById("pCant").value=1;
 
   await cargarTodo();
-  alert("Producto creado y mostrado abajo");
+  alert("Producto creado con stock real por ubicación");
 }
 
 async function registrarSalida(){
-  let codigo=document.getElementById("sProducto").value;
+  let valor=document.getElementById("sInventario").value;
   let cantidad=Number(document.getElementById("sCantidad").value);
   let recibe=document.getElementById("sRecibe").value.trim();
   let nota=document.getElementById("sNota").value.trim();
-  let ubicacion=document.getElementById("sUbicacion").value;
 
-  let producto=productosPantalla.find(p=>p.codigo===codigo);
+  if(!valor){
+    alert("Selecciona producto con ubicación");
+    return;
+  }
 
-  if(!producto){
-    alert("Selecciona producto");
+  let partes=valor.split("|");
+  let productoId=Number(partes[0]);
+  let ubicacionId=Number(partes[1]);
+
+  let inv=inventarioResumen.find(x=>
+    String(x.producto_id)===String(productoId) &&
+    String(x.ubicacion_id)===String(ubicacionId)
+  );
+
+  if(!inv){
+    alert("No se encontró inventario real");
     return;
   }
 
@@ -662,81 +706,54 @@ async function registrarSalida(){
     return;
   }
 
-  if(cantidad > Number(producto.cantidad || 0)){
-    alert("No hay suficiente stock");
+  if(cantidad > Number(inv.cantidad || 0)){
+    alert("No hay suficiente stock en esa ubicación");
     return;
   }
 
-  let movimiento={
-    tipo:"salida",
-    producto_id:producto.id || null,
-    producto_nombre:producto.nombre,
-    codigo:producto.codigo,
-    cantidad:cantidad,
-    recibe:recibe || "Sin nombre",
-    nota:nota || "-",
-    ubicacion:ubicacion || producto.ubicacion || "-",
-    fecha:new Date().toLocaleString()
-  };
-
-  let guardadoBackend=false;
-
   try{
-    if(producto.id){
-      let res=await fetch(API+"/movimientos/movimientos/",{
-        method:"POST",
-        headers:headers(),
-        body:JSON.stringify({
-          producto_id:producto.id,
-          tipo:"salida",
-          cantidad:cantidad,
-          recibe:movimiento.recibe,
-          nota:movimiento.nota,
-          usuario:"frontend"
-        })
-      });
+    let res=await fetch(API+"/movimientos/movimientos/",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        producto_id:productoId,
+        ubicacion_id:ubicacionId,
+        tipo:"salida",
+        cantidad:cantidad,
+        recibe:recibe || "Sin nombre",
+        empleado:"",
+        nota:nota || "-",
+        usuario:"frontend"
+      })
+    });
 
-      if(res.ok){
-        guardadoBackend=true;
-      }
+    if(!res.ok){
+      let error=await res.json();
+      alert(error.detail || "No se pudo registrar salida");
+      return;
     }
-  }catch(e){}
-
-  producto.cantidad=Number(producto.cantidad || 0)-cantidad;
-  if(producto.cantidad<0) producto.cantidad=0;
-
-  let productosLocales=getLocalProductos();
-  productosLocales=unirPorCodigo(productosLocales,[producto]);
-  setLocalProductos(productosLocales);
-
-  let movimientosLocales=getLocalMovimientos();
-  movimientosLocales.push(movimiento);
-  setLocalMovimientos(movimientosLocales);
+  }catch(e){
+    alert("Error de conexión registrando salida");
+    return;
+  }
 
   document.getElementById("sCantidad").value=1;
   document.getElementById("sRecibe").value="";
   document.getElementById("sNota").value="";
 
   await cargarTodo();
-
-  if(guardadoBackend){
-    alert("Salida registrada");
-  }else{
-    alert("Salida registrada en demo local");
-  }
+  alert("Salida registrada y descontada del inventario real");
 }
 
 async function registrarTraspaso(){
-  let codigo=document.getElementById("tProducto").value;
-  let origen=document.getElementById("tOrigen").value;
-  let destino=document.getElementById("tDestino").value;
+  let productoId=Number(document.getElementById("tProducto").value);
+  let origenId=Number(document.getElementById("tOrigen").value);
+  let destinoId=Number(document.getElementById("tDestino").value);
   let cantidad=Number(document.getElementById("tCantidad").value);
   let responsable=document.getElementById("tResponsable").value.trim();
   let nota=document.getElementById("tNota").value.trim();
 
-  let producto=productosPantalla.find(p=>p.codigo===codigo);
-
-  if(!producto){
+  if(!productoId){
     alert("Selecciona producto");
     return;
   }
@@ -746,36 +763,44 @@ async function registrarTraspaso(){
     return;
   }
 
-  if(cantidad > Number(producto.cantidad || 0)){
-    alert("No hay suficiente stock para traspasar");
-    return;
-  }
-
-  if(origen===destino){
+  if(origenId===destinoId){
     alert("Origen y destino no pueden ser iguales");
     return;
   }
 
-  let movimiento={
-    tipo:"traspaso",
-    producto_id:producto.id || null,
-    producto_nombre:producto.nombre,
-    codigo:producto.codigo,
-    cantidad:cantidad,
-    recibe:responsable || "Movimiento interno",
-    nota:nota || `Traspaso de ${origen} a ${destino}`,
-    ubicacion:`${origen} → ${destino}`,
-    fecha:new Date().toLocaleString()
-  };
+  try{
+    let res=await fetch(API+"/traspasos/traspasos/",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        producto_id:productoId,
+        ubicacion_origen_id:origenId,
+        ubicacion_destino_id:destinoId,
+        cantidad:cantidad
+      })
+    });
 
-  producto.ubicacion=destino;
-
-  let productosLocales=getLocalProductos();
-  productosLocales=unirPorCodigo(productosLocales,[producto]);
-  setLocalProductos(productosLocales);
+    if(!res.ok){
+      let error=await res.json();
+      alert(error.detail || "No se pudo registrar traspaso");
+      return;
+    }
+  }catch(e){
+    alert("Error de conexión registrando traspaso");
+    return;
+  }
 
   let movimientosLocales=getLocalMovimientos();
-  movimientosLocales.push(movimiento);
+  movimientosLocales.push({
+    tipo:"traspaso",
+    producto_id:productoId,
+    producto_nombre:productosPantalla.find(p=>String(p.id)===String(productoId))?.nombre || "-",
+    cantidad:cantidad,
+    recibe:responsable || "Movimiento interno",
+    nota:nota || "Traspaso entre ubicaciones",
+    ubicacion:`${nombreUbicacionPorId(origenId)} → ${nombreUbicacionPorId(destinoId)}`,
+    fecha:new Date().toLocaleString()
+  });
   setLocalMovimientos(movimientosLocales);
 
   document.getElementById("tCantidad").value=1;
