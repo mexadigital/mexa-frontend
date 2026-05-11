@@ -524,17 +524,35 @@ function renderSelectTraspaso(){
   origen.innerHTML="";
   destino.innerHTML="";
 
-  if(productosPantalla.length===0){
-    producto.innerHTML="<option value=''>Sin productos</option>";
-  }else{
-    productosPantalla.forEach(p=>{
-      producto.innerHTML+=`
-        <option value="${p.id}">
-          ${p.nombre} | ${p.codigo || "-"}
-        </option>
-      `;
-    });
-  }
+  let productosParaTraspaso = [];
+
+if(inventarioResumen.length){
+  const mapa = {};
+  inventarioResumen.forEach(x=>{
+    if(x.producto_id){
+      mapa[x.producto_id] = {
+        id: x.producto_id,
+        nombre: x.producto,
+        codigo: x.codigo
+      };
+    }
+  });
+  productosParaTraspaso = Object.values(mapa);
+}else{
+  productosParaTraspaso = productosPantalla;
+}
+
+if(productosParaTraspaso.length===0){
+  producto.innerHTML="<option value=''>Sin productos</option>";
+}else{
+  productosParaTraspaso.forEach(p=>{
+    producto.innerHTML+=`
+      <option value="${p.id}">
+        ${p.nombre} | ${p.codigo || "-"}
+      </option>
+    `;
+  });
+}
 
   if(ubicacionesPantalla.length===0){
     origen.innerHTML="<option value=''>Sin ubicaciones</option>";
