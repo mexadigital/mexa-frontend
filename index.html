@@ -618,10 +618,13 @@ async function crearUbicacion(){
 
 async function crearProducto(){
   let ubicacionSelect = document.getElementById("pUbicacion");
-  if(!ubicacionId || ubicacionId === "undefined" || ubicacionId === "null"){
-      alert("Esa ubicación no tiene ID real en base de datos. Crea otra ubicación nueva desde el sistema y úsala.");
-  return;
-}
+
+  if(!ubicacionSelect || !ubicacionSelect.value){
+    alert("Selecciona una ubicación válida");
+    return;
+  }
+
+  let ubicacionId = Number(ubicacionSelect.value);
   let ubicacionNombre = ubicacionSelect.options[ubicacionSelect.selectedIndex]?.dataset?.nombre || "";
   let cantidadInicial = Number(document.getElementById("pCant").value);
 
@@ -634,13 +637,8 @@ async function crearProducto(){
     precio: 0
   };
 
-  if(!body.nombre || !body.codigo || !ubicacionId){
-    alert("Falta nombre, código/serie o ubicación");
-    return;
-  }
-
-  if(!cantidadInicial || cantidadInicial <= 0){
-    alert("Cantidad inválida");
+  if(!body.nombre || !body.codigo){
+    alert("Falta nombre o código");
     return;
   }
 
@@ -655,12 +653,6 @@ async function crearProducto(){
 
     if(!res.ok){
       let txt = await res.text();
-
-      if(txt.includes("Ya existe")){
-        alert("Ya existe ese código/serie. Cambia el número de serie.");
-        return;
-      }
-
       alert("Error creando producto: " + txt);
       return;
     }
@@ -672,37 +664,36 @@ async function crearProducto(){
     return;
   }
 
-  // 🔥 Entrada real obligatoria
+  // Entrada automática
   try{
     let resEntrada = await fetch(API + "/movimientos/movimientos/", {
       method: "POST",
       headers: headers(),
       body: JSON.stringify({
-      producto_id: creado.id,
-      ubicacion_id: Number(ubicacionId),
-      tipo: "entrada",
-      cantidad: cantidadInicial,
-      usuario: "frontend",
-      recibe: "Alta de producto",
-      empleado: "",
-      nota: "Producto creado con stock inicial"
-})
+        producto_id: creado.id,
+        ubicacion_id: ubicacionId,
+        tipo: "entrada",
+        cantidad: cantidadInicial,
+        usuario: "frontend",
+        recibe: "Alta de producto",
+        empleado: "",
+        nota: "Producto creado con stock inicial"
+      })
     });
 
     if(!resEntrada.ok){
-  let error = await resEntrada.text();
-  alert("Producto creado, pero FALLÓ la entrada: " + error);
-  await cargarTodo();
-  return;
-}
-    
+      let error = await resEntrada.text();
+      alert("Producto creado, pero FALLÓ la entrada: " + error);
+      await cargarTodo();
+      return;
+    }
+
   }catch(e){
     alert("Producto creado, pero error en entrada");
     await cargarTodo();
     return;
   }
 
-  // limpiar inputs
   document.getElementById("pNombre").value = "";
   document.getElementById("pCodigo").value = "";
   document.getElementById("pCant").value = 1;
@@ -711,7 +702,7 @@ async function crearProducto(){
 
   alert("Producto creado correctamente con stock real");
 }
-
+  
 async function registrarSalida(){
   let valor=document.getElementById("sInventario").value;
   let cantidad=Number(document.getElementById("sCantidad").value);
