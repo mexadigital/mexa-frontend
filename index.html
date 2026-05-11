@@ -814,7 +814,7 @@ async function registrarTraspaso(){
   }
 
   try{
-    let res=await fetch(API+"/traspasos/traspasos/",{
+    let res=await fetch(API+"/traspasos/",{
       method:"POST",
       headers:headers(),
       body:JSON.stringify({
