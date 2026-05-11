@@ -369,7 +369,7 @@ function renderUbicaciones(){
     }
 
     grid.innerHTML+=`
-      <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva" : ""}" onclick="mostrarProductosUbicacion('${u.nombre}')">
+      <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva" : ""}" onclick="mostrarProductosUbicacion(${JSON.stringify(u.nombre).replace(/"/g,'&quot;')})">
         <b>${u.nombre}</b><br>
         <span class="small">Tipo: ${u.tipo || "-"}</span><br>
         <span class="small">Responsable: ${u.responsable || "Sin responsable"}</span><br>
