@@ -601,19 +601,20 @@ async function crearUbicacion(){
   alert("Ubicación creada y mostrada");
 }
 
-async function crearProducto(){
-  let ubicacionSelect=document.getElementById("pUbicacion");
-  let ubicacionId=ubicacionSelect.value;
-  let ubicacionNombre=ubicacionSelect.options[ubicacionSelect.selectedIndex]?.dataset?.nombre || "";
-  let cantidadInicial=Number(document.getElementById("pCant").value);
 
-  let body={
-    nombre:document.getElementById("pNombre").value.trim(),
-    codigo:document.getElementById("pCodigo").value.trim(),
-    cantidad:0,
-    ubicacion:ubicacionNombre,
-    tipo:document.getElementById("pTipo").value,
-    precio:0
+async function crearProducto(){
+  let ubicacionSelect = document.getElementById("pUbicacion");
+  let ubicacionId = ubicacionSelect.value;
+  let ubicacionNombre = ubicacionSelect.options[ubicacionSelect.selectedIndex]?.dataset?.nombre || "";
+  let cantidadInicial = Number(document.getElementById("pCant").value);
+
+  let body = {
+    nombre: document.getElementById("pNombre").value.trim(),
+    codigo: document.getElementById("pCodigo").value.trim(),
+    cantidad: 0,
+    ubicacion: ubicacionNombre,
+    tipo: document.getElementById("pTipo").value,
+    precio: 0
   };
 
   if(!body.nombre || !body.codigo || !ubicacionId){
@@ -621,59 +622,77 @@ async function crearProducto(){
     return;
   }
 
-  if(!cantidadInicial || cantidadInicial<=0){
+  if(!cantidadInicial || cantidadInicial <= 0){
     alert("Cantidad inválida");
     return;
   }
 
-  let creado=null;
+  let creado = null;
 
   try{
-    let res=await fetch(API+"/productos/productos/",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify(body)
+    let res = await fetch(API + "/productos/productos/", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(body)
     });
 
-    if(res.ok){
-      creado=await res.json();
-    }else{
-      let txt=await res.text();
+    if(!res.ok){
+      let txt = await res.text();
+
       if(txt.includes("Ya existe")){
         alert("Ya existe ese código/serie. Cambia el número de serie.");
         return;
       }
-      alert("No se pudo crear producto");
+
+      alert("Error creando producto: " + txt);
       return;
     }
+
+    creado = await res.json();
+
   }catch(e){
     alert("Error de conexión creando producto");
     return;
   }
 
+  // 🔥 Entrada real obligatoria
   try{
-    await fetch(API+"/movimientos/movimientos/",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify({
-        producto_id:creado.id,
-        ubicacion_id:Number(ubicacionId),
-        tipo:"entrada",
-        cantidad:cantidadInicial,
-        usuario:"frontend",
-        recibe:"Alta de producto",
-        empleado:"",
-        nota:"Producto creado con stock inicial"
+    let resEntrada = await fetch(API + "/movimientos/movimientos/", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        producto_id: creado.id,
+        ubicacion_id: Number(ubicacionId),
+        tipo: "entrada",
+        cantidad: cantidadInicial,
+        usuario: "frontend",
+        recibe: "Alta de producto",
+        empleado: "",
+        nota: "Producto creado con stock inicial"
       })
     });
-  }catch(e){}
 
-  document.getElementById("pNombre").value="";
-  document.getElementById("pCodigo").value="";
-  document.getElementById("pCant").value=1;
+    if(!resEntrada.ok){
+      let error = await resEntrada.json();
+      alert("Producto creado, pero FALLÓ la entrada: " + (error.detail || "Error"));
+      await cargarTodo();
+      return;
+    }
+
+  }catch(e){
+    alert("Producto creado, pero error en entrada");
+    await cargarTodo();
+    return;
+  }
+
+  // limpiar inputs
+  document.getElementById("pNombre").value = "";
+  document.getElementById("pCodigo").value = "";
+  document.getElementById("pCant").value = 1;
 
   await cargarTodo();
-  alert("Producto creado con stock real por ubicación");
+
+  alert("Producto creado correctamente con stock real");
 }
 
 async function registrarSalida(){
