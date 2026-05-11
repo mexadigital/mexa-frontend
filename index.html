@@ -604,7 +604,7 @@ async function crearUbicacion(){
 
 async function crearProducto(){
   let ubicacionSelect = document.getElementById("pUbicacion");
-  let ubicacionId = ubicacionSelect.value;
+  let ubicacionId = ubicacionSelect.value || ubicacionSelect.options[ubicacionSelect.selectedIndex]?.value;
   let ubicacionNombre = ubicacionSelect.options[ubicacionSelect.selectedIndex]?.dataset?.nombre || "";
   let cantidadInicial = Number(document.getElementById("pCant").value);
 
