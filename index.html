@@ -378,7 +378,9 @@ function renderUbicaciones(){
       </div>
     `;
 
-    select.innerHTML+=`<option value="${u.id}" data-nombre="${u.nombre}">${u.nombre}</option>`;
+    if(u.id){
+      select.innerHTML+=`<option value="${u.id}" data-nombre="${u.nombre}">${u.nombre}</option>`;
+}
   });
 }
 
