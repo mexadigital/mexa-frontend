@@ -177,13 +177,25 @@ function setLocalMovimientos(data){
 
 function unirPorNombre(base, extras){
   const mapa={};
-  [...base,...extras].forEach(x=>{
-    if(x && x.nombre) mapa[x.nombre]=x;
+
+  [...extras, ...base].forEach(x=>{
+    if(!x || !x.nombre) return;
+
+    if(!mapa[x.nombre]){
+      mapa[x.nombre]=x;
+      return;
+    }
+
+    // Si una versión tiene ID real y la otra no, conservar la que sí tiene ID
+    if(x.id && !mapa[x.nombre].id){
+      mapa[x.nombre]=x;
+    }
   });
+
   return Object.values(mapa);
 }
-
-function unirPorCodigo(base, extras){
+  
+  function unirPorCodigo(base, extras){
   const mapa={};
   [...base,...extras].forEach(x=>{
     if(x && x.codigo) mapa[x.codigo]=x;
