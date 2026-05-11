@@ -672,12 +672,12 @@ async function crearProducto(){
     });
 
     if(!resEntrada.ok){
-      let error = await resEntrada.json();
-      alert("Producto creado, pero FALLÓ la entrada: " + (error.detail || "Error"));
-      await cargarTodo();
-      return;
-    }
-
+  let error = await resEntrada.text();
+  alert("Producto creado, pero FALLÓ la entrada: " + error);
+  await cargarTodo();
+  return;
+}
+    
   }catch(e){
     alert("Producto creado, pero error en entrada");
     await cargarTodo();
