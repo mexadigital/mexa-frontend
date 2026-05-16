@@ -85,7 +85,8 @@ h3{margin-top:28px;margin-bottom:10px}
     <option value="patio">Patio</option>
   </select>
 
-  <input id="uResp" placeholder="Responsable">
+  <input id="uResp" placeholder="Responsable / mero mero">
+  <input id="uEmpleado" placeholder="Número de empleado">
   <button onclick="crearUbicacion()">Guardar ubicación</button>
 
   <h3>Crear producto</h3>
@@ -186,7 +187,6 @@ function unirPorNombre(base, extras){
       return;
     }
 
-    // Si una versión tiene ID real y la otra no, conservar la que sí tiene ID
     if(x.id && !mapa[x.nombre].id){
       mapa[x.nombre]=x;
     }
@@ -194,8 +194,8 @@ function unirPorNombre(base, extras){
 
   return Object.values(mapa);
 }
-  
-  function unirPorCodigo(base, extras){
+
+function unirPorCodigo(base, extras){
   const mapa={};
   [...base,...extras].forEach(x=>{
     if(x && x.codigo) mapa[x.codigo]=x;
@@ -384,7 +384,10 @@ function renderUbicaciones(){
       <div class="card ${ubicacionSeleccionada===u.nombre ? "ubicacionActiva" : ""}" onclick="mostrarProductosUbicacion(${JSON.stringify(u.nombre).replace(/"/g,'&quot;')})">
         <b>${u.nombre}</b><br>
         <span class="small">Tipo: ${u.tipo || "-"}</span><br>
-        <span class="small">Responsable: ${u.responsable || "Sin responsable"}</span><br>
+        <span class="small">
+          Responsable: ${u.responsable || "Sin responsable"}<br>
+          Empleado: ${u.numero_empleado || "-"}
+        </span><br>
         <span class="badge">Stock real: ${total}</span>
         <span class="badge">Clic para ver productos</span>
       </div>
@@ -392,7 +395,7 @@ function renderUbicaciones(){
 
     if(u.id){
       select.innerHTML+=`<option value="${u.id}" data-nombre="${u.nombre}">${u.nombre}</option>`;
-}
+    }
   });
 }
 
@@ -415,13 +418,19 @@ function mostrarProductosUbicacion(nombre){
   if(productos.length===0){
     div.innerHTML=`
       <b>${nombre}</b><br>
-      <span class="small">Responsable: ${ubicacion?.responsable || "Sin responsable"}</span><br>
+      <span class="small">
+        Responsable: ${ubicacion?.responsable || "Sin responsable"}<br>
+        Empleado: ${ubicacion?.numero_empleado || "-"}
+      </span><br>
       <span class="small">No hay productos en esta ubicación</span>
     `;
   }else{
     div.innerHTML=`
       <b>${nombre}</b><br>
-      <span class="small">Responsable: ${ubicacion?.responsable || "Sin responsable"}</span><br><br>
+      <span class="small">
+        Responsable: ${ubicacion?.responsable || "Sin responsable"}<br>
+        Empleado: ${ubicacion?.numero_empleado || "-"}
+      </span><br><br>
       ${productos.map(p=>`
         <div class="small">• ${p.producto || p.nombre} — ${p.codigo || "-"} — Stock real: <b>${p.cantidad ?? 0}</b></div>
       `).join("")}
@@ -526,33 +535,33 @@ function renderSelectTraspaso(){
 
   let productosParaTraspaso = [];
 
-if(inventarioResumen.length){
-  const mapa = {};
-  inventarioResumen.forEach(x=>{
-    if(x.producto_id){
-      mapa[x.producto_id] = {
-        id: x.producto_id,
-        nombre: x.producto,
-        codigo: x.codigo
-      };
-    }
-  });
-  productosParaTraspaso = Object.values(mapa);
-}else{
-  productosParaTraspaso = productosPantalla;
-}
+  if(inventarioResumen.length){
+    const mapa = {};
+    inventarioResumen.forEach(x=>{
+      if(x.producto_id){
+        mapa[x.producto_id] = {
+          id: x.producto_id,
+          nombre: x.producto,
+          codigo: x.codigo
+        };
+      }
+    });
+    productosParaTraspaso = Object.values(mapa);
+  }else{
+    productosParaTraspaso = productosPantalla;
+  }
 
-if(productosParaTraspaso.length===0){
-  producto.innerHTML="<option value=''>Sin productos</option>";
-}else{
-  productosParaTraspaso.forEach(p=>{
-    producto.innerHTML+=`
-      <option value="${p.id}">
-        ${p.nombre} | ${p.codigo || "-"}
-      </option>
-    `;
-  });
-}
+  if(productosParaTraspaso.length===0){
+    producto.innerHTML="<option value=''>Sin productos</option>";
+  }else{
+    productosParaTraspaso.forEach(p=>{
+      producto.innerHTML+=`
+        <option value="${p.id}">
+          ${p.nombre} | ${p.codigo || "-"}
+        </option>
+      `;
+    });
+  }
 
   if(ubicacionesPantalla.length===0){
     origen.innerHTML="<option value=''>Sin ubicaciones</option>";
@@ -561,8 +570,10 @@ if(productosParaTraspaso.length===0){
   }
 
   ubicacionesPantalla.forEach(u=>{
-    origen.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;
-    destino.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;
+    if(u.id){
+      origen.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;
+      destino.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;
+    }
   });
 }
 
@@ -601,6 +612,7 @@ async function crearUbicacion(){
   let nombre=document.getElementById("uNombre").value.trim();
   let tipo=document.getElementById("uTipo").value;
   let responsable=document.getElementById("uResp").value.trim();
+  let empleado=document.getElementById("uEmpleado").value.trim();
 
   if(!nombre){
     alert("Pon nombre de ubicación");
@@ -611,16 +623,26 @@ async function crearUbicacion(){
     nombre:nombre,
     tipo:tipo,
     responsable:responsable || "Sin responsable",
+    numero_empleado: empleado || "",
     organizacion_id:1
   };
 
   try{
-    await fetch(API+"/ubicaciones/ubicaciones/",{
+    let res=await fetch(API+"/ubicaciones/ubicaciones/",{
       method:"POST",
       headers:headers(),
       body:JSON.stringify(nueva)
     });
-  }catch(e){}
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo crear ubicación: " + error);
+      return;
+    }
+  }catch(e){
+    alert("Error de conexión creando ubicación");
+    return;
+  }
 
   let locales=getLocalUbicaciones();
   locales=unirPorNombre(locales,[nueva]);
@@ -628,11 +650,11 @@ async function crearUbicacion(){
 
   document.getElementById("uNombre").value="";
   document.getElementById("uResp").value="";
+  document.getElementById("uEmpleado").value="";
 
   await cargarTodo();
   alert("Ubicación creada y mostrada");
 }
-
 
 async function crearProducto(){
   let ubicacionSelect = document.getElementById("pUbicacion");
@@ -660,6 +682,11 @@ async function crearProducto(){
     return;
   }
 
+  if(!cantidadInicial || cantidadInicial <= 0){
+    alert("Cantidad inválida");
+    return;
+  }
+
   let creado = null;
 
   try{
@@ -682,7 +709,6 @@ async function crearProducto(){
     return;
   }
 
-  // Entrada automática
   try{
     let resEntrada = await fetch(API + "/movimientos/movimientos/", {
       method: "POST",
@@ -773,8 +799,8 @@ async function registrarSalida(){
     });
 
     if(!res.ok){
-      let error=await res.json();
-      alert(error.detail || "No se pudo registrar salida");
+      let error=await res.text();
+      alert("No se pudo registrar salida: " + error);
       return;
     }
   }catch(e){
