@@ -12,10 +12,13 @@ button{padding:8px 12px;border:none;border-radius:8px;background:#2563eb;color:w
 button:hover{opacity:.9}
 .danger{background:#dc2626}
 .green{background:#16a34a}
+.gray{background:#475569}
+.orange{background:#f59e0b;color:#111827}
 .container{max-width:980px;margin:auto;padding:18px}
 .card{background:#111827;padding:12px;border-radius:12px;margin-bottom:10px;border:1px solid #1f2937}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
-input,select{width:100%;padding:9px;margin:5px 0;background:#020617;color:white;border:1px solid #374151;border-radius:8px;box-sizing:border-box}
+input,select,textarea{width:100%;padding:9px;margin:5px 0;background:#020617;color:white;border:1px solid #374151;border-radius:8px;box-sizing:border-box}
+textarea{min-height:70px;resize:vertical}
 .hidden{display:none}
 #login{max-width:400px;margin:80px auto}
 .status{color:#93c5fd;font-size:13px}
@@ -23,18 +26,28 @@ h3{margin-top:28px;margin-bottom:10px}
 .mov{border-left:4px solid #dc2626}
 .entrada{border-left:4px solid #16a34a}
 .traspaso{border-left:4px solid #f59e0b}
+.vale{border-left:4px solid #38bdf8}
+.valeCerrado{border-left:4px solid #22c55e}
+.valeParcial{border-left:4px solid #f59e0b}
 .card:hover{outline:1px solid #2563eb}
 .ubicacionActiva{outline:2px solid #22c55e}
 .resumenUbicacion{background:#020617;padding:12px;border-radius:12px;margin-bottom:14px;border:1px solid #1f2937}
 .small{font-size:13px;color:#cbd5e1}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .badge{display:inline-block;background:#020617;border:1px solid #334155;padding:3px 8px;border-radius:999px;font-size:12px;color:#cbd5e1;margin-top:4px}
+.badgeBlue{border-color:#38bdf8;color:#bae6fd}
+.badgeGreen{border-color:#22c55e;color:#bbf7d0}
+.badgeOrange{border-color:#f59e0b;color:#fed7aa}
+.badgeRed{border-color:#ef4444;color:#fecaca}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:15px}
 .kpi{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:12px}
 .kpi b{font-size:24px}
 .table{width:100%;border-collapse:collapse}
-.table th,.table td{border-bottom:1px solid #1f2937;padding:8px;text-align:left;font-size:13px}
+.table th,.table td{border-bottom:1px solid #1f2937;padding:8px;text-align:left;font-size:13px;vertical-align:top}
 .table th{color:#93c5fd}
+hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
+.detalleVale{background:#020617;border:1px solid #1f2937;border-radius:10px;padding:10px;margin-top:8px}
 </style>
 </head>
 
@@ -65,6 +78,7 @@ h3{margin-top:28px;margin-bottom:10px}
     <div class="kpi"><span class="small">Productos</span><br><b id="kProductos">0</b></div>
     <div class="kpi"><span class="small">Stock total real</span><br><b id="kStock">0</b></div>
     <div class="kpi"><span class="small">Movimientos</span><br><b id="kMovimientos">0</b></div>
+    <div class="kpi"><span class="small">Vales abiertos</span><br><b id="kVales">0</b></div>
   </div>
 
   <h3>Ubicaciones</h3>
@@ -129,6 +143,92 @@ h3{margin-top:28px;margin-bottom:10px}
   <input id="tNota" placeholder="Nota del traspaso">
   <button class="green" onclick="registrarTraspaso()">Registrar traspaso</button>
 
+  <h3>Vales de resguardo</h3>
+
+  <div class="card vale">
+    <h3 style="margin-top:0">Crear vale</h3>
+
+    <div class="row">
+      <input id="vNumeroFisico" placeholder="Número físico del vale, ejemplo 1587">
+      <input id="vFotoUrl" placeholder="URL foto del vale">
+    </div>
+
+    <div class="row">
+      <input id="vEmpleado" placeholder="Empleado responsable">
+      <input id="vNumeroEmpleado" placeholder="Número de empleado">
+    </div>
+
+    <div class="row">
+      <input id="vPuesto" placeholder="Puesto">
+      <input id="vArea" placeholder="Área / frente">
+    </div>
+
+    <div class="row">
+      <input id="vUbicacionOrigen" placeholder="Ubicación origen, ejemplo M-06">
+      <input id="vUbicacionFisica" value="Carpeta A / A0001-A0050" placeholder="Dónde guardarás el papel físico">
+    </div>
+
+    <textarea id="vNota" placeholder="Nota general del vale"></textarea>
+
+    <h4>Herramientas / artículos del vale</h4>
+    <p class="small">Captura rápido lo que dice el vale físico. No necesita existir en inventario.</p>
+
+    <div class="detalleVale">
+      <div class="row3">
+        <input id="vArt1" placeholder="Artículo 1">
+        <input id="vCant1" type="number" value="1" placeholder="Cantidad">
+        <input id="vObs1" placeholder="Observación">
+      </div>
+    </div>
+
+    <div class="detalleVale">
+      <div class="row3">
+        <input id="vArt2" placeholder="Artículo 2">
+        <input id="vCant2" type="number" value="1" placeholder="Cantidad">
+        <input id="vObs2" placeholder="Observación">
+      </div>
+    </div>
+
+    <div class="detalleVale">
+      <div class="row3">
+        <input id="vArt3" placeholder="Artículo 3">
+        <input id="vCant3" type="number" value="1" placeholder="Cantidad">
+        <input id="vObs3" placeholder="Observación">
+      </div>
+    </div>
+
+    <div class="detalleVale">
+      <div class="row3">
+        <input id="vArt4" placeholder="Artículo 4">
+        <input id="vCant4" type="number" value="1" placeholder="Cantidad">
+        <input id="vObs4" placeholder="Observación">
+      </div>
+    </div>
+
+    <div class="detalleVale">
+      <div class="row3">
+        <input id="vArt5" placeholder="Artículo 5">
+        <input id="vCant5" type="number" value="1" placeholder="Cantidad">
+        <input id="vObs5" placeholder="Observación">
+      </div>
+    </div>
+
+    <button class="green" onclick="crearValeResguardo()">Crear vale de resguardo</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Buscar vales</h3>
+    <div class="row">
+      <input id="buscarVale" placeholder="Buscar por nombre, número empleado, folio A0001, vale físico, área">
+      <button onclick="buscarVales()">Buscar</button>
+    </div>
+    <button class="gray" onclick="cargarValesAbiertos()">Ver solo abiertos/parciales</button>
+    <button class="gray" onclick="cargarVales()">Ver todos</button>
+  </div>
+
+  <h3>Vales capturados</h3>
+  <div id="valesResguardo"></div>
+
   <h3>Productos dados de alta</h3>
   <div id="productos"></div>
 
@@ -144,6 +244,7 @@ let ubicacionesPantalla=[];
 let productosPantalla=[];
 let movimientosPantalla=[];
 let inventarioResumen=[];
+let valesPantalla=[];
 let ubicacionSeleccionada="";
 
 function tokenActual(){
@@ -217,7 +318,6 @@ function esAdmin(){
     return true;
   }
 
-  // Respaldo por si el token no trae rol
   if(email === "admin.ica@mexa.com"){
     return true;
   }
@@ -357,6 +457,19 @@ function unirMovimientosSinDuplicados(locales, backend){
   return Object.values(mapa);
 }
 
+function badgeEstadoVale(estado){
+  if(estado==="cerrado") return `<span class="badge badgeGreen">Cerrado</span>`;
+  if(estado==="parcial") return `<span class="badge badgeOrange">Parcial</span>`;
+  if(estado==="cancelado") return `<span class="badge badgeRed">Cancelado</span>`;
+  return `<span class="badge badgeBlue">Abierto</span>`;
+}
+
+function claseVale(estado){
+  if(estado==="cerrado") return "valeCerrado";
+  if(estado==="parcial") return "valeParcial";
+  return "vale";
+}
+
 /* =========================
    LOGIN
 ========================= */
@@ -455,6 +568,8 @@ async function cargarTodo(){
   inventarioResumen=inventarioBackend || [];
   movimientosPantalla=unirMovimientosSinDuplicados(getLocalMovimientos(),movimientosBackend);
 
+  await cargarValesAbiertos(false);
+
   renderKpis();
   renderUbicaciones();
   renderInventarioPorUbicacion();
@@ -462,6 +577,7 @@ async function cargarTodo(){
   renderSelectSalida();
   renderSelectTraspaso();
   renderMovimientos();
+  renderVales();
 
   aplicarPermisos();
 }
@@ -474,10 +590,13 @@ function renderKpis(){
     ? inventarioResumen.reduce((s,p)=>s+Number(p.cantidad || 0),0)
     : productosPantalla.reduce((s,p)=>s+Number(p.cantidad || 0),0);
 
+  const valesAbiertos=valesPantalla.filter(v=>v.estado_vale==="abierto" || v.estado_vale==="parcial").length;
+
   document.getElementById("kUbicaciones").innerText=ubicacionesPantalla.length;
   document.getElementById("kProductos").innerText=productosPantalla.length;
   document.getElementById("kStock").innerText=stockReal;
   document.getElementById("kMovimientos").innerText=movimientosPantalla.length;
+  document.getElementById("kVales").innerText=valesAbiertos;
 }
 
 function renderUbicaciones(){
@@ -734,6 +853,91 @@ function renderMovimientos(){
         </div>
       `;
     }).join("");
+}
+
+function renderVales(){
+  let div=document.getElementById("valesResguardo");
+
+  if(!div) return;
+
+  if(valesPantalla.length===0){
+    div.innerHTML=`
+      <div class="card">
+        <p>No hay vales capturados todavía.</p>
+        <p class="small">Crea el primer vale físico y el sistema le dará folio A0001.</p>
+      </div>
+    `;
+    renderKpis();
+    return;
+  }
+
+  div.innerHTML=valesPantalla.map(v=>{
+    let detalles=(v.detalles || []);
+
+    let pendientes=detalles.filter(d=>Number(d.cantidad_devuelta || 0) < Number(d.cantidad_entregada || 0));
+
+    let detalleHtml=detalles.map(d=>{
+      let entregada=Number(d.cantidad_entregada || 0);
+      let devuelta=Number(d.cantidad_devuelta || 0);
+      let falta=entregada-devuelta;
+
+      return `
+        <div class="detalleVale">
+          <b>${d.herramienta_nombre || "-"}</b><br>
+          <span class="small">
+            Entregado: ${entregada} |
+            Devuelto: ${devuelta} |
+            Falta: <b>${falta}</b> |
+            Estado: ${d.estado || "-"}
+          </span><br>
+          <span class="small">Obs: ${d.observacion || "-"}</span>
+
+          ${falta > 0 ? `
+            <div class="row" style="margin-top:8px">
+              <input id="dev_${v.id}_${d.id}" type="number" value="${falta}" min="1" max="${falta}">
+              <button class="green" onclick="registrarDevolucion(${v.id},${d.id})">Registrar devolución</button>
+            </div>
+          ` : `<span class="badge badgeGreen">Completo</span>`}
+        </div>
+      `;
+    }).join("");
+
+    let pendientesTexto=pendientes.length
+      ? pendientes.map(d=>{
+          let falta=Number(d.cantidad_entregada || 0)-Number(d.cantidad_devuelta || 0);
+          return `${d.herramienta_nombre} (${falta})`;
+        }).join(", ")
+      : "Sin pendientes";
+
+    let foto=v.foto_url
+      ? `<a href="${v.foto_url}" target="_blank" style="color:#93c5fd">Ver foto</a>`
+      : `<span class="small">Sin foto URL</span>`;
+
+    return `
+      <div class="card ${claseVale(v.estado_vale)}">
+        <b>${v.folio_sistema}</b> ${badgeEstadoVale(v.estado_vale)}<br>
+        <span class="small">Vale físico: ${v.numero_vale_fisico || "-"}</span><br>
+        <span class="small">Empleado: <b>${v.empleado_recibe || "-"}</b> | No. empleado: ${v.numero_empleado || "-"}</span><br>
+        <span class="small">Puesto: ${v.puesto || "-"} | Área/frente: ${v.area_frente || "-"}</span><br>
+        <span class="small">Ubicación origen: ${v.ubicacion_origen || "-"}</span><br>
+        <span class="small">Papel físico: <b>${v.ubicacion_fisica_vale || "-"}</b> | Archivo: ${v.estado_archivo_fisico || "-"}</span><br>
+        <span class="small">Fecha: ${v.fecha_entrega || "-"}</span><br>
+        <span class="small">Nota: ${v.nota || "-"}</span><br>
+        <span class="small">Foto: ${foto}</span><br>
+        <span class="badge ${pendientes.length ? "badgeOrange" : "badgeGreen"}">Pendiente: ${pendientesTexto}</span>
+
+        <hr>
+        ${detalleHtml}
+
+        <div class="row" style="margin-top:10px">
+          <input id="arch_${v.id}" placeholder="Nueva ubicación física del papel">
+          <button class="orange" onclick="moverArchivoFisico(${v.id})">Mover papel físico</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  renderKpis();
 }
 
 /* =========================
@@ -1029,6 +1233,246 @@ async function registrarTraspaso(){
   aplicarPermisos();
 
   alert("Traspaso registrado");
+}
+
+/* =========================
+   VALES DE RESGUARDO
+========================= */
+function obtenerDetallesValeFormulario(){
+  let detalles=[];
+
+  for(let i=1;i<=5;i++){
+    let nombre=document.getElementById(`vArt${i}`).value.trim();
+    let cantidad=Number(document.getElementById(`vCant${i}`).value);
+    let obs=document.getElementById(`vObs${i}`).value.trim();
+
+    if(nombre){
+      detalles.push({
+        herramienta_nombre:nombre,
+        cantidad_entregada:cantidad > 0 ? cantidad : 1,
+        observacion:obs || null
+      });
+    }
+  }
+
+  return detalles;
+}
+
+function limpiarFormularioVale(){
+  document.getElementById("vNumeroFisico").value="";
+  document.getElementById("vFotoUrl").value="";
+  document.getElementById("vEmpleado").value="";
+  document.getElementById("vNumeroEmpleado").value="";
+  document.getElementById("vPuesto").value="";
+  document.getElementById("vArea").value="";
+  document.getElementById("vUbicacionOrigen").value="";
+  document.getElementById("vUbicacionFisica").value="Carpeta A / A0001-A0050";
+  document.getElementById("vNota").value="";
+
+  for(let i=1;i<=5;i++){
+    document.getElementById(`vArt${i}`).value="";
+    document.getElementById(`vCant${i}`).value=1;
+    document.getElementById(`vObs${i}`).value="";
+  }
+}
+
+async function crearValeResguardo(){
+  let detalles=obtenerDetallesValeFormulario();
+
+  let body={
+    numero_vale_fisico:document.getElementById("vNumeroFisico").value.trim() || null,
+    empleado_recibe:document.getElementById("vEmpleado").value.trim(),
+    numero_empleado:document.getElementById("vNumeroEmpleado").value.trim() || null,
+    puesto:document.getElementById("vPuesto").value.trim() || null,
+    area_frente:document.getElementById("vArea").value.trim() || null,
+    ubicacion_origen:document.getElementById("vUbicacionOrigen").value.trim() || null,
+    ubicacion_fisica_vale:document.getElementById("vUbicacionFisica").value.trim() || "Carpeta A",
+    estado_archivo_fisico:"archivado",
+    foto_url:document.getElementById("vFotoUrl").value.trim() || null,
+    nota:document.getElementById("vNota").value.trim() || null,
+    detalles:detalles
+  };
+
+  if(!body.empleado_recibe){
+    alert("Falta empleado responsable");
+    return;
+  }
+
+  if(detalles.length===0){
+    alert("Agrega al menos una herramienta o artículo");
+    return;
+  }
+
+  try{
+    let res=await fetch(API+"/vales-resguardo/",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify(body)
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo crear vale: " + error);
+      return;
+    }
+
+    let data=await res.json();
+
+    limpiarFormularioVale();
+    await cargarValesAbiertos();
+    await cargarTodo();
+
+    alert("Vale creado: " + data.folio_sistema + ". Escríbelo en una esquina del vale físico.");
+
+  }catch(e){
+    alert("Error de conexión creando vale");
+  }
+}
+
+async function cargarVales(renderizar=true){
+  try{
+    let res=await fetch(API+"/vales-resguardo/?t="+Date.now(),{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(res.ok){
+      valesPantalla=await res.json();
+    }else{
+      valesPantalla=[];
+    }
+  }catch(e){
+    valesPantalla=[];
+  }
+
+  if(renderizar){
+    renderVales();
+    renderKpis();
+  }
+}
+
+async function cargarValesAbiertos(renderizar=true){
+  try{
+    let res=await fetch(API+"/vales-resguardo/abiertos?t="+Date.now(),{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(res.ok){
+      valesPantalla=await res.json();
+    }else{
+      valesPantalla=[];
+    }
+  }catch(e){
+    valesPantalla=[];
+  }
+
+  if(renderizar){
+    renderVales();
+    renderKpis();
+  }
+}
+
+async function buscarVales(){
+  let q=document.getElementById("buscarVale").value.trim();
+
+  if(!q){
+    await cargarValesAbiertos();
+    return;
+  }
+
+  try{
+    let res=await fetch(API+"/vales-resguardo/?q="+encodeURIComponent(q)+"&t="+Date.now(),{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo buscar vales: " + error);
+      return;
+    }
+
+    valesPantalla=await res.json();
+    renderVales();
+    renderKpis();
+
+  }catch(e){
+    alert("Error de conexión buscando vales");
+  }
+}
+
+async function registrarDevolucion(valeId,detalleId){
+  let input=document.getElementById(`dev_${valeId}_${detalleId}`);
+  let cantidad=Number(input?.value || 0);
+
+  if(!cantidad || cantidad<=0){
+    alert("Cantidad inválida para devolución");
+    return;
+  }
+
+  let observacion=prompt("Observación de devolución:", "Entregó herramienta / artículo");
+
+  try{
+    let res=await fetch(API+`/vales-resguardo/${valeId}/devolver`,{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        devoluciones:[
+          {
+            detalle_id:detalleId,
+            cantidad_devuelta:cantidad,
+            observacion:observacion || null
+          }
+        ]
+      })
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo registrar devolución: " + error);
+      return;
+    }
+
+    await cargarValesAbiertos();
+    alert("Devolución registrada");
+
+  }catch(e){
+    alert("Error de conexión registrando devolución");
+  }
+}
+
+async function moverArchivoFisico(valeId){
+  let input=document.getElementById(`arch_${valeId}`);
+  let nuevaUbicacion=input.value.trim();
+
+  if(!nuevaUbicacion){
+    alert("Escribe la nueva ubicación física del papel");
+    return;
+  }
+
+  try{
+    let res=await fetch(API+`/vales-resguardo/${valeId}/archivo-fisico`,{
+      method:"PATCH",
+      headers:headers(),
+      body:JSON.stringify({
+        ubicacion_fisica_vale:nuevaUbicacion,
+        estado_archivo_fisico:"archivado"
+      })
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo mover archivo físico: " + error);
+      return;
+    }
+
+    await cargarValesAbiertos();
+    alert("Ubicación física actualizada");
+
+  }catch(e){
+    alert("Error de conexión actualizando archivo físico");
+  }
 }
 
 /* =========================
