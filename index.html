@@ -929,6 +929,22 @@ function renderVales(){
         <hr>
         ${detalleHtml}
 
+        ${(v.estado_vale==="abierto" || v.estado_vale==="parcial") ? `
+          <hr>
+          <div class="detalleVale">
+            <b>Agregar herramienta a ${v.folio_sistema}</b>
+            <p class="small">Úsalo cuando el trabajador vuelve a pedir más herramienta durante el día.</p>
+
+            <div class="row3">
+              <input id="addHerr_${v.id}" placeholder="Nueva herramienta / artículo">
+              <input id="addCant_${v.id}" type="number" value="1" min="1" placeholder="Cantidad">
+              <input id="addObs_${v.id}" placeholder="Observación">
+            </div>
+
+            <button class="green" onclick="agregarHerramientaVale(${v.id})">Agregar al vale</button>
+          </div>
+        ` : ""}
+
         <div class="row" style="margin-top:10px">
           <input id="arch_${v.id}" placeholder="Nueva ubicación física del papel">
           <button class="orange" onclick="moverArchivoFisico(${v.id})">Mover papel físico</button>
@@ -1399,6 +1415,51 @@ async function buscarVales(){
 
   }catch(e){
     alert("Error de conexión buscando vales");
+  }
+}
+
+async function agregarHerramientaVale(valeId){
+  let nombre=document.getElementById(`addHerr_${valeId}`).value.trim();
+  let cantidad=Number(document.getElementById(`addCant_${valeId}`).value);
+  let observacion=document.getElementById(`addObs_${valeId}`).value.trim();
+
+  if(!nombre){
+    alert("Escribe la herramienta o artículo");
+    return;
+  }
+
+  if(!cantidad || cantidad<=0){
+    alert("Cantidad inválida");
+    return;
+  }
+
+  try{
+    let res=await fetch(API+`/vales-resguardo/${valeId}/detalles`,{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        herramienta_nombre:nombre,
+        cantidad_entregada:cantidad,
+        observacion:observacion || null
+      })
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo agregar herramienta: " + error);
+      return;
+    }
+
+    document.getElementById(`addHerr_${valeId}`).value="";
+    document.getElementById(`addCant_${valeId}`).value=1;
+    document.getElementById(`addObs_${valeId}`).value="";
+
+    await cargarValesAbiertos();
+
+    alert("Herramienta agregada al vale");
+
+  }catch(e){
+    alert("Error de conexión agregando herramienta al vale");
   }
 }
 
