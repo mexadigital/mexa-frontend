@@ -48,6 +48,11 @@ h3{margin-top:28px;margin-bottom:10px}
 .table th{color:#93c5fd}
 hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
 .detalleVale{background:#020617;border:1px solid #1f2937;border-radius:10px;padding:10px;margin-top:8px}
+@media(max-width:720px){
+  .row,.row3{grid-template-columns:1fr}
+  header{gap:10px;align-items:flex-start;flex-direction:column}
+  button{width:100%;margin:3px 0}
+}
 </style>
 </head>
 
@@ -175,10 +180,7 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
 
     <div id="contenedorDetallesVale"></div>
 
-    <button class="gray" type="button" onclick="agregarRenglonVale()">
-      + Agregar herramienta
-    </button>
-
+    <button class="gray" type="button" onclick="agregarRenglonVale()">+ Agregar herramienta</button>
     <button class="green" onclick="crearValeResguardo()">Crear vale de resguardo</button>
   </div>
 
@@ -190,6 +192,7 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
     </div>
     <button class="gray" onclick="cargarValesAbiertos()">Ver solo abiertos/parciales</button>
     <button class="gray" onclick="cargarVales()">Ver todos</button>
+    <button class="orange" onclick="revisionBajaEmpleado()">Revisión baja empleado</button>
   </div>
 
   <h3>Vales capturados</h3>
@@ -1426,6 +1429,76 @@ async function buscarVales(){
   }
 }
 
+async function revisionBajaEmpleado(){
+  let q=document.getElementById("buscarVale").value.trim();
+
+  if(!q){
+    alert("Escribe nombre o número de empleado en el buscador");
+    return;
+  }
+
+  try{
+    let res=await fetch(API+"/vales-resguardo/?q="+encodeURIComponent(q)+"&t="+Date.now(),{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo revisar baja: " + error);
+      return;
+    }
+
+    let vales=await res.json();
+
+    let pendientes=[];
+
+    vales.forEach(v=>{
+      if(!(v.estado_vale==="abierto" || v.estado_vale==="parcial")) return;
+
+      (v.detalles || []).forEach(d=>{
+        let entregada=Number(d.cantidad_entregada || 0);
+        let devuelta=Number(d.cantidad_devuelta || 0);
+        let falta=entregada-devuelta;
+
+        if(falta>0){
+          pendientes.push({
+            folio:v.folio_sistema,
+            valeFisico:v.numero_vale_fisico || "-",
+            empleado:v.empleado_recibe || "-",
+            numero:v.numero_empleado || "-",
+            papel:v.ubicacion_fisica_vale || "-",
+            herramienta:d.herramienta_nombre || "-",
+            falta:falta
+          });
+        }
+      });
+    });
+
+    if(pendientes.length===0){
+      alert("LIBRE DE RESGUARDOS: no se encontraron herramientas pendientes para: " + q);
+      valesPantalla=vales;
+      renderVales();
+      renderKpis();
+      return;
+    }
+
+    let msg="NO LIBERAR TODAVÍA\\n\\nPendientes encontrados:\\n\\n";
+    pendientes.forEach(p=>{
+      msg+=`${p.folio} | ${p.empleado} | ${p.herramienta} | Falta: ${p.falta} | Papel: ${p.papel}\\n`;
+    });
+
+    alert(msg);
+
+    valesPantalla=vales;
+    renderVales();
+    renderKpis();
+
+  }catch(e){
+    alert("Error de conexión revisando baja");
+  }
+}
+
 async function agregarHerramientaVale(valeId){
   let nombre=document.getElementById(`addHerr_${valeId}`).value.trim();
   let cantidad=Number(document.getElementById(`addCant_${valeId}`).value);
@@ -1545,7 +1618,7 @@ async function moverArchivoFisico(valeId){
 }
 
 /* =========================
-   RENGÓN INICIAL
+   RENGLÓN INICIAL
 ========================= */
 document.addEventListener("DOMContentLoaded", ()=>{
   const contenedor=document.getElementById("contenedorDetallesVale");
