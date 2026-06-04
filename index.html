@@ -51,7 +51,6 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
 @media(max-width:720px){
   .row,.row3{grid-template-columns:1fr}
   header{gap:10px;align-items:flex-start;flex-direction:column}
-  button{width:100%;margin:3px 0}
 }
 </style>
 </head>
@@ -192,7 +191,6 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
     </div>
     <button class="gray" onclick="cargarValesAbiertos()">Ver solo abiertos/parciales</button>
     <button class="gray" onclick="cargarVales()">Ver todos</button>
-    <button class="orange" onclick="revisionBajaEmpleado()">Revisión baja empleado</button>
   </div>
 
   <h3>Vales capturados</h3>
@@ -446,20 +444,41 @@ function claseVale(estado){
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value.trim();
+  const msg=document.getElementById("msg");
 
-  document.getElementById("msg").innerText="Entrando...";
+  msg.innerText="Entrando...";
 
-  const rutas=["/auth/login","/auth/auth/login"];
+  localStorage.removeItem("token");
+  localStorage.removeItem("mexa_token");
+
+  const rutas=[
+    "/auth/login",
+    "/auth/auth/login"
+  ];
+
+  let ultimoError="";
 
   for(let r of rutas){
     try{
       let res=await fetch(API+r,{
         method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({email,password})
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          email:email,
+          password:password
+        })
       });
 
-      let data=await res.json();
+      let texto=await res.text();
+      let data={};
+
+      try{
+        data=JSON.parse(texto);
+      }catch(e){
+        data={raw:texto};
+      }
 
       if(res.ok && data.access_token){
         guardarToken(data.access_token);
@@ -471,13 +490,20 @@ async function login(){
         await cargarTodo();
         aplicarPermisos();
 
+        msg.innerText="";
         return;
       }
-    }catch(e){}
+
+      ultimoError=`Ruta ${r} respondió ${res.status}: ${texto}`;
+
+    }catch(e){
+      ultimoError=`Ruta ${r} falló: ${e.message}`;
+    }
   }
 
-  document.getElementById("msg").innerText="Error login";
-  alert("Error login");
+  console.error("Error login:", ultimoError);
+  msg.innerText="Error login: " + ultimoError;
+  alert("Error login. Revisa el mensaje debajo del botón.");
 }
 
 function cerrarSesion(){
@@ -1429,76 +1455,6 @@ async function buscarVales(){
   }
 }
 
-async function revisionBajaEmpleado(){
-  let q=document.getElementById("buscarVale").value.trim();
-
-  if(!q){
-    alert("Escribe nombre o número de empleado en el buscador");
-    return;
-  }
-
-  try{
-    let res=await fetch(API+"/vales-resguardo/?q="+encodeURIComponent(q)+"&t="+Date.now(),{
-      headers:headers(),
-      cache:"no-store"
-    });
-
-    if(!res.ok){
-      let error=await res.text();
-      alert("No se pudo revisar baja: " + error);
-      return;
-    }
-
-    let vales=await res.json();
-
-    let pendientes=[];
-
-    vales.forEach(v=>{
-      if(!(v.estado_vale==="abierto" || v.estado_vale==="parcial")) return;
-
-      (v.detalles || []).forEach(d=>{
-        let entregada=Number(d.cantidad_entregada || 0);
-        let devuelta=Number(d.cantidad_devuelta || 0);
-        let falta=entregada-devuelta;
-
-        if(falta>0){
-          pendientes.push({
-            folio:v.folio_sistema,
-            valeFisico:v.numero_vale_fisico || "-",
-            empleado:v.empleado_recibe || "-",
-            numero:v.numero_empleado || "-",
-            papel:v.ubicacion_fisica_vale || "-",
-            herramienta:d.herramienta_nombre || "-",
-            falta:falta
-          });
-        }
-      });
-    });
-
-    if(pendientes.length===0){
-      alert("LIBRE DE RESGUARDOS: no se encontraron herramientas pendientes para: " + q);
-      valesPantalla=vales;
-      renderVales();
-      renderKpis();
-      return;
-    }
-
-    let msg="NO LIBERAR TODAVÍA\\n\\nPendientes encontrados:\\n\\n";
-    pendientes.forEach(p=>{
-      msg+=`${p.folio} | ${p.empleado} | ${p.herramienta} | Falta: ${p.falta} | Papel: ${p.papel}\\n`;
-    });
-
-    alert(msg);
-
-    valesPantalla=vales;
-    renderVales();
-    renderKpis();
-
-  }catch(e){
-    alert("Error de conexión revisando baja");
-  }
-}
-
 async function agregarHerramientaVale(valeId){
   let nombre=document.getElementById(`addHerr_${valeId}`).value.trim();
   let cantidad=Number(document.getElementById(`addCant_${valeId}`).value);
@@ -1635,7 +1591,20 @@ if(tokenActual()){
   document.getElementById("app").classList.remove("hidden");
 
   aplicarPermisos();
-  cargarTodo().then(()=>aplicarPermisos());
+
+  cargarTodo()
+    .then(()=>aplicarPermisos())
+    .catch((e)=>{
+      console.error("Error cargando sesión guardada:", e);
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("mexa_token");
+
+      document.getElementById("app").classList.add("hidden");
+      document.getElementById("login").classList.remove("hidden");
+
+      document.getElementById("msg").innerText="Sesión vencida. Vuelve a entrar.";
+    });
 }
 </script>
 
