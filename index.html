@@ -171,47 +171,13 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
     <textarea id="vNota" placeholder="Nota general del vale"></textarea>
 
     <h4>Herramientas / artículos del vale</h4>
-    <p class="small">Captura rápido lo que dice el vale físico. No necesita existir en inventario.</p>
+    <p class="small">Captura rápido lo que dice el vale físico. No necesita existir en inventario. Puedes agregar todos los renglones que necesites.</p>
 
-    <div class="detalleVale">
-      <div class="row3">
-        <input id="vArt1" placeholder="Artículo 1">
-        <input id="vCant1" type="number" value="1" placeholder="Cantidad">
-        <input id="vObs1" placeholder="Observación">
-      </div>
-    </div>
+    <div id="contenedorDetallesVale"></div>
 
-    <div class="detalleVale">
-      <div class="row3">
-        <input id="vArt2" placeholder="Artículo 2">
-        <input id="vCant2" type="number" value="1" placeholder="Cantidad">
-        <input id="vObs2" placeholder="Observación">
-      </div>
-    </div>
-
-    <div class="detalleVale">
-      <div class="row3">
-        <input id="vArt3" placeholder="Artículo 3">
-        <input id="vCant3" type="number" value="1" placeholder="Cantidad">
-        <input id="vObs3" placeholder="Observación">
-      </div>
-    </div>
-
-    <div class="detalleVale">
-      <div class="row3">
-        <input id="vArt4" placeholder="Artículo 4">
-        <input id="vCant4" type="number" value="1" placeholder="Cantidad">
-        <input id="vObs4" placeholder="Observación">
-      </div>
-    </div>
-
-    <div class="detalleVale">
-      <div class="row3">
-        <input id="vArt5" placeholder="Artículo 5">
-        <input id="vCant5" type="number" value="1" placeholder="Cantidad">
-        <input id="vObs5" placeholder="Observación">
-      </div>
-    </div>
+    <button class="gray" type="button" onclick="agregarRenglonVale()">
+      + Agregar herramienta
+    </button>
 
     <button class="green" onclick="crearValeResguardo()">Crear vale de resguardo</button>
   </div>
@@ -246,6 +212,7 @@ let movimientosPantalla=[];
 let inventarioResumen=[];
 let valesPantalla=[];
 let ubicacionSeleccionada="";
+let contadorRenglonesVale=0;
 
 function tokenActual(){
   return localStorage.getItem("token") || localStorage.getItem("mexa_token") || "";
@@ -1254,19 +1221,58 @@ async function registrarTraspaso(){
 /* =========================
    VALES DE RESGUARDO
 ========================= */
+function agregarRenglonVale(nombre="", cantidad=1, observacion=""){
+  contadorRenglonesVale++;
+
+  const contenedor=document.getElementById("contenedorDetallesVale");
+  if(!contenedor) return;
+
+  const id=contadorRenglonesVale;
+
+  const div=document.createElement("div");
+  div.className="detalleVale";
+  div.id=`renglonVale_${id}`;
+
+  div.innerHTML=`
+    <div class="row3">
+      <input id="vArt_${id}" placeholder="Herramienta / artículo" value="${nombre}">
+      <input id="vCant_${id}" type="number" value="${cantidad}" min="1" placeholder="Cantidad">
+      <input id="vObs_${id}" placeholder="Observación" value="${observacion}">
+    </div>
+    <button class="danger" type="button" onclick="eliminarRenglonVale(${id})">
+      Quitar renglón
+    </button>
+  `;
+
+  contenedor.appendChild(div);
+}
+
+function eliminarRenglonVale(id){
+  const div=document.getElementById(`renglonVale_${id}`);
+  if(div){
+    div.remove();
+  }
+}
+
 function obtenerDetallesValeFormulario(){
   let detalles=[];
 
-  for(let i=1;i<=5;i++){
-    let nombre=document.getElementById(`vArt${i}`).value.trim();
-    let cantidad=Number(document.getElementById(`vCant${i}`).value);
-    let obs=document.getElementById(`vObs${i}`).value.trim();
+  for(let i=1;i<=contadorRenglonesVale;i++){
+    const art=document.getElementById(`vArt_${i}`);
+    const cant=document.getElementById(`vCant_${i}`);
+    const obs=document.getElementById(`vObs_${i}`);
+
+    if(!art || !cant || !obs) continue;
+
+    let nombre=art.value.trim();
+    let cantidad=Number(cant.value);
+    let observacion=obs.value.trim();
 
     if(nombre){
       detalles.push({
         herramienta_nombre:nombre,
         cantidad_entregada:cantidad > 0 ? cantidad : 1,
-        observacion:obs || null
+        observacion:observacion || null
       });
     }
   }
@@ -1285,11 +1291,13 @@ function limpiarFormularioVale(){
   document.getElementById("vUbicacionFisica").value="Carpeta A / A0001-A0050";
   document.getElementById("vNota").value="";
 
-  for(let i=1;i<=5;i++){
-    document.getElementById(`vArt${i}`).value="";
-    document.getElementById(`vCant${i}`).value=1;
-    document.getElementById(`vObs${i}`).value="";
+  const contenedor=document.getElementById("contenedorDetallesVale");
+  if(contenedor){
+    contenedor.innerHTML="";
   }
+
+  contadorRenglonesVale=0;
+  agregarRenglonVale();
 }
 
 async function crearValeResguardo(){
@@ -1535,6 +1543,16 @@ async function moverArchivoFisico(valeId){
     alert("Error de conexión actualizando archivo físico");
   }
 }
+
+/* =========================
+   RENGÓN INICIAL
+========================= */
+document.addEventListener("DOMContentLoaded", ()=>{
+  const contenedor=document.getElementById("contenedorDetallesVale");
+  if(contenedor && contadorRenglonesVale===0){
+    agregarRenglonVale();
+  }
+});
 
 /* =========================
    SESIÓN GUARDADA
