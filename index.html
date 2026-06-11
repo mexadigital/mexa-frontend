@@ -48,6 +48,12 @@ h3{margin-top:28px;margin-bottom:10px}
 .table th{color:#93c5fd}
 hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
 .detalleVale{background:#020617;border:1px solid #1f2937;border-radius:10px;padding:10px;margin-top:8px}
+.liberacionBox{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:14px;margin-top:10px}
+.liberacionLibre{border-color:#22c55e;box-shadow:0 0 0 1px rgba(34,197,94,.25)}
+.liberacionNo{border-color:#ef4444;box-shadow:0 0 0 1px rgba(239,68,68,.25)}
+.liberacionSin{border-color:#38bdf8;box-shadow:0 0 0 1px rgba(56,189,248,.25)}
+.tituloLiberacion{font-size:24px;font-weight:bold;margin-bottom:8px}
+.btnRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 
 @media(max-width:720px){
   .row,.row3{grid-template-columns:1fr}
@@ -190,8 +196,20 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
       <input id="buscarVale" placeholder="Buscar por nombre, número empleado, folio A0001, vale físico, área">
       <button onclick="buscarVales()">Buscar</button>
     </div>
-    <button class="gray" onclick="cargarValesAbiertos()">Ver solo abiertos/parciales</button>
+    <button class="gray" onclick="cargarValesAbiertos()">Ver abiertos / parciales / cerrados pendientes</button>
     <button class="gray" onclick="cargarVales()">Ver todos</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Reporte de bajas y pendientes por empleado</h3>
+    <p class="small">Busca por nombre, número de empleado, folio del sistema o número físico del vale. El sistema dirá si puede salir libre o si debe herramientas.</p>
+
+    <div class="row">
+      <input id="buscarReporteEmpleado" placeholder="Ejemplo: Badillo, 12345, A0001 o VF-001">
+      <button class="orange" onclick="buscarReporteEmpleado()">Revisar liberación</button>
+    </div>
+
+    <div id="resultadoReporteEmpleado"></div>
   </div>
 
   <h3>Vales capturados</h3>
@@ -427,14 +445,16 @@ function unirMovimientosSinDuplicados(locales, backend){
 }
 
 function badgeEstadoVale(estado){
-  if(estado==="cerrado") return `<span class="badge badgeGreen">Cerrado</span>`;
+  if(estado==="cerrado") return `<span class="badge badgeOrange">Cerrado con pendiente</span>`;
   if(estado==="parcial") return `<span class="badge badgeOrange">Parcial</span>`;
+  if(estado==="devuelto") return `<span class="badge badgeGreen">Devuelto completo</span>`;
   if(estado==="cancelado") return `<span class="badge badgeRed">Cancelado</span>`;
   return `<span class="badge badgeBlue">Abierto</span>`;
 }
 
 function claseVale(estado){
-  if(estado==="cerrado") return "valeCerrado";
+  if(estado==="devuelto") return "valeCerrado";
+  if(estado==="cerrado") return "valeParcial";
   if(estado==="parcial") return "valeParcial";
   return "vale";
 }
@@ -625,7 +645,11 @@ function renderKpis(){
     ? inventarioResumen.reduce((s,p)=>s+Number(p.cantidad || 0),0)
     : productosPantalla.reduce((s,p)=>s+Number(p.cantidad || 0),0);
 
-  const valesAbiertos=valesPantalla.filter(v=>v.estado_vale==="abierto" || v.estado_vale==="parcial").length;
+  const valesAbiertos=valesPantalla.filter(v=>
+    v.estado_vale==="abierto" ||
+    v.estado_vale==="parcial" ||
+    v.estado_vale==="cerrado"
+  ).length;
 
   document.getElementById("kUbicaciones").innerText=ubicacionesPantalla.length;
   document.getElementById("kProductos").innerText=productosPantalla.length;
@@ -979,6 +1003,20 @@ function renderVales(){
             <button class="green" onclick="agregarHerramientaVale(${v.id})">Agregar al vale</button>
           </div>
         ` : ""}
+
+        <div class="btnRow">
+          ${(v.estado_vale==="abierto" || v.estado_vale==="parcial") ? `
+            <button class="orange" onclick="cerrarVale(${v.id})">Cerrar vale físico</button>
+          ` : ""}
+
+          ${(v.estado_vale==="cerrado" || v.estado_vale==="parcial") ? `
+            <button class="gray" onclick="reabrirVale(${v.id})">Reabrir vale</button>
+          ` : ""}
+
+          ${(v.estado_vale!=="devuelto" && v.estado_vale!=="cancelado") ? `
+            <button class="danger" onclick="cancelarVale(${v.id})">Cancelar vale</button>
+          ` : ""}
+        </div>
 
         <div class="row" style="margin-top:10px">
           <input id="arch_${v.id}" placeholder="Nueva ubicación física del papel">
@@ -1491,6 +1529,208 @@ async function buscarVales(){
 
   }catch(e){
     alert("Error de conexión buscando vales");
+  }
+}
+
+async function buscarReporteEmpleado(){
+  let q=document.getElementById("buscarReporteEmpleado").value.trim();
+  const div=document.getElementById("resultadoReporteEmpleado");
+
+  if(!q){
+    alert("Escribe nombre, número de empleado, folio o número de vale físico");
+    return;
+  }
+
+  if(div){
+    div.innerHTML=`<div class="liberacionBox liberacionSin">Buscando pendientes...</div>`;
+  }
+
+  try{
+    let res=await fetch(API+"/vales-resguardo/reporte-empleado?q="+encodeURIComponent(q)+"&t="+Date.now(),{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo generar reporte: " + error);
+      return;
+    }
+
+    let data=await res.json();
+    renderReporteEmpleado(data);
+
+  }catch(e){
+    alert("Error de conexión generando reporte");
+  }
+}
+
+function renderReporteEmpleado(data){
+  const div=document.getElementById("resultadoReporteEmpleado");
+  if(!div) return;
+
+  if(!data.encontrado){
+    div.innerHTML=`
+      <div class="liberacionBox liberacionSin">
+        <div class="tituloLiberacion">ℹ️ SIN REGISTROS</div>
+        <p>${data.mensaje || "No se encontraron vales para esa búsqueda."}</p>
+        <p class="small">Si el empleado ya tiene un vale físico, primero captúralo en el sistema.</p>
+      </div>
+    `;
+    return;
+  }
+
+  let empleado=data.empleado || {};
+  let clase=data.puede_salir ? "liberacionLibre" : "liberacionNo";
+  let titulo=data.puede_salir ? "✅ LIBRE" : "⚠️ NO LIBERAR";
+
+  let pendientesHtml="";
+
+  if(data.vales_pendientes && data.vales_pendientes.length){
+    pendientesHtml=data.vales_pendientes.map(v=>{
+      let herramientas=(v.herramientas || []).map(h=>`
+        <tr>
+          <td>${h.herramienta_nombre || "-"}</td>
+          <td>${h.item_code || "-"}</td>
+          <td>${h.serie || "-"}</td>
+          <td>${h.cantidad_entregada ?? 0}</td>
+          <td>${h.cantidad_devuelta ?? 0}</td>
+          <td><b>${h.cantidad_pendiente ?? 0}</b></td>
+          <td>${h.estado || "-"}</td>
+        </tr>
+      `).join("");
+
+      return `
+        <div class="detalleVale">
+          <b>Vale ${v.folio_sistema || "-"}</b> ${badgeEstadoVale(v.estado_vale)}<br>
+          <span class="small">Vale físico: ${v.numero_vale_fisico || "-"} | Área: ${v.area_frente || "-"}</span><br>
+          <span class="small">Papel físico: ${v.ubicacion_fisica_vale || "-"} | Responsable: ${v.responsable || "-"}</span>
+
+          <table class="table" style="margin-top:8px">
+            <thead>
+              <tr>
+                <th>Herramienta</th>
+                <th>Código</th>
+                <th>Serie</th>
+                <th>Entregado</th>
+                <th>Devuelto</th>
+                <th>Pendiente</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>${herramientas}</tbody>
+          </table>
+        </div>
+      `;
+    }).join("");
+  }else{
+    pendientesHtml=`<p class="small">No hay herramientas pendientes por devolver.</p>`;
+  }
+
+  div.innerHTML=`
+    <div class="liberacionBox ${clase}">
+      <div class="tituloLiberacion">${titulo}</div>
+      <p>${data.mensaje || "Reporte generado."}</p>
+
+      <div class="row">
+        <div>
+          <span class="small">Empleado</span><br>
+          <b>${empleado.empleado_recibe || "-"}</b>
+        </div>
+        <div>
+          <span class="small">Número empleado</span><br>
+          <b>${empleado.numero_empleado || "-"}</b>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <span class="small">Puesto</span><br>
+          <b>${empleado.puesto || "-"}</b>
+        </div>
+        <div>
+          <span class="small">Área / frente</span><br>
+          <b>${empleado.area_frente || "-"}</b>
+        </div>
+      </div>
+
+      <p>
+        <span class="badge ${data.puede_salir ? "badgeGreen" : "badgeRed"}">
+          Total pendiente: ${data.total_pendientes || 0}
+        </span>
+      </p>
+
+      ${pendientesHtml}
+    </div>
+  `;
+}
+
+async function cerrarVale(valeId){
+  if(!confirm("¿Cerrar este vale físico? Ya no se podrán agregar más herramientas hasta reabrirlo.")) return;
+
+  try{
+    let res=await fetch(API+`/vales-resguardo/${valeId}/cerrar`,{
+      method:"POST",
+      headers:headers()
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo cerrar vale: " + error);
+      return;
+    }
+
+    await cargarValesAbiertos();
+    alert("Vale cerrado. Si todavía debe herramienta, seguirá saliendo en reporte de bajas.");
+
+  }catch(e){
+    alert("Error de conexión cerrando vale");
+  }
+}
+
+async function reabrirVale(valeId){
+  if(!confirm("¿Reabrir este vale para agregar más herramientas?")) return;
+
+  try{
+    let res=await fetch(API+`/vales-resguardo/${valeId}/reabrir`,{
+      method:"POST",
+      headers:headers()
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo reabrir vale: " + error);
+      return;
+    }
+
+    await cargarValesAbiertos();
+    alert("Vale reabierto");
+
+  }catch(e){
+    alert("Error de conexión reabriendo vale");
+  }
+}
+
+async function cancelarVale(valeId){
+  if(!confirm("¿Cancelar este vale? Úsalo solo si fue una captura equivocada o el vale físico quedó anulado.")) return;
+
+  try{
+    let res=await fetch(API+`/vales-resguardo/${valeId}/cancelar`,{
+      method:"POST",
+      headers:headers()
+    });
+
+    if(!res.ok){
+      let error=await res.text();
+      alert("No se pudo cancelar vale: " + error);
+      return;
+    }
+
+    await cargarValesAbiertos();
+    alert("Vale cancelado");
+
+  }catch(e){
+    alert("Error de conexión cancelando vale");
   }
 }
 
