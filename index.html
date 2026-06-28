@@ -55,6 +55,42 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
 .tituloLiberacion{font-size:24px;font-weight:bold;margin-bottom:8px}
 .btnRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 
+
+/* =========================
+   PANTALLA SPOOLS
+========================= */
+.spoolsShell{display:grid;grid-template-columns:245px 1fr;gap:14px;margin-bottom:24px}
+.spoolsSidebar{background:#020617;border:1px solid #1f2937;border-radius:14px;padding:14px;height:fit-content}
+.spoolsSidebar h3{margin:0 0 12px}
+.treeRoot{font-weight:bold;color:#e2e8f0;margin-bottom:10px}
+.treeArea{color:#4ade80;font-weight:bold;margin:10px 0 6px}
+.treeItem{padding:8px 10px;margin:4px 0;border-radius:8px;background:#0f172a;border:1px solid #1f2937;cursor:pointer;font-size:13px}
+.treeItem:hover,.treeItem.active{border-color:#22c55e;background:#052e16}
+.spoolsMain{min-width:0}
+.spoolsHero{background:linear-gradient(135deg,#111827,#0b1220);border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:12px}
+.spoolsHero h2{margin:0 0 4px}
+.spoolsSearch{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;margin-top:14px}
+.spoolsKpis{display:grid;grid-template-columns:repeat(4,minmax(135px,1fr));gap:10px;margin:12px 0}
+.spoolsKpi{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:12px}
+.spoolsKpi strong{display:block;font-size:25px;margin-top:4px}
+.spoolsTableWrap{overflow:auto;background:#111827;border:1px solid #1f2937;border-radius:12px}
+.spoolsTable{width:100%;border-collapse:collapse;min-width:850px}
+.spoolsTable th,.spoolsTable td{padding:10px;border-bottom:1px solid #1f2937;text-align:left;font-size:13px}
+.spoolsTable th{color:#93c5fd;background:#0b1220;position:sticky;top:0}
+.spoolsAction{padding:5px 8px;font-size:12px;margin-right:4px}
+.sectionTitleRow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 8px}
+.sectionTitleRow h3{margin:0}
+.spoolsEmpty{padding:18px;color:#94a3b8;text-align:center}
+@media(max-width:900px){
+  .spoolsShell{grid-template-columns:1fr}
+  .spoolsSidebar{display:none}
+  .spoolsSearch{grid-template-columns:1fr 1fr}
+  .spoolsKpis{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .spoolsSearch,.spoolsKpis{grid-template-columns:1fr}
+}
+
 @media(max-width:720px){
   .row,.row3{grid-template-columns:1fr}
   header{gap:10px;align-items:flex-start;flex-direction:column}
@@ -83,6 +119,71 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
 <div id="app" class="container hidden">
 
   <p id="estado" class="status"></p>
+
+
+  <section id="pantallaSpools">
+    <div class="spoolsShell">
+      <aside class="spoolsSidebar">
+        <h3>Estructura</h3>
+        <div class="treeRoot">🏭 Almacén General</div>
+        <div class="treeArea">▾ Área: Spools</div>
+        <div id="arbolSpools"></div>
+      </aside>
+
+      <main class="spoolsMain">
+        <div class="spoolsHero">
+          <h2>Almacén General — Área Spools</h2>
+          <div class="small">Consulta herramientas y equipos distribuidos entre naves, contenedores, patios y zonas internas.</div>
+
+          <div class="spoolsSearch">
+            <div>
+              <label class="small">Herramienta, equipo o código</label>
+              <input id="spoolsBuscar" placeholder="Ej. HYTORC, perica, B12M..." oninput="renderPantallaSpools()">
+            </div>
+            <div>
+              <label class="small">Ubicación</label>
+              <select id="spoolsUbicacion" onchange="renderPantallaSpools()"></select>
+            </div>
+            <div>
+              <label class="small">Tipo</label>
+              <select id="spoolsTipo" onchange="renderPantallaSpools()">
+                <option value="">Todos</option>
+                <option value="herramienta">Herramienta</option>
+                <option value="equipo_industrial">Equipo industrial</option>
+                <option value="consumible">Consumible</option>
+                <option value="epp">EPP</option>
+                <option value="material">Material</option>
+              </select>
+            </div>
+            <button class="green" onclick="renderPantallaSpools()">Buscar</button>
+          </div>
+        </div>
+
+        <div class="spoolsKpis">
+          <div class="spoolsKpi"><span class="small">Naves / contenedores</span><strong id="spKUbicaciones">0</strong></div>
+          <div class="spoolsKpi"><span class="small">Productos registrados</span><strong id="spKProductos">0</strong></div>
+          <div class="spoolsKpi"><span class="small">Existencia total</span><strong id="spKStock">0</strong></div>
+          <div class="spoolsKpi"><span class="small">Traspasos registrados</span><strong id="spKTraspasos">0</strong></div>
+        </div>
+
+        <div class="sectionTitleRow">
+          <h3>Inventario del área Spools</h3>
+          <button class="gray" onclick="limpiarFiltrosSpools()">Limpiar filtros</button>
+        </div>
+        <div class="spoolsTableWrap">
+          <table class="spoolsTable">
+            <thead>
+              <tr>
+                <th>Código</th><th>Herramienta / equipo</th><th>Tipo</th><th>Ubicación</th><th>Responsable</th><th>Disponible</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaSpools"></tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  </section>
+
 
   <div class="kpis">
     <div class="kpi"><span class="small">Ubicaciones</span><br><b id="kUbicaciones">0</b></div>
@@ -571,6 +672,137 @@ function cerrarSesion(){
   location.reload();
 }
 
+
+/* =========================
+   DASHBOARD ÁREA SPOOLS
+========================= */
+function inventarioSpoolsNormalizado(){
+  if(inventarioResumen.length){
+    return inventarioResumen.map(x=>{
+      const producto=productosPantalla.find(p=>String(p.id)===String(x.producto_id)) || {};
+      const ubicacion=ubicacionesPantalla.find(u=>String(u.id)===String(x.ubicacion_id)) || {};
+      return {
+        producto_id:x.producto_id,
+        ubicacion_id:x.ubicacion_id,
+        codigo:x.codigo || producto.codigo || "-",
+        nombre:x.producto || producto.nombre || "-",
+        tipo:producto.tipo || "-",
+        ubicacion:x.ubicacion || ubicacion.nombre || "Sin ubicación",
+        responsable:ubicacion.responsable || "Sin responsable",
+        cantidad:Number(x.cantidad || 0)
+      };
+    });
+  }
+
+  return productosPantalla.map(p=>{
+    const ubicacion=ubicacionesPantalla.find(u=>u.nombre===p.ubicacion) || {};
+    return {
+      producto_id:p.id,
+      ubicacion_id:ubicacion.id || null,
+      codigo:p.codigo || "-",
+      nombre:p.nombre || "-",
+      tipo:p.tipo || "-",
+      ubicacion:p.ubicacion || "Sin ubicación",
+      responsable:ubicacion.responsable || "Sin responsable",
+      cantidad:Number(p.cantidad || 0)
+    };
+  });
+}
+
+function prepararFiltrosSpools(){
+  const select=document.getElementById("spoolsUbicacion");
+  if(!select) return;
+
+  const actual=select.value;
+  select.innerHTML='<option value="">Todas</option>';
+  ubicacionesPantalla.forEach(u=>{
+    select.innerHTML+=`<option value="${u.nombre}">${u.nombre}</option>`;
+  });
+  if([...select.options].some(o=>o.value===actual)) select.value=actual;
+}
+
+function seleccionarUbicacionSpools(nombre){
+  const select=document.getElementById("spoolsUbicacion");
+  if(select) select.value=nombre;
+  renderPantallaSpools();
+}
+
+function limpiarFiltrosSpools(){
+  const q=document.getElementById("spoolsBuscar");
+  const u=document.getElementById("spoolsUbicacion");
+  const t=document.getElementById("spoolsTipo");
+  if(q) q.value="";
+  if(u) u.value="";
+  if(t) t.value="";
+  renderPantallaSpools();
+}
+
+function cargarProductoEnTraspaso(productoId,ubicacionId){
+  const p=document.getElementById("tProducto");
+  const o=document.getElementById("tOrigen");
+  if(p) p.value=String(productoId);
+  if(o && ubicacionId) o.value=String(ubicacionId);
+  document.getElementById("tCantidad")?.focus();
+  document.getElementById("tProducto")?.scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function mostrarDetalleSpools(productoId,ubicacionId){
+  const x=inventarioSpoolsNormalizado().find(i=>String(i.producto_id)===String(productoId) && String(i.ubicacion_id)===String(ubicacionId));
+  if(!x) return;
+  alert(`${x.nombre}
+Código: ${x.codigo}
+Tipo: ${x.tipo}
+Ubicación: ${x.ubicacion}
+Responsable: ${x.responsable}
+Disponible: ${x.cantidad}`);
+}
+
+function renderPantallaSpools(){
+  const tabla=document.getElementById("tablaSpools");
+  const arbol=document.getElementById("arbolSpools");
+  if(!tabla || !arbol) return;
+
+  prepararFiltrosSpools();
+
+  const q=(document.getElementById("spoolsBuscar")?.value || "").trim().toLowerCase();
+  const ubicacionFiltro=document.getElementById("spoolsUbicacion")?.value || "";
+  const tipoFiltro=document.getElementById("spoolsTipo")?.value || "";
+  const datos=inventarioSpoolsNormalizado();
+
+  arbol.innerHTML=ubicacionesPantalla.length
+    ? ubicacionesPantalla.map(u=>`<div class="treeItem ${ubicacionFiltro===u.nombre ? "active" : ""}" onclick='seleccionarUbicacionSpools(${JSON.stringify(u.nombre)})'>▣ ${u.nombre}</div>`).join("")
+    : '<div class="small">Sin ubicaciones registradas</div>';
+
+  const filtrados=datos.filter(x=>{
+    const coincideQ=!q || `${x.nombre} ${x.codigo} ${x.ubicacion} ${x.responsable}`.toLowerCase().includes(q);
+    const coincideU=!ubicacionFiltro || x.ubicacion===ubicacionFiltro;
+    const coincideT=!tipoFiltro || x.tipo===tipoFiltro;
+    return coincideQ && coincideU && coincideT;
+  });
+
+  tabla.innerHTML=filtrados.length
+    ? filtrados.map(x=>`<tr>
+        <td><b>${x.codigo}</b></td>
+        <td>${x.nombre}</td>
+        <td>${x.tipo}</td>
+        <td>${x.ubicacion}</td>
+        <td>${x.responsable}</td>
+        <td><span class="badge ${x.cantidad>0 ? "badgeGreen" : "badgeRed"}">${x.cantidad}</span></td>
+        <td>
+          <button class="spoolsAction gray" onclick="mostrarDetalleSpools(${x.producto_id},${x.ubicacion_id || 'null'})">Ver</button>
+          ${x.cantidad>0 && x.ubicacion_id ? `<button class="spoolsAction green" onclick="cargarProductoEnTraspaso(${x.producto_id},${x.ubicacion_id})">Mover</button>` : ""}
+        </td>
+      </tr>`).join("")
+    : '<tr><td colspan="7" class="spoolsEmpty">No hay resultados para estos filtros.</td></tr>';
+
+  const stock=datos.reduce((s,x)=>s+x.cantidad,0);
+  const traspasos=movimientosPantalla.filter(m=>m.tipo==="traspaso").length;
+  document.getElementById("spKUbicaciones").innerText=ubicacionesPantalla.length;
+  document.getElementById("spKProductos").innerText=new Set(datos.map(x=>x.producto_id || x.codigo)).size;
+  document.getElementById("spKStock").innerText=stock;
+  document.getElementById("spKTraspasos").innerText=traspasos;
+}
+
 /* =========================
    CARGA GENERAL
 ========================= */
@@ -633,6 +865,7 @@ async function cargarTodo(){
   renderSelectTraspaso();
   renderMovimientos();
   renderVales();
+  renderPantallaSpools();
 
   aplicarPermisos();
 }
