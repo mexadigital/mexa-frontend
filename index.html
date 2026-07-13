@@ -815,7 +815,7 @@ async function cargarTodo(){
   let inventarioBackend=[];
 
   try{
-    let resU=await fetch(API+"/ubicaciones/ubicaciones/?t="+Date.now(),{
+    let resU=await fetch(API+"/ubicaciones/?t="+Date.now(),{
       headers:headers(),
       cache:"no-store"
     });
@@ -824,7 +824,7 @@ async function cargarTodo(){
   }catch(e){}
 
   try{
-    let resP=await fetch(API+"/productos/productos/?t="+Date.now(),{
+    let resP=await fetch(API+"/productos/?t="+Date.now(),{
       headers:headers(),
       cache:"no-store"
     });
@@ -842,7 +842,7 @@ async function cargarTodo(){
   }catch(e){}
 
   try{
-    let resM=await fetch(API+"/movimientos/movimientos/?t="+Date.now(),{
+    let resM=await fetch(API+"/movimientos/?t="+Date.now(),{
       headers:headers(),
       cache:"no-store"
     });
@@ -1287,7 +1287,7 @@ async function crearUbicacion(){
   };
 
   try{
-    let res=await fetch(API+"/ubicaciones/ubicaciones/",{
+    let res=await fetch(API+"/ubicaciones/",{
       method:"POST",
       headers:headers(),
       body:JSON.stringify(nueva)
@@ -1353,7 +1353,7 @@ async function crearProducto(){
   let creado = null;
 
   try{
-    let res = await fetch(API + "/productos/productos/", {
+    let res = await fetch(API + "/productos/", {
       method: "POST",
       headers: headers(),
       body: JSON.stringify(body)
@@ -1373,7 +1373,7 @@ async function crearProducto(){
   }
 
   try{
-    let resEntrada = await fetch(API + "/movimientos/movimientos/", {
+    let resEntrada = await fetch(API + "/movimientos/", {
       method: "POST",
       headers: headers(),
       body: JSON.stringify({
@@ -1452,7 +1452,7 @@ async function registrarSalida(){
   }
 
   try{
-    let res=await fetch(API+"/movimientos/movimientos/",{
+    let res=await fetch(API+"/movimientos/",{
       method:"POST",
       headers:headers(),
       body:JSON.stringify({
