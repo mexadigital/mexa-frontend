@@ -262,7 +262,7 @@ hr{border:none;border-top:1px solid #1f2937;margin:14px 0}
 
     <div class="row">
       <input id="vNumeroFisico" placeholder="Número físico del vale, ejemplo 1587">
-      <input id="vFotoUrl" placeholder="URL foto del vale">
+      <input id="vFotoArchivo" type="file" accept="image/*" capture="environment">
     </div>
 
     <div class="row">
@@ -1201,8 +1201,9 @@ function renderVales(){
         }).join(", ")
       : "Sin pendientes";
 
+    let fotoUrl=v.foto_url && v.foto_url.startsWith("http") ? v.foto_url : (v.foto_url ? API+v.foto_url : "");
     let foto=v.foto_url
-      ? `<a href="${v.foto_url}" target="_blank" style="color:#93c5fd">Ver foto</a>`
+      ? `<a href="${fotoUrl}" target="_blank" style="color:#93c5fd">Ver foto</a>`
       : `<span class="small">Sin foto URL</span>`;
 
     return `
@@ -1621,7 +1622,7 @@ function obtenerDetallesValeFormulario(){
 
 function limpiarFormularioVale(){
   document.getElementById("vNumeroFisico").value="";
-  document.getElementById("vFotoUrl").value="";
+  document.getElementById("vFotoArchivo").value="";
   document.getElementById("vEmpleado").value="";
   document.getElementById("vNumeroEmpleado").value="";
   document.getElementById("vPuesto").value="";
@@ -1639,7 +1640,30 @@ function limpiarFormularioVale(){
   agregarRenglonVale();
 }
 
+async function subirFotoVale(valeId, archivo){
+  if(!archivo) return null;
+
+  const formData=new FormData();
+  formData.append("archivo", archivo);
+
+  const res=await fetch(API+`/vales-resguardo/${valeId}/foto`,{
+    method:"POST",
+    headers:{
+      "Authorization":"Bearer "+tokenActual()
+    },
+    body:formData
+  });
+
+  if(!res.ok){
+    const error=await res.text();
+    throw new Error(error || "No se pudo subir la foto");
+  }
+
+  return await res.json();
+}
+
 async function crearValeResguardo(){
+  const fotoArchivo=document.getElementById("vFotoArchivo")?.files?.[0] || null;
   let detalles=obtenerDetallesValeFormulario();
 
   let body={
@@ -1651,7 +1675,7 @@ async function crearValeResguardo(){
     ubicacion_origen:document.getElementById("vUbicacionOrigen").value.trim() || null,
     ubicacion_fisica_vale:document.getElementById("vUbicacionFisica").value.trim() || "Carpeta A",
     estado_archivo_fisico:"archivado",
-    foto_url:document.getElementById("vFotoUrl").value.trim() || null,
+    foto_url:null,
     nota:document.getElementById("vNota").value.trim() || null,
     detalles:detalles
   };
@@ -1681,11 +1705,19 @@ async function crearValeResguardo(){
 
     let data=await res.json();
 
+    if(fotoArchivo){
+      try{
+        data=await subirFotoVale(data.id, fotoArchivo);
+      }catch(errorFoto){
+        alert("El vale se creó, pero la foto no pudo subirse: " + errorFoto.message);
+      }
+    }
+
     limpiarFormularioVale();
     await cargarValesAbiertos();
     await cargarTodo();
 
-    alert("Vale creado: " + data.folio_sistema + ". Escríbelo en una esquina del vale físico.");
+    alert("Vale creado: " + data.folio_sistema + ". La foto quedó ligada al vale.");
 
   }catch(e){
     alert("Error de conexión creando vale");
