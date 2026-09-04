@@ -5,35 +5,131 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Capital Parking</title>
 <style>
-body{font-family:Arial,sans-serif;margin:0;background:#0f172a;color:#fff}.wrap{max-width:1100px;margin:auto;padding:20px}.card{background:#1e293b;padding:18px;border-radius:12px;margin-bottom:16px}input,select,button,textarea{width:100%;box-sizing:border-box;padding:10px;margin-top:8px;border-radius:8px;border:0}input,select,textarea{background:#334155;color:#fff}button{background:#16a34a;color:#fff;font-weight:700;cursor:pointer}.secondary{background:#2563eb}.danger{background:#dc2626}.muted{color:#94a3b8}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:9px;border-bottom:1px solid #334155;text-align:left;font-size:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#fff}.wrap{max-width:1180px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.card{background:#1e293b;border:1px solid #334155;padding:16px;border-radius:14px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.kpi{background:#020617;border:1px solid #334155;border-radius:12px;padding:14px}.kpi b{display:block;font-size:28px;margin-top:4px}.muted{color:#94a3b8}.ok{color:#86efac}.warn{color:#fde68a}.dangerText{color:#fca5a5}.hidden{display:none!important}input,select,textarea,button{width:100%;padding:10px;border-radius:9px;border:1px solid #475569;margin-top:7px}input,select,textarea{background:#0f172a;color:#fff}button{background:#16a34a;color:white;font-weight:700;cursor:pointer}.blue{background:#2563eb}.red{background:#dc2626}.gray{background:#475569}.orange{background:#d97706}.smallBtn{width:auto;padding:7px 10px;margin:2px}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{width:auto}.login{max-width:470px;margin:55px auto}.pill{display:inline-block;padding:4px 9px;border-radius:999px;background:#0f172a;border:1px solid #475569;font-size:12px}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{padding:9px;border-bottom:1px solid #334155;text-align:left;font-size:13px;vertical-align:top}th{color:#93c5fd}.tableWrap{overflow:auto}.right{text-align:right}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.toolbar button{width:auto}.sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}label{font-size:13px;color:#cbd5e1}.status{padding:9px 11px;border-radius:10px;background:#020617;border:1px solid #334155;margin-bottom:12px}@media(max-width:800px){.grid,.grid3,.kpis{grid-template-columns:1fr}.top{align-items:flex-start}.actions{flex-direction:column}.actions button{width:100%}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Capital Parking</h1><p class="muted">Respaldo funcional — almacenamiento local del navegador.</p>
-<div class="card">
-<h2>Registrar entrada</h2>
-<div class="grid"><input id="placa" placeholder="Placa / referencia"><select id="tipo"><option>Auto</option><option>Moto</option><option>Camioneta</option></select></div>
-<div class="grid"><input id="tarifa" type="number" value="20" min="0" step="1" placeholder="Tarifa por hora"><input id="notaEntrada" placeholder="Nota de entrada (opcional)"></div>
-<button onclick="registrarEntrada()">Registrar entrada</button>
+  <div id="authView" class="login">
+    <div class="card">
+      <h1>Capital Parking</h1>
+      <p class="muted">Control operativo del estacionamiento</p>
+      <div id="setupBox" class="hidden">
+        <h3>Crear acceso inicial</h3>
+        <p class="muted">Esto se muestra solo la primera vez.</p>
+        <input id="setupNombre" value="Administrador" placeholder="Nombre del administrador">
+        <input id="setupEmail" type="email" placeholder="Correo para iniciar sesión">
+        <input id="setupPassword" type="password" placeholder="Contraseña (mínimo 8 caracteres)">
+        <button onclick="crearAcceso()">Crear acceso y comenzar</button>
+        <hr>
+      </div>
+      <div id="loginBox">
+        <h3>Iniciar sesión</h3>
+        <input id="email" type="email" placeholder="Correo">
+        <input id="password" type="password" placeholder="Contraseña">
+        <button onclick="login()">Entrar</button>
+      </div>
+      <p id="authMsg" class="muted"></p>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div class="top">
+      <div><h1 style="margin-bottom:4px">Capital Parking</h1><span id="usuarioLabel" class="muted"></span></div>
+      <div class="toolbar"><button class="blue" onclick="cargarDashboard()">Actualizar</button><button class="gray" onclick="logout()">Cerrar sesión</button></div>
+    </div>
+
+    <div id="estadoMsg" class="status muted">Conectando...</div>
+
+    <div class="kpis">
+      <div class="kpi"><span class="muted">Ocupados</span><b id="kOcupados">0</b></div>
+      <div class="kpi"><span class="muted">Disponibles</span><b id="kDisponibles">0</b></div>
+      <div class="kpi"><span class="muted">Capacidad</span><b id="kCapacidad">23</b></div>
+      <div class="kpi"><span class="muted">Baños turno</span><b id="kBanos">0</b></div>
+    </div>
+
+    <div id="sinTurno" class="card hidden">
+      <h2>Abrir turno</h2>
+      <p class="muted">Antes de registrar autos o baños, abre el turno.</p>
+      <div class="grid"><div><label>Fondo inicial</label><input id="fondoInicial" type="number" value="0" min="0" step="1"></div><div><label>Nota</label><input id="notaTurno" placeholder="Opcional"></div></div>
+      <button onclick="abrirTurno()">Abrir turno</button>
+    </div>
+
+    <div id="conTurno" class="hidden">
+      <div class="card">
+        <div class="sectionTitle"><div><h2 style="margin:0">Turno activo</h2><span id="turnoLabel" class="muted"></span></div><button class="orange smallBtn" onclick="cerrarTurno()">Cerrar turno / corte</button></div>
+      </div>
+
+      <div class="card">
+        <h2>Registrar entrada</h2>
+        <div class="grid3">
+          <div><label>Placa / referencia</label><input id="placa" placeholder="Ej. ABC-123"></div>
+          <div><label>Tipo</label><select id="tipo"><option value="auto">Auto</option><option value="moto">Moto</option><option value="camioneta">Camioneta</option></select></div>
+          <div><label>Cliente distinguido</label><select id="distinguido"><option value="false">No</option><option value="true">Sí</option></select></div>
+        </div>
+        <div class="grid3">
+          <input id="nombreCliente" placeholder="Nombre del cliente (opcional)">
+          <input id="telefonoCliente" placeholder="Teléfono (opcional)">
+          <input id="notaEntrada" placeholder="Nota de entrada (opcional)">
+        </div>
+        <button onclick="registrarEntrada()">Registrar entrada</button>
+        <div id="tarifas" class="muted" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle"><h2 style="margin:0">Vehículos activos</h2><span class="pill">5 min de tolerancia</span></div>
+        <div id="activos" class="tableWrap"></div>
+      </div>
+
+      <div class="card">
+        <h2>Baño</h2>
+        <div class="grid3">
+          <div><label>Tipo</label><select id="banoTipo" onchange="renderBanoVehiculos()"><option value="externo">Externo — $5</option><option value="estacionamiento">Cliente del estacionamiento — gratis</option></select></div>
+          <div><label>Vehículo relacionado</label><select id="banoMovimiento"><option value="">Sin relación</option></select></div>
+          <div><label>Nota</label><input id="banoNota" placeholder="Opcional"></div>
+        </div>
+        <button class="blue" onclick="registrarBano()">Registrar uso de baño</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Historial reciente</h2>
+      <div id="historial" class="tableWrap"></div>
+    </div>
+  </div>
 </div>
-<div class="card"><h2>Vehículos activos</h2><div id="activos"></div></div>
-<div class="card"><h2>Historial</h2><button class="secondary" onclick="exportar()">Exportar respaldo JSON</button><div id="historial"></div></div>
-</div>
+
 <script>
-const TOLERANCIA_MIN=5;
-let movimientos=JSON.parse(localStorage.getItem('capitalParkingMovimientos')||'[]');
-function guardar(){localStorage.setItem('capitalParkingMovimientos',JSON.stringify(movimientos));render()}
-function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-function registrarEntrada(){const placa=document.getElementById('placa').value.trim()||'SIN PLACA';const tipo=document.getElementById('tipo').value;const tarifa=Number(document.getElementById('tarifa').value||0);const nota=document.getElementById('notaEntrada').value.trim();movimientos.push({id:id(),placa,tipo,tarifa,entrada:new Date().toISOString(),salidaReal:null,cierreSistema:null,estado:'activo',cobro:null,notaEntrada:nota,notaSalida:'',motivoCorreccion:''});document.getElementById('placa').value='';document.getElementById('notaEntrada').value='';guardar()}
-function minutosEntre(a,b){return Math.max(0,Math.floor((new Date(b)-new Date(a))/60000))}
-function calcularCobro(m, salida){const mins=minutosEntre(m.entrada,salida);if(mins<=60+TOLERANCIA_MIN)return m.tarifa;const excedente=mins-(60+TOLERANCIA_MIN);const horasExtra=Math.ceil(excedente/60);return m.tarifa*(1+horasExtra)}
-function salir(idm){const m=movimientos.find(x=>x.id===idm);const ahora=new Date();const propuesta=prompt('Hora real de salida (AAAA-MM-DDTHH:MM). Déjala vacía para usar ahora.','');let salida=ahora;if(propuesta){const d=new Date(propuesta);if(!isNaN(d))salida=d}const diferencia=Math.abs(ahora-salida)/60000;if(diferencia>1){const motivo=prompt('Motivo obligatorio de corrección de hora:','');if(!motivo)return alert('La corrección requiere motivo.');m.motivoCorreccion=motivo}m.salidaReal=salida.toISOString();m.cierreSistema=ahora.toISOString();m.cobro=calcularCobro(m,m.salidaReal);m.estado='cerrado';m.notaSalida=prompt('Nota de salida (opcional):','')||'';guardar()}
-function sinEstacionarse(idm){const m=movimientos.find(x=>x.id===idm);const nota=prompt('Nota / motivo de salida sin estacionarse:','');m.salidaReal=new Date().toISOString();m.cierreSistema=new Date().toISOString();m.cobro=0;m.estado='sin_estacionarse';m.notaSalida=nota||'';guardar()}
+const API='https://mexa-core-1.onrender.com';
+let token=localStorage.getItem('capitalParkingToken')||'';
+let data=null;
+
+function msg(text,type='muted'){const el=document.getElementById('estadoMsg');el.textContent=text;el.className='status '+type}
+function authMsg(text,type='muted'){const el=document.getElementById('authMsg');el.textContent=text;el.className=type}
 function dinero(n){return '$'+Number(n||0).toFixed(2)}
-function render(){const activos=movimientos.filter(m=>m.estado==='activo');document.getElementById('activos').innerHTML=activos.length?'<table><tr><th>Placa</th><th>Tipo</th><th>Entrada</th><th>Acciones</th></tr>'+activos.map(m=>`<tr><td>${m.placa}</td><td>${m.tipo}</td><td>${new Date(m.entrada).toLocaleString()}</td><td><button onclick="salir('${m.id}')">Cobrar salida</button><button class="danger" onclick="sinEstacionarse('${m.id}')">Salió sin estacionarse</button></td></tr>`).join('')+'</table>':'<p class="muted">No hay vehículos activos.</p>';
-const hist=[...movimientos].filter(m=>m.estado!=='activo').reverse();document.getElementById('historial').innerHTML=hist.length?'<table><tr><th>Placa</th><th>Entrada</th><th>Salida real</th><th>Cierre sistema</th><th>Estado</th><th>Cobro</th><th>Notas</th></tr>'+hist.map(m=>`<tr><td>${m.placa}</td><td>${new Date(m.entrada).toLocaleString()}</td><td>${m.salidaReal?new Date(m.salidaReal).toLocaleString():''}</td><td>${m.cierreSistema?new Date(m.cierreSistema).toLocaleString():''}</td><td>${m.estado}</td><td>${dinero(m.cobro)}</td><td>${[m.notaSalida,m.motivoCorreccion].filter(Boolean).join(' | ')}</td></tr>`).join('')+'</table>':'<p class="muted">Sin historial.</p>'}
-function exportar(){const blob=new Blob([JSON.stringify(movimientos,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='capital-parking-backup.json';a.click();URL.revokeObjectURL(a.href)}
-render();
+function fecha(v){return v?new Date(v).toLocaleString():'—'}
+async function api(path,opts={}){const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const r=await fetch(API+path,{...opts,headers});let body={};try{body=await r.json()}catch(e){}if(!r.ok){const detail=body.detail||body.message||('Error '+r.status);throw new Error(detail)}return body}
+
+async function revisarSetup(){try{const r=await fetch(API+'/parking/setup-status');const s=await r.json();document.getElementById('setupBox').classList.toggle('hidden',!!s.configured)}catch(e){authMsg('No se pudo conectar con el servidor. Intenta de nuevo en unos segundos.','dangerText')}}
+async function crearAcceso(){const nombre=document.getElementById('setupNombre').value.trim();const email=document.getElementById('setupEmail').value.trim();const password=document.getElementById('setupPassword').value;try{authMsg('Creando acceso...');await api('/parking/setup',{method:'POST',body:JSON.stringify({nombre,email,password})});document.getElementById('email').value=email;document.getElementById('setupBox').classList.add('hidden');authMsg('Acceso creado. Ahora inicia sesión.','ok')}catch(e){authMsg(e.message,'dangerText')}}
+async function login(){const email=document.getElementById('email').value.trim();const password=document.getElementById('password').value;try{authMsg('Entrando...');const r=await api('/auth/login',{method:'POST',body:JSON.stringify({email,password})});token=r.access_token;localStorage.setItem('capitalParkingToken',token);await arrancar()}catch(e){authMsg(e.message,'dangerText')}}
+function logout(){token='';localStorage.removeItem('capitalParkingToken');data=null;document.getElementById('appView').classList.add('hidden');document.getElementById('authView').classList.remove('hidden');authMsg('Sesión cerrada.');revisarSetup()}
+async function arrancar(){document.getElementById('authView').classList.add('hidden');document.getElementById('appView').classList.remove('hidden');try{await cargarDashboard()}catch(e){if(/401|token|credencial|autentic/i.test(e.message)){logout()}else msg(e.message,'dangerText')}}
+
+async function cargarDashboard(){try{msg('Actualizando...');data=await api('/parking/dashboard');render();msg('Sistema conectado y guardando en la nube.','ok')}catch(e){msg(e.message,'dangerText');throw e}}
+function render(){document.getElementById('usuarioLabel').textContent=(data.usuario?.nombre||'')+' · '+(data.usuario?.email||'');document.getElementById('kOcupados').textContent=data.ocupados;document.getElementById('kDisponibles').textContent=data.disponibles;document.getElementById('kCapacidad').textContent=data.capacidad;document.getElementById('kBanos').textContent=data.banos_turno||0;const hay=!!data.turno;document.getElementById('sinTurno').classList.toggle('hidden',hay);document.getElementById('conTurno').classList.toggle('hidden',!hay);if(hay)document.getElementById('turnoLabel').textContent='Operador: '+data.turno.operador+' · Abierto: '+fecha(data.turno.apertura_at);document.getElementById('tarifas').textContent='Tarifas: '+(data.tarifas||[]).map(t=>t.tipo+' '+dinero(t.precio_hora)+'/h · tolerancia '+t.tolerancia_minutos+' min').join(' | ');renderActivos();renderHistorial();renderBanoVehiculos()}
+function renderActivos(){const a=data.activos||[];document.getElementById('activos').innerHTML=a.length?'<table><thead><tr><th>Placa</th><th>Tipo</th><th>Entrada</th><th>Nota</th><th>Acciones</th></tr></thead><tbody>'+a.map(m=>`<tr><td><b>${m.placa||'SIN PLACA'}</b></td><td>${m.tipo_vehiculo}</td><td>${fecha(m.entrada_at)}</td><td>${m.nota||''}</td><td><div class="actions"><button class="smallBtn" onclick="cobrarSalida(${m.id})">Cobrar salida</button><button class="red smallBtn" onclick="sinEstacionarse(${m.id})">Salió sin estacionarse</button></div></td></tr>`).join('')+'</tbody></table>':'<p class="muted">No hay vehículos dentro.</p>'}
+function renderHistorial(){const h=data.historial||[];document.getElementById('historial').innerHTML=h.length?'<table><thead><tr><th>Placa</th><th>Entrada</th><th>Salida</th><th>Estado</th><th>Min.</th><th>Cobro</th><th>Notas</th></tr></thead><tbody>'+h.map(m=>`<tr><td>${m.placa||''}</td><td>${fecha(m.entrada_at)}</td><td>${fecha(m.salida_real_at)}</td><td>${m.estado}</td><td>${m.minutos_cobrados||0}</td><td>${dinero(m.importe)}</td><td>${[m.motivo_sin_estacionarse,m.nota].filter(Boolean).join(' | ')}</td></tr>`).join('')+'</tbody></table>':'<p class="muted">Sin movimientos cerrados.</p>'}
+function renderBanoVehiculos(){const sel=document.getElementById('banoMovimiento');const actual=sel.value;sel.innerHTML='<option value="">Sin relación</option>'+((data&&data.activos)||[]).map(m=>`<option value="${m.id}">${m.placa} · ${m.tipo_vehiculo}</option>`).join('');if([...sel.options].some(o=>o.value===actual))sel.value=actual}
+
+async function abrirTurno(){try{await api('/parking/turnos/abrir',{method:'POST',body:JSON.stringify({fondo_inicial:Number(document.getElementById('fondoInicial').value||0),nota:document.getElementById('notaTurno').value.trim()||null})});await cargarDashboard()}catch(e){msg(e.message,'dangerText')}}
+async function registrarEntrada(){const body={placa:document.getElementById('placa').value.trim()||null,tipo_vehiculo:document.getElementById('tipo').value,nombre_cliente:document.getElementById('nombreCliente').value.trim()||null,telefono:document.getElementById('telefonoCliente').value.trim()||null,distinguido:document.getElementById('distinguido').value==='true',nota:document.getElementById('notaEntrada').value.trim()||null};try{await api('/parking/entradas',{method:'POST',body:JSON.stringify(body)});['placa','nombreCliente','telefonoCliente','notaEntrada'].forEach(id=>document.getElementById(id).value='');document.getElementById('distinguido').value='false';await cargarDashboard()}catch(e){msg(e.message,'dangerText')}}
+async function cobrarSalida(id){const cambiar=confirm('¿La hora real de salida es ahora?\nAceptar = ahora. Cancelar = capturar otra hora.');let salida_real_at=null,motivo_correccion=null;if(!cambiar){const valor=prompt('Escribe fecha/hora: AAAA-MM-DDTHH:MM');if(!valor)return;const d=new Date(valor);if(isNaN(d))return alert('Fecha inválida');salida_real_at=d.toISOString();motivo_correccion=prompt('Motivo de corrección de hora:')||'';if(!motivo_correccion.trim())return alert('El motivo es obligatorio.')}const nota=prompt('Nota de salida (opcional):')||null;try{const r=await api('/parking/movimientos/'+id+'/salida',{method:'POST',body:JSON.stringify({salida_real_at,motivo_correccion,nota})});alert('Cobro: '+dinero(r.importe));await cargarDashboard()}catch(e){msg(e.message,'dangerText')}}
+async function sinEstacionarse(id){const motivo=prompt('Motivo por el que salió sin estacionarse:');if(!motivo||!motivo.trim())return;try{await api('/parking/movimientos/'+id+'/sin-estacionarse',{method:'POST',body:JSON.stringify({motivo,nota:null})});await cargarDashboard()}catch(e){msg(e.message,'dangerText')}}
+async function registrarBano(){const tipo_cliente=document.getElementById('banoTipo').value;const movimiento_id=document.getElementById('banoMovimiento').value?Number(document.getElementById('banoMovimiento').value):null;const nota=document.getElementById('banoNota').value.trim()||null;try{const r=await api('/parking/banos',{method:'POST',body:JSON.stringify({tipo_cliente,movimiento_id,nota})});document.getElementById('banoNota').value='';alert(tipo_cliente==='externo'?'Baño registrado: '+dinero(r.importe):'Baño de cliente registrado sin cobro');await cargarDashboard()}catch(e){msg(e.message,'dangerText')}}
+async function cerrarTurno(){if(!confirm('¿Cerrar turno y generar corte?'))return;const efectivo=prompt('Efectivo contado al cierre (opcional):','');const nota=prompt('Nota del corte (opcional):','')||null;try{const r=await api('/parking/turnos/cerrar',{method:'POST',body:JSON.stringify({efectivo_cierre:efectivo===''?null:Number(efectivo),nota})});alert('Corte generado\nEstacionamiento: '+dinero(r.total_estacionamiento)+'\nBaños: '+dinero(r.total_banos)+'\nTotal: '+dinero(r.total));await cargarDashboard()}catch(e){msg(e.message,'dangerText')}}
+
+(async()=>{await revisarSetup();if(token){try{await arrancar()}catch(e){}}})();
 </script>
-</body></html>
+</body>
+</html>
