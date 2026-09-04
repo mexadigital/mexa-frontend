@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Capital Parking</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#0f172a;color:#fff}.wrap{max-width:1100px;margin:auto;padding:20px}.card{background:#1e293b;padding:18px;border-radius:12px;margin-bottom:16px}input,select,button,textarea{width:100%;box-sizing:border-box;padding:10px;margin-top:8px;border-radius:8px;border:0}input,select,textarea{background:#334155;color:#fff}button{background:#16a34a;color:#fff;font-weight:700;cursor:pointer}.secondary{background:#2563eb}.danger{background:#dc2626}.muted{color:#94a3b8}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:9px;border-bottom:1px solid #334155;text-align:left;font-size:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Capital Parking</h1><p class="muted">Respaldo funcional — almacenamiento local del navegador.</p>
+<div class="card">
+<h2>Registrar entrada</h2>
+<div class="grid"><input id="placa" placeholder="Placa / referencia"><select id="tipo"><option>Auto</option><option>Moto</option><option>Camioneta</option></select></div>
+<div class="grid"><input id="tarifa" type="number" value="20" min="0" step="1" placeholder="Tarifa por hora"><input id="notaEntrada" placeholder="Nota de entrada (opcional)"></div>
+<button onclick="registrarEntrada()">Registrar entrada</button>
+</div>
+<div class="card"><h2>Vehículos activos</h2><div id="activos"></div></div>
+<div class="card"><h2>Historial</h2><button class="secondary" onclick="exportar()">Exportar respaldo JSON</button><div id="historial"></div></div>
+</div>
+<script>
+const TOLERANCIA_MIN=5;
+let movimientos=JSON.parse(localStorage.getItem('capitalParkingMovimientos')||'[]');
+function guardar(){localStorage.setItem('capitalParkingMovimientos',JSON.stringify(movimientos));render()}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function registrarEntrada(){const placa=document.getElementById('placa').value.trim()||'SIN PLACA';const tipo=document.getElementById('tipo').value;const tarifa=Number(document.getElementById('tarifa').value||0);const nota=document.getElementById('notaEntrada').value.trim();movimientos.push({id:id(),placa,tipo,tarifa,entrada:new Date().toISOString(),salidaReal:null,cierreSistema:null,estado:'activo',cobro:null,notaEntrada:nota,notaSalida:'',motivoCorreccion:''});document.getElementById('placa').value='';document.getElementById('notaEntrada').value='';guardar()}
+function minutosEntre(a,b){return Math.max(0,Math.floor((new Date(b)-new Date(a))/60000))}
+function calcularCobro(m, salida){const mins=minutosEntre(m.entrada,salida);if(mins<=60+TOLERANCIA_MIN)return m.tarifa;const excedente=mins-(60+TOLERANCIA_MIN);const horasExtra=Math.ceil(excedente/60);return m.tarifa*(1+horasExtra)}
+function salir(idm){const m=movimientos.find(x=>x.id===idm);const ahora=new Date();const propuesta=prompt('Hora real de salida (AAAA-MM-DDTHH:MM). Déjala vacía para usar ahora.','');let salida=ahora;if(propuesta){const d=new Date(propuesta);if(!isNaN(d))salida=d}const diferencia=Math.abs(ahora-salida)/60000;if(diferencia>1){const motivo=prompt('Motivo obligatorio de corrección de hora:','');if(!motivo)return alert('La corrección requiere motivo.');m.motivoCorreccion=motivo}m.salidaReal=salida.toISOString();m.cierreSistema=ahora.toISOString();m.cobro=calcularCobro(m,m.salidaReal);m.estado='cerrado';m.notaSalida=prompt('Nota de salida (opcional):','')||'';guardar()}
+function sinEstacionarse(idm){const m=movimientos.find(x=>x.id===idm);const nota=prompt('Nota / motivo de salida sin estacionarse:','');m.salidaReal=new Date().toISOString();m.cierreSistema=new Date().toISOString();m.cobro=0;m.estado='sin_estacionarse';m.notaSalida=nota||'';guardar()}
+function dinero(n){return '$'+Number(n||0).toFixed(2)}
+function render(){const activos=movimientos.filter(m=>m.estado==='activo');document.getElementById('activos').innerHTML=activos.length?'<table><tr><th>Placa</th><th>Tipo</th><th>Entrada</th><th>Acciones</th></tr>'+activos.map(m=>`<tr><td>${m.placa}</td><td>${m.tipo}</td><td>${new Date(m.entrada).toLocaleString()}</td><td><button onclick="salir('${m.id}')">Cobrar salida</button><button class="danger" onclick="sinEstacionarse('${m.id}')">Salió sin estacionarse</button></td></tr>`).join('')+'</table>':'<p class="muted">No hay vehículos activos.</p>';
+const hist=[...movimientos].filter(m=>m.estado!=='activo').reverse();document.getElementById('historial').innerHTML=hist.length?'<table><tr><th>Placa</th><th>Entrada</th><th>Salida real</th><th>Cierre sistema</th><th>Estado</th><th>Cobro</th><th>Notas</th></tr>'+hist.map(m=>`<tr><td>${m.placa}</td><td>${new Date(m.entrada).toLocaleString()}</td><td>${m.salidaReal?new Date(m.salidaReal).toLocaleString():''}</td><td>${m.cierreSistema?new Date(m.cierreSistema).toLocaleString():''}</td><td>${m.estado}</td><td>${dinero(m.cobro)}</td><td>${[m.notaSalida,m.motivoCorreccion].filter(Boolean).join(' | ')}</td></tr>`).join('')+'</table>':'<p class="muted">Sin historial.</p>'}
+function exportar(){const blob=new Blob([JSON.stringify(movimientos,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='capital-parking-backup.json';a.click();URL.revokeObjectURL(a.href)}
+render();
+</script>
+</body></html>
