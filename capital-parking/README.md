@@ -3,7 +3,8 @@
 Esta carpeta es una copia independiente de respaldo creada para evitar depender únicamente del ChatGPT Site.
 
 ## Reglas incluidas
-- Tolerancia de 5 minutos antes de cobrar la siguiente hora/fracción.
+- La primera hora se cobra completa desde la entrada.
+- Hay 5 minutos de tolerancia únicamente antes de cobrar la siguiente hora/fracción.
 - Opción “Salió sin estacionarse” con cobro $0 y nota.
 - Corrección manual de hora real de salida.
 - Si la hora es corregida, se solicita motivo.
