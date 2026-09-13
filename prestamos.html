@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MEXA Préstamos</title>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb}header{padding:16px;background:#020617;display:flex;justify-content:space-between;gap:12px;align-items:center;position:sticky;top:0}main{max-width:1100px;margin:auto;padding:18px}.card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.kpi{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:12px}.kpi b{font-size:24px;display:block;margin-top:4px}input,select,textarea{width:100%;box-sizing:border-box;background:#020617;color:white;border:1px solid #374151;border-radius:8px;padding:10px;margin:5px 0}button,a.btn{border:0;border-radius:8px;padding:9px 12px;background:#2563eb;color:white;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block}.green{background:#16a34a}.orange{background:#f59e0b;color:#111827}.gray{background:#475569}.danger{background:#dc2626}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.small{font-size:13px;color:#94a3b8}.hidden{display:none}.loan{border-left:4px solid #2563eb}.late{border-left-color:#ef4444}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.status{color:#93c5fd}.badge{padding:3px 8px;border-radius:999px;background:#020617;border:1px solid #334155;font-size:12px}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:8px;border-bottom:1px solid #1f2937;text-align:left;font-size:13px}@media(max-width:700px){.row{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.table{display:block;overflow:auto}}
+body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb}header{padding:16px;background:#020617;display:flex;justify-content:space-between;gap:12px;align-items:center;position:sticky;top:0}main{max-width:1100px;margin:auto;padding:18px}.card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.kpi{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:12px}.kpi b{font-size:24px;display:block;margin-top:4px}input,select,textarea{width:100%;box-sizing:border-box;background:#020617;color:white;border:1px solid #374151;border-radius:8px;padding:10px;margin:5px 0}button,a.btn{border:0;border-radius:8px;padding:9px 12px;background:#2563eb;color:white;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block}.green{background:#16a34a}.orange{background:#f59e0b;color:#111827}.gray{background:#475569}.danger{background:#dc2626}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.small{font-size:13px;color:#94a3b8}.hidden{display:none}.loan{border-left:4px solid #2563eb}.late{border-left-color:#ef4444}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.status{color:#93c5fd}.badge{padding:3px 8px;border-radius:999px;background:#020617;border:1px solid #334155;font-size:12px}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:8px;border-bottom:1px solid #1f2937;text-align:left;font-size:13px}.evidence-note{background:#020617;border:1px solid #334155;border-radius:10px;padding:10px;margin-top:10px}.ok{color:#86efac}@media(max-width:700px){.row{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.table{display:block;overflow:auto}}
 </style>
 </head>
 <body>
@@ -52,6 +52,11 @@ body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb}head
         <div class="small" id="simulacion"></div>
         <button onclick="crearPrestamo()">Crear préstamo</button>
       </div>
+    </div>
+
+    <div class="card evidence-note">
+      <b>Video de aceptación</b>
+      <div class="small">Después de crear el préstamo, el cliente puede grabar un video indicando su nombre, el folio, que leyó y entendió el contrato, monto recibido, total a pagar, frecuencia de pago y que acepta voluntariamente las condiciones. Antes de subirlo, confirma que autorizó la grabación y conservación del video.</div>
     </div>
 
     <div class="card">
@@ -125,7 +130,8 @@ function renderPrestamos(){
     <div><b>${p.cliente||('Cliente '+p.cliente_id)}</b> <span class="badge">${p.estado}</span> ${p.dias_mora>0?`<span class="badge">${p.dias_mora} días mora</span>`:''}</div>
     <div class="grid" style="margin-top:8px"><div><span class="small">Capital</span><br>${money(p.capital)}</div><div><span class="small">Pago</span><br>${money(p.pago_programado)} / ${p.frecuencia_pago==='diario_habil'?'día hábil':'semana'}</div><div><span class="small">Pagado</span><br>${money(p.pagado)}</div><div><span class="small">Saldo</span><br><b>${money(p.saldo_total)}</b></div></div>
     <div class="small">${p.plazo_semanas} semanas · ${p.tasa_ciclo_pct}% ciclo · ${p.numero_pagos} pagos · fin ${p.fecha_fin_programada}</div>
-    <div class="actions"><button class="green" onclick="registrarPago(${p.id},${p.pago_programado})">Registrar pago</button><button class="orange" onclick="whatsapp(${p.id},'hoy')">WhatsApp hoy</button>${p.dias_mora>0?`<button class="danger" onclick="whatsapp(${p.id},'atraso')">Aviso atraso</button>`:''}<button class="gray" onclick="whatsapp(${p.id},'saldo')">Enviar saldo</button></div>
+    <input id="video-${p.id}" type="file" accept="video/mp4,video/webm,video/quicktime" class="hidden" onchange="subirVideo(${p.id},this)">
+    <div class="actions"><button class="green" onclick="registrarPago(${p.id},${p.pago_programado})">Registrar pago</button><button class="orange" onclick="whatsapp(${p.id},'hoy')">WhatsApp hoy</button>${p.dias_mora>0?`<button class="danger" onclick="whatsapp(${p.id},'atraso')">Aviso atraso</button>`:''}<button class="gray" onclick="whatsapp(${p.id},'saldo')">Enviar saldo</button><button onclick="document.getElementById('video-${p.id}').click()">Subir video aceptación</button><button class="gray" onclick="verExpediente(${p.id})">Ver expediente</button></div>
   </div>`).join("");
 }
 
@@ -145,7 +151,7 @@ async function crearPrestamo(){
   if(!pCliente.value){alert("Registra primero un cliente");return}
   try{
     const r=await request("/prestamos",{method:"POST",body:JSON.stringify({cliente_id:Number(pCliente.value),capital:Number(pCapital.value),tasa_ciclo_pct:Number(pTasa.value),plazo_semanas:Number(pSemanas.value),frecuencia_pago:pFrecuencia.value,referencia:pReferencia.value,notas:pNotas.value})});
-    alert(`Préstamo creado. Pago programado: ${money(r.pago_programado)}`);pReferencia.value="";pNotas.value="";await cargarTodo();
+    alert(`Préstamo creado. Pago programado: ${money(r.pago_programado)}. Ahora puedes cargar el video de aceptación desde la cartera.`);pReferencia.value="";pNotas.value="";await cargarTodo();
   }catch(e){alert(e.message)}
 }
 async function registrarPago(id,sugerido){
@@ -156,6 +162,34 @@ async function registrarPago(id,sugerido){
 }
 async function whatsapp(id,tipo){
   try{const r=await request(`/prestamos/${id}/whatsapp?tipo=${tipo}`);window.open(r.url,"_blank","noopener")}catch(e){alert(e.message)}
+}
+async function subirVideo(id,input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  const ok=confirm("Confirma que el cliente autorizó expresamente la grabación y conservación de este video y que en el video manifiesta haber leído, entendido y aceptado el contrato.");
+  if(!ok){input.value="";return}
+  const form=new FormData();
+  form.append("archivo",file);
+  form.append("consentimiento_grabacion","true");
+  form.append("declaracion","Cliente manifiesta haber leído, entendido y aceptado el contrato y autoriza conservar este video como evidencia.");
+  document.getElementById("estado").textContent="Subiendo video de aceptación...";
+  try{
+    const res=await fetch(API+`/prestamos/${id}/evidencias/video`,{method:"POST",headers:{"Authorization":"Bearer "+token()},body:form});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||("HTTP "+res.status));
+    alert("Video guardado en el expediente. Huella SHA-256: "+data.sha256);
+    document.getElementById("estado").textContent="Video de aceptación guardado";
+  }catch(e){alert(e.message);document.getElementById("estado").textContent="Error al subir video"}
+  input.value="";
+}
+async function verExpediente(id){
+  try{
+    const rows=await request(`/prestamos/${id}/evidencias`);
+    if(!rows.length){alert("Este préstamo todavía no tiene evidencias cargadas.");return}
+    const resumen=rows.map((x,i)=>`${i+1}. ${x.tipo} · ${x.nombre_original}\nSHA-256: ${x.sha256}\n${new Date(x.created_at).toLocaleString('es-MX')}`).join("\n\n");
+    const abrir=confirm(resumen+"\n\nAceptar para abrir la evidencia más reciente.");
+    if(abrir)window.open(API+rows[0].archivo_url,"_blank","noopener");
+  }catch(e){alert(e.message)}
 }
 if(token()) abrir();
 </script>
