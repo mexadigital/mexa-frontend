@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MEXA Préstamos</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb}header{padding:16px;background:#020617;display:flex;justify-content:space-between;gap:12px;align-items:center;position:sticky;top:0}main{max-width:1100px;margin:auto;padding:18px}.card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.kpi{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:12px}.kpi b{font-size:24px;display:block;margin-top:4px}input,select,textarea{width:100%;box-sizing:border-box;background:#020617;color:white;border:1px solid #374151;border-radius:8px;padding:10px;margin:5px 0}button,a.btn{border:0;border-radius:8px;padding:9px 12px;background:#2563eb;color:white;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block}.green{background:#16a34a}.orange{background:#f59e0b;color:#111827}.gray{background:#475569}.danger{background:#dc2626}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.small{font-size:13px;color:#94a3b8}.hidden{display:none}.loan{border-left:4px solid #2563eb}.late{border-left-color:#ef4444}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.status{color:#93c5fd}.badge{padding:3px 8px;border-radius:999px;background:#020617;border:1px solid #334155;font-size:12px}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:8px;border-bottom:1px solid #1f2937;text-align:left;font-size:13px}@media(max-width:700px){.row{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.table{display:block;overflow:auto}}
+</style>
+</head>
+<body>
+<header>
+  <div><b>MEXA Préstamos</b><div class="small">Piloto de microcrédito y cobranza digital</div></div>
+  <div class="actions"><a class="btn gray" href="index.html">MEXA</a><button onclick="cargarTodo()">Actualizar</button><button class="danger" onclick="salir()">Salir</button></div>
+</header>
+<main>
+  <section id="login" class="card">
+    <h2>Acceso</h2>
+    <div class="row"><input id="email" placeholder="Correo"><input id="password" type="password" placeholder="Contraseña"></div>
+    <button onclick="login()">Entrar</button><span id="loginMsg" class="small"></span>
+  </section>
+
+  <section id="app" class="hidden">
+    <div id="estado" class="status"></div>
+    <div class="grid" style="margin:12px 0">
+      <div class="kpi"><span class="small">Clientes</span><b id="kClientes">0</b></div>
+      <div class="kpi"><span class="small">Préstamos activos</span><b id="kPrestamos">0</b></div>
+      <div class="kpi"><span class="small">Capital colocado</span><b id="kCapital">$0</b></div>
+      <div class="kpi"><span class="small">Saldo por cobrar</span><b id="kSaldo">$0</b></div>
+      <div class="kpi"><span class="small">Morosos</span><b id="kMorosos">0</b></div>
+    </div>
+
+    <div class="row">
+      <div class="card">
+        <h3>Alta de cliente</h3>
+        <input id="cNombre" placeholder="Nombre completo">
+        <div class="row"><input id="cTelefono" placeholder="Teléfono"><input id="cWhatsapp" placeholder="WhatsApp"></div>
+        <input id="cFuente" placeholder="Fuente de ingresos">
+        <div class="row"><input id="cIngreso" type="number" min="0" placeholder="Ingreso estimado"><select id="cFrecuencia"><option value="diaria">Ingreso diario</option><option value="semanal">Ingreso semanal</option><option value="quincenal">Ingreso quincenal</option><option value="mensual">Ingreso mensual</option></select></div>
+        <input id="cLinea" type="number" value="1500" min="1" placeholder="Línea inicial">
+        <textarea id="cNotas" placeholder="Notas"></textarea>
+        <button class="green" onclick="crearCliente()">Guardar cliente</button>
+      </div>
+
+      <div class="card">
+        <h3>Nuevo préstamo</h3>
+        <select id="pCliente"></select>
+        <div class="row"><input id="pCapital" type="number" value="1500" min="1"><input id="pTasa" type="number" value="20" min="0" max="100"></div>
+        <div class="row"><input id="pSemanas" type="number" value="8" min="1" max="52"><select id="pFrecuencia"><option value="diario_habil">Diario hábil</option><option value="semanal">Semanal</option></select></div>
+        <input id="pReferencia" placeholder="Referencia / folio">
+        <textarea id="pNotas" placeholder="Notas del préstamo"></textarea>
+        <div class="small" id="simulacion"></div>
+        <button onclick="crearPrestamo()">Crear préstamo</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Clientes</h3>
+      <div id="clientes"></div>
+    </div>
+
+    <div class="card">
+      <h3>Cartera activa</h3>
+      <div id="prestamos"></div>
+    </div>
+  </section>
+</main>
+<script>
+const API="https://mexa-core-1.onrender.com";
+let clientes=[];
+let prestamos=[];
+const token=()=>localStorage.getItem("token")||localStorage.getItem("mexa_token")||"";
+const headers=()=>({"Content-Type":"application/json","Authorization":"Bearer "+token()});
+const money=n=>new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(Number(n||0));
+
+async function request(path,opts={}){
+  const res=await fetch(API+path,{...opts,headers:{...headers(),...(opts.headers||{})}});
+  const txt=await res.text();
+  let data={};try{data=JSON.parse(txt)}catch(e){data={detail:txt}}
+  if(!res.ok) throw new Error(data.detail||txt||("HTTP "+res.status));
+  return data;
+}
+
+async function login(){
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  const msg=document.getElementById("loginMsg");
+  msg.textContent=" Entrando...";
+  const res=await fetch(API+"/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+  const data=await res.json().catch(()=>({}));
+  const t=data.access_token||data.token;
+  if(!res.ok||!t){msg.textContent=" Error de acceso";return}
+  localStorage.setItem("token",t);localStorage.setItem("mexa_token",t);
+  abrir();
+}
+function salir(){localStorage.removeItem("token");localStorage.removeItem("mexa_token");location.reload()}
+function abrir(){document.getElementById("login").classList.add("hidden");document.getElementById("app").classList.remove("hidden");cargarTodo()}
+
+async function cargarTodo(){
+  document.getElementById("estado").textContent="Cargando cartera...";
+  try{
+    const [d,c,p]=await Promise.all([request("/prestamos/dashboard"),request("/prestamos/clientes"),request("/prestamos/activos")]);
+    clientes=c;prestamos=p;
+    document.getElementById("kClientes").textContent=d.clientes_activos;
+    document.getElementById("kPrestamos").textContent=d.prestamos_activos;
+    document.getElementById("kCapital").textContent=money(d.capital_colocado);
+    document.getElementById("kSaldo").textContent=money(d.saldo_por_cobrar);
+    document.getElementById("kMorosos").textContent=d.morosos;
+    renderClientes();renderPrestamos();llenarClientes();simular();
+    document.getElementById("estado").textContent="Cartera actualizada";
+  }catch(e){document.getElementById("estado").textContent="Error: "+e.message}
+}
+
+function llenarClientes(){
+  const s=document.getElementById("pCliente");
+  s.innerHTML=clientes.length?clientes.map(c=>`<option value="${c.id}">${c.nombre} — línea ${money(c.linea_credito)}</option>`).join(""):'<option value="">Primero registra un cliente</option>';
+}
+function renderClientes(){
+  document.getElementById("clientes").innerHTML=clientes.length?`<table class="table"><thead><tr><th>Cliente</th><th>Ingreso</th><th>Línea</th><th>Score</th><th>WhatsApp</th></tr></thead><tbody>${clientes.map(c=>`<tr><td><b>${c.nombre}</b><div class="small">${c.fuente_ingresos||""}</div></td><td>${money(c.ingreso_estimado)} / ${c.frecuencia_ingreso||"-"}</td><td>${money(c.linea_credito)}</td><td>${c.score_interno}</td><td>${c.whatsapp||c.telefono||"-"}</td></tr>`).join("")}</tbody></table>`:'<div class="small">Aún no hay clientes.</div>';
+}
+function renderPrestamos(){
+  const box=document.getElementById("prestamos");
+  if(!prestamos.length){box.innerHTML='<div class="small">No hay préstamos activos.</div>';return}
+  box.innerHTML=prestamos.map(p=>`<div class="card loan ${p.dias_mora>0?'late':''}">
+    <div><b>${p.cliente||('Cliente '+p.cliente_id)}</b> <span class="badge">${p.estado}</span> ${p.dias_mora>0?`<span class="badge">${p.dias_mora} días mora</span>`:''}</div>
+    <div class="grid" style="margin-top:8px"><div><span class="small">Capital</span><br>${money(p.capital)}</div><div><span class="small">Pago</span><br>${money(p.pago_programado)} / ${p.frecuencia_pago==='diario_habil'?'día hábil':'semana'}</div><div><span class="small">Pagado</span><br>${money(p.pagado)}</div><div><span class="small">Saldo</span><br><b>${money(p.saldo_total)}</b></div></div>
+    <div class="small">${p.plazo_semanas} semanas · ${p.tasa_ciclo_pct}% ciclo · ${p.numero_pagos} pagos · fin ${p.fecha_fin_programada}</div>
+    <div class="actions"><button class="green" onclick="registrarPago(${p.id},${p.pago_programado})">Registrar pago</button><button class="orange" onclick="whatsapp(${p.id},'hoy')">WhatsApp hoy</button>${p.dias_mora>0?`<button class="danger" onclick="whatsapp(${p.id},'atraso')">Aviso atraso</button>`:''}<button class="gray" onclick="whatsapp(${p.id},'saldo')">Enviar saldo</button></div>
+  </div>`).join("");
+}
+
+async function crearCliente(){
+  try{
+    await request("/prestamos/clientes",{method:"POST",body:JSON.stringify({nombre:cNombre.value,telefono:cTelefono.value,whatsapp:cWhatsapp.value,fuente_ingresos:cFuente.value,ingreso_estimado:Number(cIngreso.value||0),frecuencia_ingreso:cFrecuencia.value,linea_credito:Number(cLinea.value||1500),notas:cNotas.value})});
+    cNombre.value="";cTelefono.value="";cWhatsapp.value="";cFuente.value="";cIngreso.value="";cNotas.value="";await cargarTodo();
+  }catch(e){alert(e.message)}
+}
+function simular(){
+  const capital=Number(pCapital.value||0),tasa=Number(pTasa.value||0),semanas=Number(pSemanas.value||0),freq=pFrecuencia.value;
+  const n=semanas*(freq==='diario_habil'?5:1),total=capital*(1+tasa/100),cuota=n?total/n:0;
+  simulacion.textContent=`Total pactado: ${money(total)} · ${n} pagos de aprox. ${money(cuota)}`;
+}
+[pCapital,pTasa,pSemanas,pFrecuencia].forEach(x=>x.addEventListener("input",simular));
+async function crearPrestamo(){
+  if(!pCliente.value){alert("Registra primero un cliente");return}
+  try{
+    const r=await request("/prestamos",{method:"POST",body:JSON.stringify({cliente_id:Number(pCliente.value),capital:Number(pCapital.value),tasa_ciclo_pct:Number(pTasa.value),plazo_semanas:Number(pSemanas.value),frecuencia_pago:pFrecuencia.value,referencia:pReferencia.value,notas:pNotas.value})});
+    alert(`Préstamo creado. Pago programado: ${money(r.pago_programado)}`);pReferencia.value="";pNotas.value="";await cargarTodo();
+  }catch(e){alert(e.message)}
+}
+async function registrarPago(id,sugerido){
+  const valor=prompt("Monto recibido",Number(sugerido).toFixed(2));if(valor===null)return;
+  const metodo=prompt("Método: transferencia o deposito","transferencia")||"transferencia";
+  const referencia=prompt("Referencia bancaria / folio (opcional)","")||"";
+  try{await request(`/prestamos/${id}/pagos`,{method:"POST",body:JSON.stringify({monto:Number(valor),metodo,referencia})});await cargarTodo()}catch(e){alert(e.message)}
+}
+async function whatsapp(id,tipo){
+  try{const r=await request(`/prestamos/${id}/whatsapp?tipo=${tipo}`);window.open(r.url,"_blank","noopener")}catch(e){alert(e.message)}
+}
+if(token()) abrir();
+</script>
+</body>
+</html>
